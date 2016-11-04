@@ -300,21 +300,6 @@ end FiggeFencl3Detailed;
     annotation (experiment(Tolerance=1e-006), __Dymola_experimentSetupOutput);
   end FiggeFencl3pCO2;
 
-  model FiggeFencl3SID "Change of pH while changing SID"
-   // extends FiggeFencl3Base;
-
-    FiggeFencl3Detailed figgeFencl3Base(
-      SID=SID,
-      pCO2=pCO2,
-      Pi=Pi,
-      alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-    Real SID = time*40 + 39 - 20;
-    parameter Real pCO2 = 40;
-    parameter Real Pi = 1.15;
-    parameter Real alb = 4.4;
-    output Real pH = figgeFencl3Base.pH;
-    annotation (experiment(Tolerance=1e-006), __Dymola_experimentSetupOutput);
-  end FiggeFencl3SID;
 
  package Thrash
 
@@ -829,49 +814,6 @@ public
     //  BE = time*44-22;
     end Full_Blood;
 
-   model SA_comparison_pCO2
-      "pH dependent on varying pCO2 by different approximations. We take our implementation of SA nomogram as reference. Compare the object's pH"
-     parameter Real Hct = 15/33.34;
-     parameter Real BEox = 0;
-     parameter Real sO2 = 1;
-     output Real pHZander = zander1995.pH;
-     output Real pHNomogram = sAoriginal.pH;
-     output Real pHVanSlyke = sAVanSlyke.pH;
-     input Real pCO2 = time*40 + 20;
-     SAnomogram_formalization.Zander1995 zander1995(
-        pCO2=pCO2,
-        BEox=BEox,
-        Hct=Hct,
-        sO2=sO2)
-        annotation (Placement(transformation(extent={{-100,40},{-80,60}})));
-     SAnomogram_formalization.Kofr2009 kofr2009(
-        pCO2=pCO2,
-        BEox=BEox,
-        Hct=Hct,
-        sO2=sO2)
-        annotation (Placement(transformation(extent={{-20,40},{0,60}})));
-     SAnomogram_formalization.SAoriginal sAoriginal(
-        pCO2=pCO2,
-        BEox=BEox,
-        Hct=Hct,
-        sO2=sO2)
-        annotation (Placement(transformation(extent={{34,40},{54,60}})));
-     SAnomogram_formalization.SAVanSlyke sAVanSlyke(
-        pCO2=pCO2,
-        BEox=BEox,
-        Hct=Hct,
-        sO2=sO2)
-        annotation (Placement(transformation(extent={{80,40},{100,60}})));
-     SAnomogram_formalization.SAVanSlyke77 sAVanSlyke77(
-        pCO2=pCO2,
-        BEox=BEox,
-        Hct=Hct,
-        sO2=sO2)
-        annotation (Placement(transformation(extent={{-60,40},{-40,60}})));
-     annotation (experiment(Tolerance=0.001), __Dymola_experimentSetupOutput,
-       __Dymola_Commands(file="def.mos" "def"));
-   end SA_comparison_pCO2;
-
    model SA_comparison_BE
      parameter Real Hct = 15/33.34;
      Real BEox = time*60 - 30;
@@ -956,6 +898,499 @@ public
      annotation (experiment(Tolerance=0.001), __Dymola_experimentSetupOutput,
        __Dymola_Commands(file="def.mos" "def"));
    end SA_comparison_plasma_pCO2;
+
+   model full_blood_test_pco2_at_BE
+      import FullBloodAcidBase;
+     constant Real fullHb = 33.34;
+     parameter Real Hb = 15;
+     parameter Real Hct = Hb/fullHb;
+
+     FullBloodAcidBase.Full_Blood.Full_blood_combo fb(
+        BE=BE,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb)
+        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+
+     FiggeFencl3 figgeFencl3Base(
+       SID=SID,
+       pCO2=pCO2,
+       Pi=Pi,
+       alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+
+     FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hct, Alb = alb)
+       annotation (Placement(transformation(extent={{-18,40},{2,60}})));
+
+     Real BE = 0;
+     Real pCO2;
+     //parameter Real pCO2 = 40;// time*40 + 20;
+     Real Pi = 1.15;
+     Real alb = 4.4;//time*4.4*2;
+     output Real pH = fb.pH;
+
+     Real SID;
+    protected
+     FiggeFenclNSID normalPlasma(
+       pH0=7.4,
+       pCO20=40,
+       alb0=alb,
+       Pi0=Pi)
+       annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
+
+   // public
+   //   discrete Real bepop( start = -20);
+     discrete Real sTime( start = 0);
+   //   parameter Real diff = 10;
+   equation
+     SID - normalPlasma.SID = BE;
+
+     pCO2 = (time - sTime)*40 + 20;
+   //   BE = bepop;
+   //
+   //   when sample(1, 1) then
+   //      bepop = pre(bepop) + diff;
+   //      sTime = time;
+   //   end when;
+
+   end full_blood_test_pco2_at_BE;
+
+   model test_combo_chng_Hb
+      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
+
+     FiggeFencl3Detailed                         plasma(
+       SID=SID,
+       pCO2=pCO2,
+       Pi=Pi,
+       alb=alb) "Plasma compartment (Hct = 0)"
+       annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
+     SAnomogram_formalization.SAoriginal fullErythrocyte(
+       Hct=1,
+       BEox=BEe,
+       pCO2=pCO2) "Full erythrocyte blood with Hct = 1"
+       annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
+
+     constant Real fullHb = 33.34;
+     Real Hb = (time - sTime)*29 + 1;
+     Real Hct = Hb/fullHb;
+     parameter Real k = 1
+        "pisvajcova konstanta - kolik mHCO3 zvostane v erytrocytu? Nebo jina nepresnost? Ideal 0.77";
+
+     Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
+     Real BEe( unit = "meq/l")= BE + k*mHCO3/Hct;
+     Real BE = 0;//time*40 - 20;
+     Real mHCO3;
+
+     Real SID;
+     Real pCO2 = dpic;
+     Real Pi = 1.15;
+     parameter Real alb = 4.4;
+     output Real pH = fullErythrocyte.pH;
+
+    FiggeFencl3Detailed                         plasma_only(
+       SID=normalPlasma.SID + BE,
+       pCO2=pCO2,
+       Pi=Pi,
+       alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+
+     SAnomogram_formalization.SAoriginal normalBloodSA(
+       Hct=Hct,
+       BEox=BE,
+       pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+    protected
+     FiggeFenclNSID normalPlasma(
+       pH0=7.4,
+       pCO20=40,
+       alb0=alb,
+       Pi0=Pi)
+       annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+
+   discrete Real dpic( start = 20);
+   discrete Real sTime( start = 0);
+   equation
+     plasma.pH = fullErythrocyte.pH;
+     BEp = SID - normalPlasma.SID;
+
+     when sample(1,1) then
+       sTime = time;
+       dpic = pre(dpic) + 10;
+     end when;
+     annotation (experiment(
+         StopTime=1,
+         __Dymola_NumberOfIntervals=500,
+         Tolerance=1e-003), Diagram(coordinateSystem(preserveAspectRatio=false,
+             extent={{-100,-100},{100,100}}), graphics={
+           Line(
+             points={{-84,52},{-90,52},{-98,52},{-94,20},{-86,18}},
+             color={28,108,200},
+             arrow={Arrow.None,Arrow.Filled}),
+           Line(
+             points={{-54,16},{-30,2},{-26,-6}},
+             color={28,108,200},
+             arrow={Arrow.None,Arrow.Filled}),
+           Line(
+             points={{-54,-12},{-36,-14},{-26,-10}},
+             color={28,108,200},
+             arrow={Arrow.None,Arrow.Filled}),
+           Text(
+             extent={{-24,-14},{-4,0}},
+             lineColor={28,108,200},
+             fillColor={0,0,255},
+             fillPattern=FillPattern.Solid,
+             textString="pH"),
+           Line(
+             points={{10,84},{10,-74},{10,-80},{10,-82}},
+             color={28,108,200},
+             arrow={Arrow.None,Arrow.Filled})}));
+   end test_combo_chng_Hb;
+
+   model full_blood_test_BE_at_pco2
+      import FullBloodAcidBase;
+     constant Real fullHb = 33.34;
+     parameter Real Hb = 15;
+     parameter Real Hct = Hb/fullHb;
+
+     FullBloodAcidBase.Full_Blood.Full_blood_combo fb(
+        BE=BE,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb)
+        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+
+     FiggeFencl3 figgeFencl3Base(
+       SID=SID,
+       pCO2=pCO2,
+       Pi=Pi,
+       alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+
+     FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hct, Alb = alb)
+       annotation (Placement(transformation(extent={{-18,40},{2,60}})));
+
+     Real BE; //= 0;// time*40 - 20;
+     Real pCO2;
+     //parameter Real pCO2 = 40;// time*40 + 20;
+     Real Pi = 1.15;
+     Real alb = 4.4;//time*4.4*2;
+     output Real pH = fb.pH;
+
+     Real SID;
+    protected
+     FiggeFenclNSID normalPlasma(
+       pH0=7.4,
+       pCO20=40,
+       alb0=alb,
+       Pi0=Pi)
+       annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
+
+    public
+     discrete Real bepop( start = 20);
+     discrete Real sTime( start = 0);
+     parameter Real diff = 10;
+   equation
+     SID - normalPlasma.SID = BE;
+
+     BE = (time - sTime)*10 - 20;
+     pCO2 = bepop;
+
+     when sample(1, 1) then
+        bepop = pre(bepop) + diff;
+        sTime = time;
+     end when;
+
+   end full_blood_test_BE_at_pco2;
+
+   model full_blood_test_VS_alb_at_BE
+      import FullBloodAcidBase;
+     constant Real fullHb = 33.34;
+     parameter Real Hb = 15;
+     parameter Real Hct = Hb/fullHb;
+
+     FullBloodAcidBase.Full_Blood.Full_blood_combo fb(
+        BE=BE,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb)
+        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+
+     FiggeFencl3 figgeFencl3Base(
+       SID=SID,
+       pCO2=pCO2,
+       Pi=Pi,
+       alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+
+     FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hct, Alb = alb)
+       annotation (Placement(transformation(extent={{-18,40},{2,60}})));
+
+         FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke77 sAVanSlyke77( pCO2 = pCO2, BEox = BE, Hct = Hct, sO2 = 1)
+       annotation (Placement(transformation(extent={{-60,40},{-40,60}})));
+     Real BE; //= 0;// time*40 - 20;
+     Real pCO2;
+     //parameter Real pCO2 = 40;// time*40 + 20;
+     Real Pi = 1.15;
+     Real alb; //= 4.4;//time*4.4*2;
+     output Real pH = fb.pH;
+
+     Real SID;
+    protected
+     FiggeFenclNSID normalPlasma(
+       pH0=7.4,
+       pCO20=40,
+       alb0=alb,
+       Pi0=Pi)
+       annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
+
+    public
+     discrete Real bepop( start = - 20);
+     discrete Real sTime( start = 0);
+     parameter Real diff = 10;
+   equation
+     SID - normalPlasma.SID = BE;
+
+     pCO2 = 40;
+     // pCO2 = (time - sTime)*40 + 20;
+
+     BE = bepop;
+     alb = (time-sTime)*4.4*2;
+     when sample(1, 1) then
+        bepop = pre(bepop) + diff;
+        sTime = time;
+     end when;
+
+   end full_blood_test_VS_alb_at_BE;
+
+   model full_blood_test_VS_Pi_at_BE
+      import FullBloodAcidBase;
+     constant Real fullHb = 33.34;
+     parameter Real Hb = 15;
+     parameter Real Hct = Hb/fullHb;
+
+     FullBloodAcidBase.Full_Blood.Full_blood_combo fb(
+        BE=BE,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb)
+        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+
+     FiggeFencl3 figgeFencl3Base(
+       SID=SID,
+       pCO2=pCO2,
+       Pi=Pi,
+       alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+
+     FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hct, Alb = alb)
+       annotation (Placement(transformation(extent={{-18,40},{2,60}})));
+
+         FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke77 sAVanSlyke77( pCO2 = pCO2, BEox = BE, Hct = Hct, sO2 = 1)
+       annotation (Placement(transformation(extent={{-60,40},{-40,60}})));
+     Real BE; //= 0;// time*40 - 20;
+     Real pCO2;
+     //parameter Real pCO2 = 40;// time*40 + 20;
+     Real Pi;  //= 1.15;
+     Real alb = 4.4;//time*4.4*2;
+     output Real pH = fb.pH;
+
+     Real SID;
+    protected
+     FiggeFenclNSID normalPlasma(
+       pH0=7.4,
+       pCO20=40,
+       alb0=alb,
+       Pi0=Pi)
+       annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
+
+    public
+     discrete Real bepop( start = - 20);
+     discrete Real sTime( start = 0);
+     parameter Real diff = 10;
+   equation
+     SID - normalPlasma.SID = BE;
+
+     pCO2 = 40;
+     // pCO2 = (time - sTime)*40 + 20;
+
+     BE = bepop;
+     Pi = (time-sTime)*1.15*2;
+     when sample(1, 1) then
+        bepop = pre(bepop) + diff;
+        sTime = time;
+     end when;
+
+     annotation (experiment(StopTime=5, Tolerance=1e-005),
+         __Dymola_experimentSetupOutput(doublePrecision=true));
+   end full_blood_test_VS_Pi_at_BE;
+
+   model test_combo_chng_Alb
+      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
+
+     FiggeFencl3                         plasma(
+       SID=SID,
+       pCO2=pCO2,
+       Pi=Pi,
+       alb=alb) "Plasma compartment (Hct = 0)"
+       annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
+     SAnomogram_formalization.SAoriginal fullErythrocyte(
+       Hct=1,
+       BEox=BEe,
+       pCO2=pCO2) "Full erythrocyte blood with Hct = 1"
+       annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
+
+     constant Real fullHb = 33.34;
+     Real Hb = 15;
+     Real Hct = Hb/fullHb;
+     parameter Real k = 1
+        "pisvajcova konstanta - kolik mHCO3 zvostane v erytrocytu? Nebo jina nepresnost? Ideal 0.77";
+
+     Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
+     Real BEe( unit = "meq/l")= BE + k*mHCO3/Hct;
+     Real BE = 0;//time*40 - 20;
+     Real mHCO3;
+
+     Real SID;
+     Real pCO2 = 40;
+     Real Pi = 1.15;
+     //  parameter Real alb = 4.4;
+     Real alb = time*4.4 + 2;
+     output Real pH = fullErythrocyte.pH;
+
+    FiggeFencl3                         plasma_only(
+       SID=normalPlasma.SID + BE,
+       pCO2=pCO2,
+       Pi=Pi,
+       alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+
+     SAnomogram_formalization.SAoriginal normalBloodSA(
+       Hct=Hct,
+       BEox=BE,
+       pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+    protected
+     FiggeFenclNSID normalPlasma(
+       pH0=7.4,
+       pCO20=40,
+       alb0=alb,
+       Pi0=Pi)
+       annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+
+   //discrete Real dpic( start = 20);
+   //discrete Real sTime( start = 0);
+   equation
+     plasma.pH = fullErythrocyte.pH;
+     BEp = SID - normalPlasma.SID;
+     annotation (experiment(
+         StopTime=1,
+         __Dymola_NumberOfIntervals=500,
+         Tolerance=1e-003), Diagram(coordinateSystem(preserveAspectRatio=false,
+             extent={{-100,-100},{100,100}}), graphics={
+           Line(
+             points={{-84,52},{-90,52},{-98,52},{-94,20},{-86,18}},
+             color={28,108,200},
+             arrow={Arrow.None,Arrow.Filled}),
+           Line(
+             points={{-54,16},{-30,2},{-26,-6}},
+             color={28,108,200},
+             arrow={Arrow.None,Arrow.Filled}),
+           Line(
+             points={{-54,-12},{-36,-14},{-26,-10}},
+             color={28,108,200},
+             arrow={Arrow.None,Arrow.Filled}),
+           Text(
+             extent={{-24,-14},{-4,0}},
+             lineColor={28,108,200},
+             fillColor={0,0,255},
+             fillPattern=FillPattern.Solid,
+             textString="pH"),
+           Line(
+             points={{10,84},{10,-74},{10,-80},{10,-82}},
+             color={28,108,200},
+             arrow={Arrow.None,Arrow.Filled})}));
+   end test_combo_chng_Alb;
+
+   model BErange
+      import FullBloodAcidBase;
+     Real logpCO2 = log10(pCO2);
+     Real pCO2 = time*40 + 20;
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE_15(BE=-15,
+          pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE_10(BE=-10,
+          pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE_5(BE=-5,
+          pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE0(BE=-0,
+          pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE5(BE=5,
+          pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE10(BE=10,
+          pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE15(BE=15,
+          pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+
+   /* 
+// ALBUMIN CHARGE ACC TO FENCL OR OUR MODEL
+createPlot(id=7, position={0, 0, 1350, 769}, y={"resultSetAtBE0.Normal.FF_plasma_only.AlbXMinus", "resultSetAtBE_15.Normal.FF_plasma_only.AlbXMinus",
+ "resultSetAtBE15.Normal.FF_plasma_only.AlbXMinus", "resultSetAtBE_15.Normal.full_blood_combo.plasma.atch",
+ "resultSetAtBE0.Normal.full_blood_combo.plasma.atch", "resultSetAtBE15.Normal.full_blood_combo.plasma.atch",
+ "resultSetAtBE_15.Normal.FF_plasma_only.pH", "resultSetAtBE_15.Normal.full_blood_combo.pH",
+ "resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.Normal.FF_plasma_only.pH",
+ "resultSetAtBE15.Normal.full_blood_combo.pH", "resultSetAtBE15.Normal.FF_plasma_only.pH",
+ "resultSetAtBE_15.Normal.FF_plasma_only.atch", "resultSetAtBE0.Normal.FF_plasma_only.atch",
+ "resultSetAtBE15.Normal.FF_plasma_only.atch"}, range={0.0, 1.0, -16.0, 9.0}, grid=true, filename="dsres.mat", colors={{238,46,47}, {28,108,200}, {0,140,72}, {180,56,148}, {0,0,0}, {162,29,33}, 
+{244,125,35}, {102,44,145}, {28,108,200}, {238,46,47}, {0,140,72}, 
+{180,56,148}, {0,0,0}, {162,29,33}, {244,125,35}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Dash, LinePattern.Dash});
+*/
+
+   end BErange;
+
+   model BErange_P
+      import FullBloodAcidBase;
+     Real logpCO2 = log10(pCO2);
+     Real pCO2 = time*40 + 20;
+     parameter Real Hb = 15;
+
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE_P resultSetAtBE_10(
+        BE=-10,
+        pCO2=pCO2,
+        Hb=Hb)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE_P resultSetAtBE0(
+        BE=-0,
+        pCO2=pCO2,
+        Hb=Hb)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+     FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.ResultSetAtBE_P resultSetAtBE10(
+        BE=10,
+        pCO2=pCO2,
+        Hb=Hb)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+
+       // PLOTS
+
+       /* low, normal and high albumin for BE -10 0 10
+createPlot(id=1, position={84, 99, 586, 418}, x="pCO2", y={"resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.Normal.FF_plasma_only.pH",
+ "resultSetAtBE0.LowP.full_blood_combo.pH", "resultSetAtBE0.HighP.FF_plasma_only.pH",
+ "resultSetAtBE0.HighP.full_blood_combo.pH", "resultSetAtBE10.LowP.FF_plasma_only.pH",
+ "resultSetAtBE10.Normal.full_blood_combo.plasma.pH", "resultSetAtBE10.Normal.full_blood_combo.fullErythrocyte.pH",
+ "resultSetAtBE_10.Normal.full_blood_combo.plasma.pH", "resultSetAtBE_10.Normal.full_blood_combo.fullErythrocyte.pH",
+ "resultSetAtBE_10.Normal.full_blood_combo.pH", "resultSetAtBE_10.HighP.full_blood_combo.pH",
+ "resultSetAtBE_10.HighP.FF_plasma_only.pH", "resultSetAtBE10.Normal.FF_plasma_only.pH",
+ "resultSetAtBE_10.Normal.FF_plasma_only.pH"}, range={20.0, 60.0, 7.0, 7.8}, grid=true, legend=false, filename="BErange_P.mat", logX=true, colors={{238,46,47}, {0,0,0}, {238,46,47}, {0,0,0}, {238,46,47}, {0,0,0}, {238,46,47}, 
+{238,46,47}, {238,46,47}, {238,46,47}, {244,125,35}, {238,46,47}, {0,0,0}, 
+{0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25, 0.5, 0.0, 0.0, 0.25, 0.5, 0.5, 0.5, 0.5, 0.25, 0.0, 0.0, 0.25, 0.25});
+ */
+
+   end BErange_P;
  end Thrash;
 
   package SAnomogram_formalization
@@ -1031,8 +1466,10 @@ public
       Real pHBB( start = 7) = pHBBCoef[1]*BB^6 + pHBBCoef[2]*BB^5 + pHBBCoef[3]*BB^4 + pHBBCoef[4]*BB^3 + pHBBCoef[5]*BB^2  + pHBBCoef[6]*BB + pHBBCoef[7];
       Real pHBE( start = 7) = pHBECoef[1]*BE^4 + pHBECoef[2]*BE^3 + pHBECoef[3]*BE^2 + pHBECoef[4]*BE + pHBECoef[5];
 
-      Real BB(start = 60) = BE+0.42*Hb+41.7;
-      Real BE( start = -1)= BEox+0.2*(1-sO2)*Hb;
+    //   Real BB(start = 60) = BE+0.42*Hb+41.7;
+    //   Real BE( start = -1)= BEox+0.2*(1-sO2)*Hb;
+      Real BB = BE+0.42*Hb+41.7;
+      Real BE = BEox+0.2*(1-sO2)*Hb;
 
       Real pH( start = 7.4) = (log10(pCO2) - log10(pCO2BB))*(pHBB - pHBE)/(log10(pCO2BB) - log10(pCO2BE))+ pHBB;
     equation
@@ -1092,13 +1529,55 @@ public
 
 
 
+    model SA_comparison_pCO2
+      "pH dependent on varying pCO2 by different approximations. We take our implementation of SA nomogram as reference. Compare the object's pH"
+      parameter Real Hct = 15/33.34;
+      parameter Real BEox = 0;
+      parameter Real sO2 = 1;
+      output Real pHZander = zander1995.pH;
+      output Real pHNomogram = sAoriginal.pH;
+      output Real pHVanSlyke = sAVanSlyke.pH;
+      input Real pCO2 = time*40 + 20;
+      SAnomogram_formalization.Zander1995 zander1995(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{-100,40},{-80,60}})));
+      SAnomogram_formalization.Kofr2009 kofr2009(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{-20,40},{0,60}})));
+      SAnomogram_formalization.SAoriginal sAoriginal(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{34,40},{54,60}})));
+      SAnomogram_formalization.SAVanSlyke sAVanSlyke(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{80,40},{100,60}})));
+      SAnomogram_formalization.SAVanSlyke77 sAVanSlyke77(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{-60,40},{-40,60}})));
+      annotation (experiment(Tolerance=0.001), __Dymola_experimentSetupOutput,
+        __Dymola_Commands(file="def.mos" "def"));
+    end SA_comparison_pCO2;
   end SAnomogram_formalization;
 
   package Full_Blood
 
 
 
-    model full_blood_combo
+    model Full_blood_combo
       "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2"
 
       FiggeFencl3Detailed                         plasma(
@@ -1149,7 +1628,775 @@ public
           StopTime=1,
           __Dymola_NumberOfIntervals=500,
           Tolerance=1e-003));
-    end full_blood_combo;
+    end Full_blood_combo;
+
+
+
+
+
+
+
+
+    package comparisson
+
+      package Auxiliary
+
+        model ResultSetAtBE
+          parameter Real Pi = 1.15;
+          parameter Real alb = 4.4;
+          parameter Real BE = 0;
+          parameter Real Hb = 15;
+          output Real pHSABlood = normalBloodSA.pH;
+          output Real pHComboBlood = Normal. full_blood_combo. pH;
+          output Real pHFFplasma = Normal. FF_plasma_only. pH;
+          output Real pHSAplasma = plasmaSA. pH;
+          Real logpCO2 = log10(pCO2);
+          input Real pCO2 = time*40 + 20;
+
+          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb LowAlb(  BE = BE, pCO2 = pCO2, alb = 2, Hb = Hb, Pi = Pi)
+            "Low Alb"
+          annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb Normal(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
+            "Normal model set"
+          annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb HighAlb(  BE = BE, pCO2 = pCO2, alb = 6.5, Hb = Hb, Pi = Pi)
+            "High Alb"
+          annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+        //   // BE 0
+        //   full_blood_combo full_blood_combo1( BE = BE, pCO2 = pCO2, alb = 2, Hb = Hb) "Low Alb"
+        //
+        //   annotation (Placement(transformation(extent={{20,20},{40,40}})));
+        //     full_blood_combo full_blood_combo2( BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb) "Low Alb"
+        //   annotation (Placement(transformation(extent={{20,20},{40,40}})));
+        //
+        //   full_blood_combo full_blood_combo3( BE = BE, pCO2 = pCO2, alb = 6.5, Hb = Hb) "Hogh Alb"
+        //   annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+        //   FiggeFencl3                         plasma_only(
+        //     SID=normalPlasma.SID + BE,
+        //     pCO2=pCO2,
+        //     Pi=Pi,
+        //     alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+        //
+        //   FiggeFencl3                         plasma_low_alb(
+        //     SID=lowAlbPlasma.SID + BE,
+        //     pCO2=pCO2,
+        //     Pi=Pi,
+        //     alb=2.0) "Plasma model acc to FiggeFencl for comparison only with low albumin level" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+        //
+        //   FiggeFencl3                         plasma_high_alb(
+        //     SID=highAlbPlasma.SID + BE,
+        //     pCO2=pCO2,
+        //     Pi=Pi,
+        //     alb=6.5) "Plasma model acc to FiggeFencl for comparison only with high albumin level" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+
+          SAnomogram_formalization.SAoriginal plasmaSA(
+            Hb=0,
+            BEox=BE,
+            pCO2=pCO2) "SA original with Hct 0 for comparison with FF"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+          SAnomogram_formalization.SAoriginal normalBloodSA(
+            Hb = Hb,
+            BEox=BE,
+            pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+        // protected
+        //   FiggeFenclNSID normalPlasma(
+        //     pH0=7.4,
+        //     pCO20=40,
+        //     alb0=alb,
+        //     Pi0=Pi)
+        //     annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+        //   FiggeFenclNSID highAlbPlasma(
+        //     pH0=7.4,
+        //     pCO20=40,
+        //     alb0=6.5,
+        //     Pi0=Pi)
+        //     annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+        //       FiggeFenclNSID lowAlbPlasma(
+        //     pH0=7.4,
+        //     pCO20=40,
+        //     alb0=2.0,
+        //     Pi0=Pi)
+        //     annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+
+        end ResultSetAtBE;
+
+
+        model SetAtAlb
+
+            Full_blood_combo full_blood_combo( BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi=Pi)
+          annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+           FiggeFencl3Detailed                         FF_plasma_only(
+            SID=normalPlasma.SID + BE,
+            pCO2=pCO2,
+            Pi=Pi,
+            alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+
+            FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hb/33.34, sO2 = 1, Alb= alb)
+            annotation (Placement(transformation(extent={{-14,40},{6,60}})));
+            input Real BE, pCO2;
+            input Real df = 1 "dilution factor";
+            input Real alb, Pi;
+            input Real Hb;
+        protected
+            FiggeFenclNSID normalPlasma(
+            pH0=7.4,
+            pCO20=40,
+            alb0=alb,
+            Pi0=Pi)
+            annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+
+        end SetAtAlb;
+
+        model ResultSetAtBE_P
+          parameter Real Pi = 1.15;
+          parameter Real alb = 4.4;
+          parameter Real BE = 0;
+          parameter Real Hb = 15;
+          output Real pHSABlood = normalBloodSA.pH;
+          output Real pHComboBlood = Normal. full_blood_combo. pH;
+          output Real pHFFplasma = Normal. FF_plasma_only. pH;
+          output Real pHSAplasma = plasmaSA. pH;
+          Real logpCO2 = log10(pCO2);
+          input Real pCO2 = time*40 + 20;
+
+          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb LowP(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi/2)
+            "Low Alb"
+          annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb Normal(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
+            "Normal model set"
+          annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb HighP(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi*2)
+            "High Alb"
+          annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+          SAnomogram_formalization.SAoriginal plasmaSA(
+            Hb=0,
+            BEox=BE,
+            pCO2=pCO2) "SA original with Hct 0 for comparison with FF"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+          SAnomogram_formalization.SAoriginal normalBloodSA(
+            Hb = Hb,
+            BEox=BE,
+            pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+        end ResultSetAtBE_P;
+      end Auxiliary;
+
+
+
+
+
+
+
+    end comparisson;
+  end Full_Blood;
+  annotation (uses(Modelica(version="3.2.1")));
+  package Figures
+
+    model Figure1
+      Real pCO2 = time*40 + 20;
+      SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE_10(BEox
+          =-10, pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-80,20},{-60,40}})));
+      SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE0(BEox=0,
+          pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-40,20},{-20,40}})));
+      SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE10(BEox=
+            10, pCO2=pCO2)
+        annotation (Placement(transformation(extent={{0,20},{20,40}})));
+      FullBloodAcidBase.Figures.Figure1_3_4_BE_curve BE_curve;
+
+      // Figure 1 Dymola Script
+     /*
+createPlot(id=1, position={0, 0, 483, 300}, x="pCO2", y={"sA_comparison_pCO2_BE_10.sAoriginal.pH", "sA_comparison_pCO2_BE0.sAoriginal.pH",
+ "sA_comparison_pCO2_BE10.sAoriginal.pH", "sA_comparison_pCO2_BE_10.zander1995.pH",
+ "sA_comparison_pCO2_BE0.zander1995.pH", "sA_comparison_pCO2_BE10.zander1995.pH",
+ "sA_comparison_pCO2_BE10.sAVanSlyke.pH", "sA_comparison_pCO2_BE0.sAVanSlyke.pH",
+ "sA_comparison_pCO2_BE_10.sAVanSlyke.pH"}, range={20.0, 60.00000000000001, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, 
+{0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
+LinePattern.Dot, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Solid}, thicknesses={1.0, 1.0, 1.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}, rightTitleType=0);
+  */
+    end Figure1;
+
+    model Figure1_3_4_BE_curve
+      Real BE = time*60 - 30;
+      output Real pCO2BE( start = 40) = pco2BECoef[1]*BE^6 + pco2BECoef[2]*BE^5 + pco2BECoef[3]*BE^4 + pco2BECoef[4]*BE^3 + pco2BECoef[5]*BE^2  + pco2BECoef[6]*BE + pco2BECoef[7];
+      output Real pHBE( start = 7) = pHBECoef[1]*BE^4 + pHBECoef[2]*BE^3 + pHBECoef[3]*BE^2 + pHBECoef[4]*BE + pHBECoef[5];
+
+    protected
+      constant Real pco2BECoef[:] = {8.3975e-009,   -513.9503e-009,      3.8105e-006,    231.6888e-006,    -46.5581e-003,    353.7105e-003,     39.9871e+000};
+      constant Real pHBECoef[:] = {131.3315e-009,      2.5027e-006,    175.6144e-006,     11.9273e-003,      7.4001e+000};
+
+      // Dymola plot script
+
+      /*
+  createPlot(id=2, position={219, 4, 483, 300}, x="pCO2BE", y={"pHBE"}, range={20.0, 60.00000000000001, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="Figure1_4_BE_curve.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{28,108,200}}, rightTitleType=0);
+  */
+
+    end Figure1_3_4_BE_curve;
+
+    model figure2A
+      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
+
+    //   Real BetaPlasma = der(plasma_only.pH)/der(BE);
+    //   Real BetaEry = der(normalBloodSA.pH)/der(BE);
+    //   Real BetaBlood = der(plasma.pH)/der(BE);
+    /*
+  FiggeFencl3Detailed                         plasma(
+    SID=SID,
+    pCO2=pCO2,
+    Pi=Pi,
+    alb=alb) "Plasma compartment (Hct = 0)"
+    annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
+  */
+      parameter Real safe_hct = 1;
+      SAnomogram_formalization.SAoriginal plasma(
+        Hct=0,
+        BEox=BEp,
+        pCO2=pCO2) "No erythrocyte blood with Hct = 0"
+        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
+
+      SAnomogram_formalization.SAoriginal fullErythrocyte(
+        Hct=1,
+        BEox=BEe,
+        pCO2=pCO2) "Full erythrocyte blood with Hct = 1"
+        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
+
+      constant Real fullHb = 33.34;
+      parameter Real Hb = 15;
+      parameter Real Hct = Hb/fullHb;
+
+      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
+      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
+      //Real BE;
+    //   Real BE = 0;
+      Real BE = time*60 - 30;
+      Real mHCO3;
+
+    //  Real SID = 39;
+     Real SID;
+    //  Real pCO2 = time*40 + 20;
+      Real pCO2 = 40;
+      Real Pi = 1.15;
+      parameter Real alb = 4.4;
+
+     FiggeFencl3Detailed                         plasma_only(
+        SID=normalPlasma.SID + BE,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+
+      SAnomogram_formalization.SAoriginal normalBloodSA(
+        Hct=Hct,
+        BEox=BE,
+        pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+    protected
+      FiggeFenclNSID normalPlasma(
+        pH0=7.4,
+        pCO20=40,
+        alb0=alb,
+        Pi0=Pi)
+        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+    equation
+      plasma.pH = fullErythrocyte.pH;
+      BEp = SID - normalPlasma.SID;
+
+    // Graph of varying BE
+    /*
+createPlot(id=21, position={0, 0, 483, 300}, x="BE", y={"plasma.pH", "normalBloodSA.pH"}, range={-30.0, 30.0, 6.6000000000000005, 7.800000000000001}, grid=true, legend=false, filename="figure2A.mat", leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Dash}, thicknesses={0.5, 0.25}, rightTitleType=0);
+*/
+      annotation (experiment(StopTime=0.94),
+                             Diagram(coordinateSystem(preserveAspectRatio=false,
+              extent={{-100,-100},{100,100}}), graphics={
+            Line(
+              points={{-84,52},{-90,52},{-98,52},{-94,20},{-86,18}},
+              color={28,108,200},
+              arrow={Arrow.None,Arrow.Filled}),
+            Line(
+              points={{-54,16},{-30,2},{-26,-6}},
+              color={28,108,200},
+              arrow={Arrow.None,Arrow.Filled}),
+            Line(
+              points={{-54,-12},{-36,-14},{-26,-10}},
+              color={28,108,200},
+              arrow={Arrow.None,Arrow.Filled}),
+            Text(
+              extent={{-24,-14},{-4,0}},
+              lineColor={28,108,200},
+              fillColor={0,0,255},
+              fillPattern=FillPattern.Solid,
+              textString="pH"),
+            Line(
+              points={{10,84},{10,-74},{10,-80},{10,-82}},
+              color={28,108,200},
+              arrow={Arrow.None,Arrow.Filled})}),
+        __Dymola_experimentSetupOutput);
+    end figure2A;
+
+    model figure2B
+      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
+
+    //   Real BetaPlasma = der(plasma_only.pH)/der(BE);
+    //   Real BetaEry = der(normalBloodSA.pH)/der(BE);
+    //   Real BetaBlood = der(plasma.pH)/der(BE);
+    /*
+  FiggeFencl3Detailed                         plasma(
+    SID=SID,
+    pCO2=pCO2,
+    Pi=Pi,
+    alb=alb) "Plasma compartment (Hct = 0)"
+    annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
+  */
+      SAnomogram_formalization.SAoriginal plasma(
+        Hct=0,
+        BEox=BEp,
+        pCO2=pCO2) "No erythrocyte blood with Hct = 0"
+        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
+
+      SAnomogram_formalization.SAoriginal fullErythrocyte(
+        Hct=1,
+        BEox=BEe,
+        pCO2=pCO2) "Full erythrocyte blood with Hct = 1"
+        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
+
+      constant Real fullHb = 33.34;
+      parameter Real Hb = 15;
+      parameter Real Hct = Hb/fullHb;
+
+      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
+      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
+      //Real BE;
+      Real BE = 0;
+    //   Real BE = time*40 - 20;
+      Real mHCO3;
+
+    //  Real SID = 39;
+     Real SID;
+     Real pCO2 = time*40 + 20;
+    //  Real pCO2 = 40;
+      Real Pi = 1.15;
+      parameter Real alb = 4.4;
+
+     FiggeFencl3Detailed                         plasma_only(
+        SID=normalPlasma.SID + BE,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+
+      SAnomogram_formalization.SAoriginal normalBloodSA(
+        Hct=Hct,
+        BEox=BE,
+        pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+    protected
+      FiggeFenclNSID normalPlasma(
+        pH0=7.4,
+        pCO20=40,
+        alb0=alb,
+        Pi0=Pi)
+        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+    equation
+      plasma.pH = fullErythrocyte.pH;
+      BEp = SID - normalPlasma.SID;
+
+      // grapf of varying pCO2
+      /*
+createPlot(id=22, position={95, 253, 483, 300}, x="pCO2", y={"plasma.pH", "normalBloodSA.pH"}, range={20.0, 60.0, 7.25, 7.65}, grid=true, legend=false, filename="figure2B.mat", leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Dash}, thicknesses={1.0, 0.5}, rightTitleType=0);
+*/
+      annotation (experiment(
+          StopTime=1,
+          __Dymola_NumberOfIntervals=500,
+          Tolerance=1e-003), Diagram(coordinateSystem(preserveAspectRatio=false,
+              extent={{-100,-100},{100,100}}), graphics={
+            Line(
+              points={{-84,52},{-90,52},{-98,52},{-94,20},{-86,18}},
+              color={28,108,200},
+              arrow={Arrow.None,Arrow.Filled}),
+            Line(
+              points={{-54,16},{-30,2},{-26,-6}},
+              color={28,108,200},
+              arrow={Arrow.None,Arrow.Filled}),
+            Line(
+              points={{-54,-12},{-36,-14},{-26,-10}},
+              color={28,108,200},
+              arrow={Arrow.None,Arrow.Filled}),
+            Text(
+              extent={{-24,-14},{-4,0}},
+              lineColor={28,108,200},
+              fillColor={0,0,255},
+              fillPattern=FillPattern.Solid,
+              textString="pH"),
+            Line(
+              points={{10,84},{10,-74},{10,-80},{10,-82}},
+              color={28,108,200},
+              arrow={Arrow.None,Arrow.Filled})}));
+    end figure2B;
+
+    model Figures3_4
+      Real logpCO2 = log10(pCO2);
+      Real pCO2 = time*40 + 20;
+      parameter Real Hb = 15;
+
+      Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE_10(
+        BE=-15,
+        pCO2=pCO2,
+        Hb=Hb)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+      Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE0(
+        BE=-0,
+        pCO2=pCO2,
+        Hb=Hb)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+      Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE10(
+        BE=15,
+        pCO2=pCO2,
+        Hb=Hb)
+        annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
+
+        // PLOTS
+
+        /* FIGURE 3: Full blood combination compared to full blood SA, Figge of plasma and SA of Hct 0 (thus plasma as well)
+    createPlot(id=3, position={70, 340, 483, 300}, x="pCO2", y={"resultSetAtBE_10.plasmaSA.pH", "resultSetAtBE_10.Normal.FF_plasma_only.pH", 
+"resultSetAtBE_10.Normal.full_blood_combo.pH", "resultSetAtBE_10.normalBloodSA.pH",
+ "resultSetAtBE0.plasmaSA.pH", "resultSetAtBE0.Normal.FF_plasma_only.pH", 
+"resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.normalBloodSA.pH",
+ "resultSetAtBE10.plasmaSA.pH", "resultSetAtBE10.Normal.FF_plasma_only.pH", 
+"resultSetAtBE10.Normal.full_blood_combo.pH", "resultSetAtBE10.normalBloodSA.pH"}, range={20.0, 60.0, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="BErange_alb_Hb5.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{0,0,0}, {0,0,0}, {238,46,47}, {0,140,72}, {0,0,0}, {0,0,0}, {238,46,47}, 
+{0,140,72}, {0,0,0}, {0,0,0}, {238,46,47}, {0,140,72}}, patterns={LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash}, thicknesses={0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5}, rightTitleType=0);
+*/
+
+    /* FIGURE 4: low, normal and high albumin for BE -10 0 10
+createPlot(id=4, position={0, 0, 483, 300}, x="pCO2", y={"resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.Normal.sAVanSlyke.pH",
+ "resultSetAtBE0.Normal.FF_plasma_only.pH", "resultSetAtBE0.LowAlb.sAVanSlyke.pH",
+ "resultSetAtBE0.LowAlb.FF_plasma_only.pH", "resultSetAtBE0.LowAlb.full_blood_combo.pH",
+ "resultSetAtBE0.HighAlb.sAVanSlyke.pH", "resultSetAtBE0.HighAlb.FF_plasma_only.pH",
+ "resultSetAtBE0.HighAlb.full_blood_combo.pH", "resultSetAtBE10.LowAlb.full_blood_combo.pH",
+ "resultSetAtBE10.LowAlb.FF_plasma_only.pH", "resultSetAtBE10.LowAlb.sAVanSlyke.pH",
+ "resultSetAtBE10.Normal.full_blood_combo.plasma.pH", "resultSetAtBE10.Normal.full_blood_combo.fullErythrocyte.pH",
+ "resultSetAtBE10.Normal.full_blood_combo.pH", "resultSetAtBE10.Normal.FF_plasma_only.pH",
+ "resultSetAtBE10.Normal.sAVanSlyke.pH", "resultSetAtBE10.HighAlb.full_blood_combo.pH",
+ "resultSetAtBE10.HighAlb.FF_plasma_only.pH", "resultSetAtBE10.HighAlb.sAVanSlyke.pH",
+ "resultSetAtBE_10.LowAlb.FF_plasma_only.pH", "resultSetAtBE_10.LowAlb.sAVanSlyke.pH",
+ "resultSetAtBE_10.Normal.full_blood_combo.plasma.pH", "resultSetAtBE_10.Normal.full_blood_combo.fullErythrocyte.pH",
+ "resultSetAtBE_10.Normal.full_blood_combo.pH", "resultSetAtBE_10.Normal.FF_plasma_only.pH",
+ "resultSetAtBE_10.Normal.sAVanSlyke.pH", "resultSetAtBE_10.HighAlb.full_blood_combo.pH",
+ "resultSetAtBE_10.HighAlb.FF_plasma_only.pH", "resultSetAtBE_10.HighAlb.sAVanSlyke.pH",
+ "resultSetAtBE_10.LowAlb.full_blood_combo.pH"}, range={20.0, 60.0, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="BErange_alb_Hb5.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {28,108,200}, {0,0,0}, {28,108,200}, {0,0,0}, {238,46,47}, 
+{28,108,200}, {0,0,0}, {238,46,47}, {238,46,47}, {0,0,0}, {28,108,200}, 
+{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {28,108,200}, {238,46,47}, 
+{0,0,0}, {28,108,200}, {0,0,0}, {28,108,200}, {238,46,47}, {238,46,47}, 
+{244,125,35}, {0,0,0}, {28,108,200}, {238,46,47}, {0,0,0}, {28,108,200}, 
+{238,46,47}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
+LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Dot, LinePattern.Dot, LinePattern.Dot, 
+LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, 
+LinePattern.Dot, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Dash, LinePattern.Dot}, thicknesses={0.5, 0.25, 0.25, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0, 0.5, 0.25, 0.25, 0.5, 0.5, 0.5,
+ 0.25, 0.25, 0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.25, 0.0, 0.0, 
+0.0, 0.5}, rightTitleType=0);
+*/
+    end Figures3_4;
+
+    model Figure5
+      parameter Real Pi = 1.15;
+      parameter Real alb = 4.4;
+      parameter Real Hb = 15;
+      Real BE = time*40 - 20;
+      Real BEfixed = 0;
+      Real pCO2 = time*40 + 20;
+      Real pCO2fixed = 40;
+
+      FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb fixedBE(  BE = BEfixed, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
+        "Normal model set";
+      FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb fixedpCO2(  BE = BE, pCO2 = pCO2fixed, alb = alb, Hb = Hb, Pi = Pi)
+        "Normal model set";
+
+        // A) VARYING BE, FIXED PCO2
+        /*
+    
+    createPlot(id-51, position={96, 378, 483, 300}, x="BE", y={"fixedpCO2.full_blood_combo.plasma.barGraphHCO3Alb2", "fixedpCO2.full_blood_combo.plasma.barGraphHCO3Alb3",
+ "fixedpCO2.full_blood_combo.plasma.barGraphHCO3Alb1", "fixedpCO2.FF_plasma_only.barGraphHCO3Alb1",
+ "fixedpCO2.FF_plasma_only.barGraphHCO3Alb2", "fixedpCO2.FF_plasma_only.barGraphHCO3Alb3"}, range={-20.0, 20.0, 0.0, 60.0}, grid=true, legend=false, filename="Figure5.mat", leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, rightTitleType=0);
+    
+    */
+
+        // B) VARYUING pCO2, FIXED BE
+        /*
+    
+    createPlot(id=52, position={96, 378, 483, 300}, x="BE", y={"fixedBE.full_blood_combo.plasma.barGraphHCO3Alb1", "fixedBE.full_blood_combo.plasma.barGraphHCO3Alb2",
+ "fixedBE.full_blood_combo.plasma.barGraphHCO3Alb3", "fixedBE.FF_plasma_only.barGraphHCO3Alb1",
+ "fixedBE.FF_plasma_only.barGraphHCO3Alb2", "fixedBE.FF_plasma_only.barGraphHCO3Alb3"}, range={-20.0, 20.0, 0.0, 45.0}, autoscale=false, grid=true, legend=false, filename="Figure5.mat", leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, rightTitleType=0);
+    
+    */
+      annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+    end Figure5;
+
+    model Figure6
+
+    //   full_blood_combo full_blood_combo1 annotation (Placement(transformation(extent={{-78,0},{-58,20}})));
+    //   FiggeFencl3Detailed figgeFencl3Detailed annotation (Placement(transformation(extent={{-40,0},{-20,20}})));
+    //   SAnomogram_formalization.SAoriginal sAoriginal annotation (Placement(transformation(extent={{0,0},{20,20}})));
+    //
+      parameter Real pCO2 = 40;
+    //  Real BE = 38.8*dilutionFactor - normalPlasma.SID;
+      Real BE= plasma.SID - normalPlasma.SID;
+      Real newSID = ndp.SID*dilutionFactor;
+      // mnoram normal SID is 38.97
+      parameter Real alb = 4.4;
+      parameter Real Pi = 1.15;
+      Real dilutionFactor = 0.5 + time;
+      Real Hb = 15*dilutionFactor;
+      Full_Blood.comparisson.Auxiliary.SetAtAlb dilluted(
+        df=dilutionFactor,
+        BE=BE,
+        pCO2=pCO2*dilutionFactor,
+        alb=alb*dilutionFactor,
+        Hb=Hb,
+        Pi=Pi*dilutionFactor) "Dilluted"
+        annotation (Placement(transformation(extent={{-80,-40},{-60,-20}})));
+      Full_Blood.comparisson.Auxiliary.SetAtAlb compensatedpCO2(
+        df=dilutionFactor,
+        BE=BE,
+        pCO2=pCO2,
+        alb=alb*dilutionFactor,
+        Hb=Hb,
+        Pi=Pi*dilutionFactor) "Dilluted"
+        annotation (Placement(transformation(extent={{-80,-40},{-60,-20}})));
+      Full_Blood.comparisson.Auxiliary.SetAtAlb nondilluted(
+        df=dilutionFactor,
+        BE=BE,
+        pCO2=pCO2,
+        alb=alb,
+        Hb=Hb,
+        Pi=Pi) "Non-dilluted"
+        annotation (Placement(transformation(extent={{-80,-40},{-60,-20}})));
+
+        FiggeFenclNSID plasma(
+          pH0=7.4,
+          pCO20=pCO2*dilutionFactor,
+          alb0=alb*dilutionFactor,
+          Pi0=Pi*dilutionFactor);
+
+    protected
+        FiggeFenclNSID normalPlasma(
+          pH0=7.4,
+          pCO20=40,
+          alb0=alb*dilutionFactor,
+          Pi0=Pi*dilutionFactor);
+
+        FiggeFenclNSID ndp(
+          pH0=7.4,
+          pCO20=40,
+          alb0=alb,
+          Pi0=Pi);
+
+    public
+      FiggeFencl3 figgeFencl3(
+        SID=39.5*dilutionFactor,
+        pCO2=pCO2*dilutionFactor,
+        Pi=Pi*dilutionFactor,
+        alb=alb*dilutionFactor) annotation (Placement(transformation(extent={{-80,0},{-60,20}})));
+
+    // dilution graph
+    /* 
+createPlot(id=6, position={46, 289, 586, 421}, x="dilutionFactor", y={"compensatedpCO2.FF_plasma_only.pH", "dilluted.FF_plasma_only.pH", 
+"dilluted.full_blood_combo.pH", "compensatedpCO2.full_blood_combo.pH"}, range={0.5, 1.25, 7.1000000000000005, 7.500000000000001}, grid=true, legend=false, filename="dsres.mat", bottomTitleType=2, bottomTitle="Dilution factor", colors={{0,0,0}, {0,0,0}, {238,46,47}, {238,46,47}}, patterns={LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.5});
+*/
+
+    end Figure6;
+
+    model Figure7_9 "Change of pH while changing SID"
+     // extends FiggeFencl3Base;
+
+      FiggeFencl3Detailed figgeFencl3Base(
+        SID=SID,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+      Real SID = time*160 + 39 - 80;
+      parameter Real pCO2 = 40;
+      parameter Real Pi = 1.15;
+      parameter Real alb = 4.4;
+      output Real pH = figgeFencl3Base.pH;
+
+      // FIGURE 7 - HOW IS THE TOTAL POSSIBLE CHARGE OF ALBUMIN built up
+
+      /*
+  
+  createPlot(id=7, position={46, 289, 586, 421}, x="figgeFencl3Base.pH", y={"figgeFencl3Base.barGraphAlb2", "figgeFencl3Base.barGraphAlb4", 
+"figgeFencl3Base.barGraphAlb1", "figgeFencl3Base.barGraphAlb3"}, range={4.0, 8.0, 0.0, 150.0}, autoscale=false, grid=true, legend=false, filename="dsres.mat", leftTitleType=0, bottomTitleType=0, colors={{0,0,0}, {0,0,0}, {28,108,200}, {238,46,47}}, thicknesses={1.0, 1.0, 0.5, 0.5}, rightTitleType=0);
+  
+  */
+
+      // FIGURE 9 - HOW IS THE TOTAL CHARGE OF ALB AND PI DIFFERENT FROM LINEAR ESTIMATE
+      /*
+  
+  // ALBUMIN  
+  createPlot(id=91, position={55, 237, 300, 300}, x="figgeFencl3Base.pH", y={"figgeFencl3Base.AlbXMinus", "figgeFencl3Base.atch"}, range={6.0, 8.0, -18.0, -2.0}, autoscale=false, grid=true, legend=false, filename="dsres.mat", leftTitleType=0, bottomTitleType=0, colors={{0,0,0}, {238,46,47}}, patterns={LinePattern.Dash, LinePattern.Solid}, thicknesses={0.25, 0.5}, range2={0.05, 0.45}, rightTitleType=0);
+  
+  // PHOSPHATE
+  createPlot(id=92, position={55, 237, 300, 300}, x="figgeFencl3Base.pH", y={"figgeFencl3Base.PXminus", "figgeFencl3Base.Pminus"}, range={6.0, 8.0, -2.3000000000000003, -1.6}, autoscale=false, grid=true, legend=false, filename="dsres.mat", leftTitleType=0, bottomTitleType=0, colors={{0,0,0}, {238,46,47}}, patterns={LinePattern.Dash, LinePattern.Solid}, thicknesses={0.25, 0.5}, rightTitleType=0);
+    
+  // TOGETHER
+   createPlot(id=93, position={55, 237, 300, 300}, x="figgeFencl3Base.pH", y={"figgeFencl3Base.totalDiff"}, range={6.0, 8.0, -1.0, 0.40000000000000013}, autoscale=false, grid=true, legend=false, filename="dsres.mat", leftTitleType=0, bottomTitleType=0, colors={{0,0,0}}, thicknesses={0.5}, range2={0.84, 0.875}, rightTitleType=0);
+
+  */
+
+      annotation (experiment(Tolerance=1e-006), __Dymola_experimentSetupOutput);
+    end Figure7_9;
+
+    model Figure8
+
+      Real BEf = 0;
+      Real BEsidf = normalPlasma.SID - albPlasma.SID;
+
+      parameter Real pCO2 = 40;
+      parameter Real Hb = 15;
+      parameter Real Pi = 1.15;
+      parameter Real alb0 = 4.4;
+      Real alb = alb0/2 + alb0*time "(0.5 - 1.5)*alb";
+
+      FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb fixedBE(  BE = BEf, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
+        "Normal model set"
+      annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+      FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb fixedSID(  BE = BEsidf, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
+        "Normal model set"
+      annotation (Placement(transformation(extent={{20,20},{40,40}})));
+
+    protected
+          FiggeFenclNSID albPlasma(
+          pH0=7.4,
+          pCO20=40,
+          alb0=alb,
+          Pi0=Pi);
+
+          FiggeFenclNSID normalPlasma(
+          pH0=7.4,
+          pCO20=40,
+          alb0=alb0,
+          Pi0=Pi);
+
+          // plot
+          /*
+createPlot(id=8, position={-39, 211, 865, 629}, x="alb", y={"fixedSID.FF_plasma_only.barGraphHCO3Alb1", "fixedSID.FF_plasma_only.barGraphHCO3Alb2",
+ "fixedSID.FF_plasma_only.barGraphHCO3Alb3", "fixedBE.FF_plasma_only.barGraphHCO3Alb1",
+ "fixedBE.FF_plasma_only.barGraphHCO3Alb2", "fixedBE.FF_plasma_only.barGraphHCO3Alb3",
+ "fixedBE.FF_plasma_only.pH", "fixedSID.FF_plasma_only.pH"}, range={2.2, 6.6000000000000005, 0.0, 60.0}, grid=true, legend=false, filename="dsres.mat", leftTitleType=2, leftTitle="Charge [mEq/l]", bottomTitleType=2, bottomTitle="Albumin concentration [g/dl]", colors={{0,0,0}, {0,0,0}, {0,0,0}, {238,46,47}, {238,46,47}, {238,46,47}, {238,46,47}, 
+{0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
+LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 1.0}, range2={6.0, 7.6}, rightTitleType=2, rightTitle="pH", axes={1, 1, 1, 1, 1, 1, 2, 2});
+*/
+    end Figure8;
+  end Figures;
+
+  package Tests
+
+    model testBE
+      "Test combination of plasma and full hematocrit blood against original SA during varying BE"
+
+      constant Real fullHb = 33.34;
+      parameter Real Hct = 15/fullHb;
+      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
+      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
+      Real mHCO3;
+      //Real pHFullBlood;
+
+      Real BE;
+      Real pCO2;
+      SAnomogram_formalization.Zander1995 plasma(
+        Hct=0,
+        BEox=BEp,
+        pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-40,18},{-20,38}})));
+      SAnomogram_formalization.Zander1995 ery(
+        Hct=1,
+        BEox=BEe,
+        pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-42,54},{-22,74}})));
+      SAnomogram_formalization.SAoriginal SABlood(
+        Hct=Hct,
+        BEox=BE,
+        pCO2=pCO2)
+        annotation (Placement(transformation(extent={{40,40},{60,60}})));
+    equation
+      plasma.pH = ery.pH;
+    //   plasma.pCO2 = ;
+    //   ery.pCO2 = pCO2;
+
+      // Hct = time + 1e-6;
+      //Hct = 20/fullHb;
+      BE = time*60 -30;
+      pCO2 = 40;
+    //   pCO2 = time * 40 + 20;
+      annotation (experiment(
+          StopTime=0.94,
+          __Dymola_NumberOfIntervals=5000,
+          Tolerance=1e-006), Diagram(coordinateSystem(preserveAspectRatio=false,
+              extent={{-100,-100},{100,100}}), graphics={
+            Line(points={{4,58},{6,62},{10,70},{20,70},{26,64},{26,56},{8,44},{10,30},
+                  {24,28},{30,34},{30,40}}, color={28,108,200}),
+            Ellipse(extent={{16,20},{24,12}}, lineColor={28,108,200}),
+            Line(points={{-34,44},{-32,44},{-22,44},{-28,44},{-28,50},{-28,40}},
+                color={28,108,200}),
+            Line(points={{0,52},{2,52},{-8,52}}, color={28,108,200}),
+            Line(points={{-8,38},{4,38}}, color={28,108,200})}));
+    end testBE;
+
+    model testpCO2
+      "Test combination of plasma and full hematocrit blood against original SA during varying pCO2"
+
+      SAnomogram_formalization.SAoriginal plasma(
+        Hct=0,
+        BEox=BEp,
+        pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-20,20},{0,40}})));
+      SAnomogram_formalization.SAoriginal ery(
+        Hct=1,
+        BEox=BEe,
+        pCO2=pCO2)
+        annotation (Placement(transformation(extent={{20,20},{40,40}})));
+      SAnomogram_formalization.SAoriginal SABlood(
+        Hct=Hct,
+        BEox=BE,
+        pCO2=pCO2)
+        annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+      constant Real fullHb = 33.34;
+      parameter Real Hct = 15/33.34;
+      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
+      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
+      Real mHCO3;
+      //Real pHFullBlood;
+
+      Real BE;
+      Real pCO2;
+
+    equation
+      plasma.pH = ery.pH;
+      BE = 0;//time*60 -30;
+    //  pCO2 = time*20 + 20;
+       pCO2 = time * 40 + 20;
+      annotation (experiment(
+          StopTime=1,
+          __Dymola_NumberOfIntervals=500,
+          Tolerance=1e-003));
+    end testpCO2;
 
     model test_combo
       "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
@@ -1253,1142 +2500,5 @@ public
               color={28,108,200},
               arrow={Arrow.None,Arrow.Filled})}));
     end test_combo;
-
-    model test_combo_chng_Hb
-      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
-
-      FiggeFencl3Detailed                         plasma(
-        SID=SID,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) "Plasma compartment (Hct = 0)"
-        annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
-      SAnomogram_formalization.SAoriginal fullErythrocyte(
-        Hct=1,
-        BEox=BEe,
-        pCO2=pCO2) "Full erythrocyte blood with Hct = 1"
-        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
-
-      constant Real fullHb = 33.34;
-      Real Hb = (time - sTime)*29 + 1;
-      Real Hct = Hb/fullHb;
-      parameter Real k = 1
-        "pisvajcova konstanta - kolik mHCO3 zvostane v erytrocytu? Nebo jina nepresnost? Ideal 0.77";
-
-      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
-      Real BEe( unit = "meq/l")= BE + k*mHCO3/Hct;
-      Real BE = 0;//time*40 - 20;
-      Real mHCO3;
-
-      Real SID;
-      Real pCO2 = dpic;
-      Real Pi = 1.15;
-      parameter Real alb = 4.4;
-      output Real pH = fullErythrocyte.pH;
-
-     FiggeFencl3Detailed                         plasma_only(
-        SID=normalPlasma.SID + BE,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
-
-      SAnomogram_formalization.SAoriginal normalBloodSA(
-        Hct=Hct,
-        BEox=BE,
-        pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
-
-    protected
-      FiggeFenclNSID normalPlasma(
-        pH0=7.4,
-        pCO20=40,
-        alb0=alb,
-        Pi0=Pi)
-        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-
-    discrete Real dpic( start = 20);
-    discrete Real sTime( start = 0);
-    equation
-      plasma.pH = fullErythrocyte.pH;
-      BEp = SID - normalPlasma.SID;
-
-      when sample(1,1) then
-        sTime = time;
-        dpic = pre(dpic) + 10;
-      end when;
-      annotation (experiment(
-          StopTime=1,
-          __Dymola_NumberOfIntervals=500,
-          Tolerance=1e-003), Diagram(coordinateSystem(preserveAspectRatio=false,
-              extent={{-100,-100},{100,100}}), graphics={
-            Line(
-              points={{-84,52},{-90,52},{-98,52},{-94,20},{-86,18}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Line(
-              points={{-54,16},{-30,2},{-26,-6}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Line(
-              points={{-54,-12},{-36,-14},{-26,-10}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Text(
-              extent={{-24,-14},{-4,0}},
-              lineColor={28,108,200},
-              fillColor={0,0,255},
-              fillPattern=FillPattern.Solid,
-              textString="pH"),
-            Line(
-              points={{10,84},{10,-74},{10,-80},{10,-82}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled})}));
-    end test_combo_chng_Hb;
-
-    model full_blood_test_pco2_at_BE
-      constant Real fullHb = 33.34;
-      parameter Real Hb = 15;
-      parameter Real Hct = Hb/fullHb;
-
-      full_blood_combo fb(
-          BE = BE,
-          pCO2 = pCO2,
-          Pi = Pi,
-          alb = alb)
-        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-
-      FiggeFencl3 figgeFencl3Base(
-        SID=SID,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-
-      FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hct, Alb = alb)
-        annotation (Placement(transformation(extent={{-18,40},{2,60}})));
-
-      Real BE = 0;
-      Real pCO2;
-      //parameter Real pCO2 = 40;// time*40 + 20;
-      Real Pi = 1.15;
-      Real alb = 4.4;//time*4.4*2;
-      output Real pH = fb.pH;
-
-      Real SID;
-    protected
-      FiggeFenclNSID normalPlasma(
-        pH0=7.4,
-        pCO20=40,
-        alb0=alb,
-        Pi0=Pi)
-        annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
-
-    // public
-    //   discrete Real bepop( start = -20);
-      discrete Real sTime( start = 0);
-    //   parameter Real diff = 10;
-    equation
-      SID - normalPlasma.SID = BE;
-
-      pCO2 = (time - sTime)*40 + 20;
-    //   BE = bepop;
-    //
-    //   when sample(1, 1) then
-    //      bepop = pre(bepop) + diff;
-    //      sTime = time;
-    //   end when;
-
-    end full_blood_test_pco2_at_BE;
-
-    model full_blood_test_BE_at_pco2
-      constant Real fullHb = 33.34;
-      parameter Real Hb = 15;
-      parameter Real Hct = Hb/fullHb;
-
-      full_blood_combo fb(
-          BE = BE,
-          pCO2 = pCO2,
-          Pi = Pi,
-          alb = alb)
-        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-
-      FiggeFencl3 figgeFencl3Base(
-        SID=SID,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-
-      FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hct, Alb = alb)
-        annotation (Placement(transformation(extent={{-18,40},{2,60}})));
-
-      Real BE; //= 0;// time*40 - 20;
-      Real pCO2;
-      //parameter Real pCO2 = 40;// time*40 + 20;
-      Real Pi = 1.15;
-      Real alb = 4.4;//time*4.4*2;
-      output Real pH = fb.pH;
-
-      Real SID;
-    protected
-      FiggeFenclNSID normalPlasma(
-        pH0=7.4,
-        pCO20=40,
-        alb0=alb,
-        Pi0=Pi)
-        annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
-
-    public
-      discrete Real bepop( start = 20);
-      discrete Real sTime( start = 0);
-      parameter Real diff = 10;
-    equation
-      SID - normalPlasma.SID = BE;
-
-      BE = (time - sTime)*10 - 20;
-      pCO2 = bepop;
-
-      when sample(1, 1) then
-         bepop = pre(bepop) + diff;
-         sTime = time;
-      end when;
-
-    end full_blood_test_BE_at_pco2;
-
-    model full_blood_test_VS_alb_at_BE
-      constant Real fullHb = 33.34;
-      parameter Real Hb = 15;
-      parameter Real Hct = Hb/fullHb;
-
-      full_blood_combo fb(
-          BE = BE,
-          pCO2 = pCO2,
-          Pi = Pi,
-          alb = alb)
-        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-
-      FiggeFencl3 figgeFencl3Base(
-        SID=SID,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-
-      FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hct, Alb = alb)
-        annotation (Placement(transformation(extent={{-18,40},{2,60}})));
-
-          FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke77 sAVanSlyke77( pCO2 = pCO2, BEox = BE, Hct = Hct, sO2 = 1)
-        annotation (Placement(transformation(extent={{-60,40},{-40,60}})));
-      Real BE; //= 0;// time*40 - 20;
-      Real pCO2;
-      //parameter Real pCO2 = 40;// time*40 + 20;
-      Real Pi = 1.15;
-      Real alb; //= 4.4;//time*4.4*2;
-      output Real pH = fb.pH;
-
-      Real SID;
-    protected
-      FiggeFenclNSID normalPlasma(
-        pH0=7.4,
-        pCO20=40,
-        alb0=alb,
-        Pi0=Pi)
-        annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
-
-    public
-      discrete Real bepop( start = - 20);
-      discrete Real sTime( start = 0);
-      parameter Real diff = 10;
-    equation
-      SID - normalPlasma.SID = BE;
-
-      pCO2 = 40;
-      // pCO2 = (time - sTime)*40 + 20;
-
-      BE = bepop;
-      alb = (time-sTime)*4.4*2;
-      when sample(1, 1) then
-         bepop = pre(bepop) + diff;
-         sTime = time;
-      end when;
-
-    end full_blood_test_VS_alb_at_BE;
-
-    model full_blood_test_VS_Pi_at_BE
-      constant Real fullHb = 33.34;
-      parameter Real Hb = 15;
-      parameter Real Hct = Hb/fullHb;
-
-      full_blood_combo fb(
-          BE = BE,
-          pCO2 = pCO2,
-          Pi = Pi,
-          alb = alb)
-        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-
-      FiggeFencl3 figgeFencl3Base(
-        SID=SID,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-
-      FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hct, Alb = alb)
-        annotation (Placement(transformation(extent={{-18,40},{2,60}})));
-
-          FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke77 sAVanSlyke77( pCO2 = pCO2, BEox = BE, Hct = Hct, sO2 = 1)
-        annotation (Placement(transformation(extent={{-60,40},{-40,60}})));
-      Real BE; //= 0;// time*40 - 20;
-      Real pCO2;
-      //parameter Real pCO2 = 40;// time*40 + 20;
-      Real Pi;  //= 1.15;
-      Real alb = 4.4;//time*4.4*2;
-      output Real pH = fb.pH;
-
-      Real SID;
-    protected
-      FiggeFenclNSID normalPlasma(
-        pH0=7.4,
-        pCO20=40,
-        alb0=alb,
-        Pi0=Pi)
-        annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
-
-    public
-      discrete Real bepop( start = - 20);
-      discrete Real sTime( start = 0);
-      parameter Real diff = 10;
-    equation
-      SID - normalPlasma.SID = BE;
-
-      pCO2 = 40;
-      // pCO2 = (time - sTime)*40 + 20;
-
-      BE = bepop;
-      Pi = (time-sTime)*1.15*2;
-      when sample(1, 1) then
-         bepop = pre(bepop) + diff;
-         sTime = time;
-      end when;
-
-      annotation (experiment(StopTime=5, Tolerance=1e-005),
-          __Dymola_experimentSetupOutput(doublePrecision=true));
-    end full_blood_test_VS_Pi_at_BE;
-
-    model test_combo_chng_Alb
-      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
-
-      FiggeFencl3                         plasma(
-        SID=SID,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) "Plasma compartment (Hct = 0)"
-        annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
-      SAnomogram_formalization.SAoriginal fullErythrocyte(
-        Hct=1,
-        BEox=BEe,
-        pCO2=pCO2) "Full erythrocyte blood with Hct = 1"
-        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
-
-      constant Real fullHb = 33.34;
-      Real Hb = 15;
-      Real Hct = Hb/fullHb;
-      parameter Real k = 1
-        "pisvajcova konstanta - kolik mHCO3 zvostane v erytrocytu? Nebo jina nepresnost? Ideal 0.77";
-
-      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
-      Real BEe( unit = "meq/l")= BE + k*mHCO3/Hct;
-      Real BE = 0;//time*40 - 20;
-      Real mHCO3;
-
-      Real SID;
-      Real pCO2 = 40;
-      Real Pi = 1.15;
-      //  parameter Real alb = 4.4;
-      Real alb = time*4.4 + 2;
-      output Real pH = fullErythrocyte.pH;
-
-     FiggeFencl3                         plasma_only(
-        SID=normalPlasma.SID + BE,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
-
-      SAnomogram_formalization.SAoriginal normalBloodSA(
-        Hct=Hct,
-        BEox=BE,
-        pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
-
-    protected
-      FiggeFenclNSID normalPlasma(
-        pH0=7.4,
-        pCO20=40,
-        alb0=alb,
-        Pi0=Pi)
-        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-
-    //discrete Real dpic( start = 20);
-    //discrete Real sTime( start = 0);
-    equation
-      plasma.pH = fullErythrocyte.pH;
-      BEp = SID - normalPlasma.SID;
-      annotation (experiment(
-          StopTime=1,
-          __Dymola_NumberOfIntervals=500,
-          Tolerance=1e-003), Diagram(coordinateSystem(preserveAspectRatio=false,
-              extent={{-100,-100},{100,100}}), graphics={
-            Line(
-              points={{-84,52},{-90,52},{-98,52},{-94,20},{-86,18}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Line(
-              points={{-54,16},{-30,2},{-26,-6}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Line(
-              points={{-54,-12},{-36,-14},{-26,-10}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Text(
-              extent={{-24,-14},{-4,0}},
-              lineColor={28,108,200},
-              fillColor={0,0,255},
-              fillPattern=FillPattern.Solid,
-              textString="pH"),
-            Line(
-              points={{10,84},{10,-74},{10,-80},{10,-82}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled})}));
-    end test_combo_chng_Alb;
-
-    package comparisson
-
-      package Auxiliary
-
-        model ResultSetAtBE
-          parameter Real Pi = 1.15;
-          parameter Real alb = 4.4;
-          parameter Real BE = 0;
-          parameter Real Hb = 15;
-          output Real pHSABlood = normalBloodSA.pH;
-          output Real pHComboBlood = Normal. full_blood_combo. pH;
-          output Real pHFFplasma = Normal. FF_plasma_only. pH;
-          output Real pHSAplasma = plasmaSA. pH;
-          Real logpCO2 = log10(pCO2);
-          input Real pCO2 = time*40 + 20;
-
-          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb LowAlb(  BE = BE, pCO2 = pCO2, alb = 2, Hb = Hb, Pi = Pi)
-            "Low Alb"
-          annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb Normal(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
-            "Normal model set"
-          annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb HighAlb(  BE = BE, pCO2 = pCO2, alb = 6.5, Hb = Hb, Pi = Pi)
-            "High Alb"
-          annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-        //   // BE 0
-        //   full_blood_combo full_blood_combo1( BE = BE, pCO2 = pCO2, alb = 2, Hb = Hb) "Low Alb"
-        //
-        //   annotation (Placement(transformation(extent={{20,20},{40,40}})));
-        //     full_blood_combo full_blood_combo2( BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb) "Low Alb"
-        //   annotation (Placement(transformation(extent={{20,20},{40,40}})));
-        //
-        //   full_blood_combo full_blood_combo3( BE = BE, pCO2 = pCO2, alb = 6.5, Hb = Hb) "Hogh Alb"
-        //   annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-        //   FiggeFencl3                         plasma_only(
-        //     SID=normalPlasma.SID + BE,
-        //     pCO2=pCO2,
-        //     Pi=Pi,
-        //     alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
-        //
-        //   FiggeFencl3                         plasma_low_alb(
-        //     SID=lowAlbPlasma.SID + BE,
-        //     pCO2=pCO2,
-        //     Pi=Pi,
-        //     alb=2.0) "Plasma model acc to FiggeFencl for comparison only with low albumin level" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
-        //
-        //   FiggeFencl3                         plasma_high_alb(
-        //     SID=highAlbPlasma.SID + BE,
-        //     pCO2=pCO2,
-        //     Pi=Pi,
-        //     alb=6.5) "Plasma model acc to FiggeFencl for comparison only with high albumin level" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
-
-          SAnomogram_formalization.SAoriginal plasmaSA(
-            Hb=0,
-            BEox=BE,
-            pCO2=pCO2) "SA original with Hct 0 for comparison with FF"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
-
-          SAnomogram_formalization.SAoriginal normalBloodSA(
-            Hb = Hb,
-            BEox=BE,
-            pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
-
-        // protected
-        //   FiggeFenclNSID normalPlasma(
-        //     pH0=7.4,
-        //     pCO20=40,
-        //     alb0=alb,
-        //     Pi0=Pi)
-        //     annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-        //   FiggeFenclNSID highAlbPlasma(
-        //     pH0=7.4,
-        //     pCO20=40,
-        //     alb0=6.5,
-        //     Pi0=Pi)
-        //     annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-        //       FiggeFenclNSID lowAlbPlasma(
-        //     pH0=7.4,
-        //     pCO20=40,
-        //     alb0=2.0,
-        //     Pi0=Pi)
-        //     annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-
-        end ResultSetAtBE;
-
-
-        model SetAtAlb
-
-            full_blood_combo full_blood_combo_1( BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi=Pi)
-          annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-           FiggeFencl3Detailed                         FF_plasma_only(
-            SID=normalPlasma.SID + BE,
-            pCO2=pCO2,
-            Pi=Pi,
-            alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
-
-            FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hb/33.34, sO2 = 1, Alb= alb)
-            annotation (Placement(transformation(extent={{-14,40},{6,60}})));
-            input Real BE, pCO2;
-            input Real df = 1 "dilution factor";
-            input Real alb, Pi;
-            input Real Hb;
-        protected
-            FiggeFenclNSID normalPlasma(
-            pH0=7.4,
-            pCO20=40,
-            alb0=alb,
-            Pi0=Pi)
-            annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-
-        end SetAtAlb;
-
-        model ResultSetAtBE_P
-          parameter Real Pi = 1.15;
-          parameter Real alb = 4.4;
-          parameter Real BE = 0;
-          parameter Real Hb = 15;
-          output Real pHSABlood = normalBloodSA.pH;
-          output Real pHComboBlood = Normal. full_blood_combo. pH;
-          output Real pHFFplasma = Normal. FF_plasma_only. pH;
-          output Real pHSAplasma = plasmaSA. pH;
-          Real logpCO2 = log10(pCO2);
-          input Real pCO2 = time*40 + 20;
-
-          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb LowP(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi/2)
-            "Low Alb"
-          annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb Normal(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
-            "Normal model set"
-          annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb HighP(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi*2)
-            "High Alb"
-          annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-          SAnomogram_formalization.SAoriginal plasmaSA(
-            Hb=0,
-            BEox=BE,
-            pCO2=pCO2) "SA original with Hct 0 for comparison with FF"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
-
-          SAnomogram_formalization.SAoriginal normalBloodSA(
-            Hb = Hb,
-            BEox=BE,
-            pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
-
-        end ResultSetAtBE_P;
-      end Auxiliary;
-
-      model BErange
-        Real logpCO2 = log10(pCO2);
-        Real pCO2 = time*40 + 20;
-        Auxiliary.ResultSetAtBE resultSetAtBE_15(BE=-15, pCO2=pCO2)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE resultSetAtBE_10(BE=-10, pCO2=pCO2)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE resultSetAtBE_5(BE=-5, pCO2=pCO2)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE resultSetAtBE0(BE=-0, pCO2=pCO2)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE resultSetAtBE5(BE=5, pCO2=pCO2)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE resultSetAtBE10(BE=10, pCO2=pCO2)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE resultSetAtBE15(BE=15, pCO2=pCO2)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-
-      /* 
-// ALBUMIN CHARGE ACC TO FENCL OR OUR MODEL
-createPlot(id=7, position={0, 0, 1350, 769}, y={"resultSetAtBE0.Normal.FF_plasma_only.AlbXMinus", "resultSetAtBE_15.Normal.FF_plasma_only.AlbXMinus",
- "resultSetAtBE15.Normal.FF_plasma_only.AlbXMinus", "resultSetAtBE_15.Normal.full_blood_combo.plasma.atch",
- "resultSetAtBE0.Normal.full_blood_combo.plasma.atch", "resultSetAtBE15.Normal.full_blood_combo.plasma.atch",
- "resultSetAtBE_15.Normal.FF_plasma_only.pH", "resultSetAtBE_15.Normal.full_blood_combo.pH",
- "resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.Normal.FF_plasma_only.pH",
- "resultSetAtBE15.Normal.full_blood_combo.pH", "resultSetAtBE15.Normal.FF_plasma_only.pH",
- "resultSetAtBE_15.Normal.FF_plasma_only.atch", "resultSetAtBE0.Normal.FF_plasma_only.atch",
- "resultSetAtBE15.Normal.FF_plasma_only.atch"}, range={0.0, 1.0, -16.0, 9.0}, grid=true, filename="dsres.mat", colors={{238,46,47}, {28,108,200}, {0,140,72}, {180,56,148}, {0,0,0}, {162,29,33}, 
-{244,125,35}, {102,44,145}, {28,108,200}, {238,46,47}, {0,140,72}, 
-{180,56,148}, {0,0,0}, {162,29,33}, {244,125,35}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, 
-LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, 
-LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, 
-LinePattern.Dash, LinePattern.Dash, LinePattern.Dash});
-*/
-
-      end BErange;
-
-      model BErange_alb_Hb5
-        Real logpCO2 = log10(pCO2);
-        Real pCO2 = time*40 + 20;
-        parameter Real Hb = 15;
-
-        Auxiliary.ResultSetAtBE resultSetAtBE_10(BE=-10, pCO2=pCO2, Hb = Hb)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE resultSetAtBE0(BE=-0, pCO2=pCO2, Hb = Hb)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE resultSetAtBE10(BE=10, pCO2=pCO2, Hb = Hb)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-
-          // PLOTS
-
-          /* low, normal and high albumin for BE -10 0 10
-    createPlot(id=9, position={53, 112, 586, 418}, x="pCO2", y={"resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.Normal.sAVanSlyke.pH",
- "resultSetAtBE0.Normal.FF_plasma_only.pH", "resultSetAtBE0.LowAlb.sAVanSlyke.pH",
- "resultSetAtBE0.LowAlb.FF_plasma_only.pH", "resultSetAtBE0.LowAlb.full_blood_combo.pH",
- "resultSetAtBE0.HighAlb.sAVanSlyke.pH", "resultSetAtBE0.HighAlb.FF_plasma_only.pH",
- "resultSetAtBE0.HighAlb.full_blood_combo.pH", "resultSetAtBE10.LowAlb.full_blood_combo.pH",
- "resultSetAtBE10.LowAlb.FF_plasma_only.pH", "resultSetAtBE10.LowAlb.sAVanSlyke.pH",
- "resultSetAtBE10.Normal.full_blood_combo.plasma.pH", "resultSetAtBE10.Normal.full_blood_combo.fullErythrocyte.pH",
- "resultSetAtBE10.Normal.full_blood_combo.pH", "resultSetAtBE10.Normal.FF_plasma_only.pH",
- "resultSetAtBE10.Normal.sAVanSlyke.pH", "resultSetAtBE10.HighAlb.full_blood_combo.pH",
- "resultSetAtBE10.HighAlb.FF_plasma_only.pH", "resultSetAtBE10.HighAlb.sAVanSlyke.pH",
- "resultSetAtBE_10.LowAlb.FF_plasma_only.pH", "resultSetAtBE_10.LowAlb.sAVanSlyke.pH",
- "resultSetAtBE_10.Normal.full_blood_combo.plasma.pH", "resultSetAtBE_10.Normal.full_blood_combo.fullErythrocyte.pH",
- "resultSetAtBE_10.Normal.full_blood_combo.pH", "resultSetAtBE_10.Normal.FF_plasma_only.pH",
- "resultSetAtBE_10.Normal.sAVanSlyke.pH", "resultSetAtBE_10.HighAlb.full_blood_combo.pH",
- "resultSetAtBE_10.HighAlb.FF_plasma_only.pH", "resultSetAtBE_10.HighAlb.sAVanSlyke.pH"}, range={20.0, 60.0, 7.0, 7.8}, grid=true, legend=false, filename="BErange_alb_Hb5.mat", logX=true, colors={{238,46,47}, {28,108,200}, {0,0,0}, {28,108,200}, {0,0,0}, {238,46,47}, 
-{28,108,200}, {0,0,0}, {238,46,47}, {238,46,47}, {0,0,0}, {28,108,200}, 
-{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {28,108,200}, {238,46,47}, 
-{0,0,0}, {28,108,200}, {0,0,0}, {28,108,200}, {238,46,47}, {238,46,47}, 
-{244,125,35}, {0,0,0}, {28,108,200}, {238,46,47}, {0,0,0}, {28,108,200}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
-LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash, 
-LinePattern.Dash, LinePattern.Dot, LinePattern.Dot, LinePattern.Dot, 
-LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, 
-LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, 
-LinePattern.Dot, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
-LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
-LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.25, 0.25, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0, 0.5, 0.25, 0.25, 0.5, 0.5, 0.5,
- 0.25, 0.25, 0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.25, 0.0, 0.0, 
- 0.0});
- */
-      end BErange_alb_Hb5;
-
-      model BErange_P
-        Real logpCO2 = log10(pCO2);
-        Real pCO2 = time*40 + 20;
-        parameter Real Hb = 15;
-
-        Auxiliary.ResultSetAtBE_P resultSetAtBE_10(BE=-10, pCO2=pCO2, Hb = Hb)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE_P resultSetAtBE0(BE=-0, pCO2=pCO2, Hb = Hb)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-        Auxiliary.ResultSetAtBE_P resultSetAtBE10(BE=10, pCO2=pCO2, Hb = Hb)
-          annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
-
-          // PLOTS
-
-          /* low, normal and high albumin for BE -10 0 10
-createPlot(id=1, position={84, 99, 586, 418}, x="pCO2", y={"resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.Normal.FF_plasma_only.pH",
- "resultSetAtBE0.LowP.full_blood_combo.pH", "resultSetAtBE0.HighP.FF_plasma_only.pH",
- "resultSetAtBE0.HighP.full_blood_combo.pH", "resultSetAtBE10.LowP.FF_plasma_only.pH",
- "resultSetAtBE10.Normal.full_blood_combo.plasma.pH", "resultSetAtBE10.Normal.full_blood_combo.fullErythrocyte.pH",
- "resultSetAtBE_10.Normal.full_blood_combo.plasma.pH", "resultSetAtBE_10.Normal.full_blood_combo.fullErythrocyte.pH",
- "resultSetAtBE_10.Normal.full_blood_combo.pH", "resultSetAtBE_10.HighP.full_blood_combo.pH",
- "resultSetAtBE_10.HighP.FF_plasma_only.pH", "resultSetAtBE10.Normal.FF_plasma_only.pH",
- "resultSetAtBE_10.Normal.FF_plasma_only.pH"}, range={20.0, 60.0, 7.0, 7.8}, grid=true, legend=false, filename="BErange_P.mat", logX=true, colors={{238,46,47}, {0,0,0}, {238,46,47}, {0,0,0}, {238,46,47}, {0,0,0}, {238,46,47}, 
-{238,46,47}, {238,46,47}, {238,46,47}, {244,125,35}, {238,46,47}, {0,0,0}, 
-{0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, LinePattern.Dash, 
-LinePattern.Dash, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
-LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, 
-LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25, 0.5, 0.0, 0.0, 0.25, 0.5, 0.5, 0.5, 0.5, 0.25, 0.0, 0.0, 0.25, 0.25});
- */
-
-      end BErange_P;
-
-      model Dilution
-
-      //   full_blood_combo full_blood_combo1 annotation (Placement(transformation(extent={{-78,0},{-58,20}})));
-      //   FiggeFencl3Detailed figgeFencl3Detailed annotation (Placement(transformation(extent={{-40,0},{-20,20}})));
-      //   SAnomogram_formalization.SAoriginal sAoriginal annotation (Placement(transformation(extent={{0,0},{20,20}})));
-      //
-        parameter Real pCO2 = 40;
-      //  Real BE = 38.8*dilutionFactor - normalPlasma.SID;
-        Real BE= plasma.SID - normalPlasma.SID;
-        Real newSID = ndp.SID*dilutionFactor;
-        // mnoram normal SID is 38.97
-        parameter Real alb = 4.4;
-        parameter Real Pi = 1.15;
-        Real dilutionFactor = 0.5 + time;
-        Real Hb = 15*dilutionFactor;
-        Auxiliary.SetAtAlb dilluted(df = dilutionFactor, BE = BE, pCO2 = pCO2*dilutionFactor, alb = alb*dilutionFactor, Hb = Hb, Pi = Pi*dilutionFactor)
-          "Dilluted"                                                                                                     annotation ( Placement(transformation(extent={{-80,-40},{-60,-20}})));
-        Auxiliary.SetAtAlb compensatedpCO2(df = dilutionFactor, BE = BE, pCO2 = pCO2, alb = alb*dilutionFactor, Hb = Hb, Pi = Pi*dilutionFactor)
-          "Dilluted"                                                                                                     annotation ( Placement(transformation(extent={{-80,-40},{-60,-20}})));
-        Auxiliary.SetAtAlb nondilluted(df = dilutionFactor, BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
-          "Non-dilluted"                                                                                                     annotation ( Placement(transformation(extent={{-80,-40},{-60,-20}})));
-
-          FiggeFenclNSID plasma(
-            pH0=7.4,
-            pCO20=pCO2*dilutionFactor,
-            alb0=alb*dilutionFactor,
-            Pi0=Pi*dilutionFactor);
-
-      protected
-          FiggeFenclNSID normalPlasma(
-            pH0=7.4,
-            pCO20=40,
-            alb0=alb*dilutionFactor,
-            Pi0=Pi*dilutionFactor);
-
-          FiggeFenclNSID ndp(
-            pH0=7.4,
-            pCO20=40,
-            alb0=alb,
-            Pi0=Pi);
-
-      public
-        FiggeFencl3 figgeFencl3(
-          SID=39.5*dilutionFactor,
-          pCO2=pCO2*dilutionFactor,
-          Pi=Pi*dilutionFactor,
-          alb=alb*dilutionFactor) annotation (Placement(transformation(extent={{-80,0},{-60,20}})));
-
-      // dilution graph
-      /* 
-createPlot(id=11, position={289, 83, 586, 421}, x="dilutionFactor", y={"compensatedpCO2.FF_plasma_only.pH", "dilluted.FF_plasma_only.pH", 
-"dilluted.full_blood_combo.pH", "compensatedpCO2.full_blood_combo.pH"}, range={0.5, 1.25, 7.1000000000000005, 7.500000000000001}, grid=true, legend=false, filename="Dilution.mat", colors={{0,0,0}, {0,0,0}, {238,46,47}, {238,46,47}}, patterns={LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.5});
-*/
-
-      end Dilution;
-
-      model AlbRange
-
-        Real BEf = 0;
-        Real BEsidf = normalPlasma.SID - albPlasma.SID;
-
-        parameter Real pCO2 = 40;
-        parameter Real Hb = 15;
-        parameter Real Pi = 1.15;
-        parameter Real alb0 = 4.4;
-        Real alb = alb0/2 + alb0*time "(0.5 - 1.5)*alb";
-
-        FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb fixedBE(  BE = BEf, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
-          "Normal model set"
-        annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-        FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb fixedSID(  BE = BEsidf, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
-          "Normal model set"
-        annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-      protected
-            FiggeFenclNSID albPlasma(
-            pH0=7.4,
-            pCO20=40,
-            alb0=alb,
-            Pi0=Pi);
-
-            FiggeFenclNSID normalPlasma(
-            pH0=7.4,
-            pCO20=40,
-            alb0=alb0,
-            Pi0=Pi);
-
-            // plot
-            /*
-      createPlot(id=10, position={116, 29, 865, 629}, x="alb", y={"fixedSID.FF_plasma_only.barGraphHCO3Alb1", "fixedSID.FF_plasma_only.barGraphHCO3Alb2",
- "fixedSID.FF_plasma_only.barGraphHCO3Alb3", "fixedBE.FF_plasma_only.barGraphHCO3Alb1",
- "fixedBE.FF_plasma_only.barGraphHCO3Alb2", "fixedBE.FF_plasma_only.barGraphHCO3Alb3",
- "fixedBE.FF_plasma_only.pH", "fixedSID.FF_plasma_only.pH"}, range={2.2, 6.6000000000000005, 0.0, 60.0}, grid=true, legend=false, filename="dsres.mat", leftTitleType=2, leftTitle="Charge [mEq/l]", bottomTitleType=2, bottomTitle="Albumin concentration [g/dl]", colors={{0,0,0}, {0,0,0}, {0,0,0}, {238,46,47}, {238,46,47}, {238,46,47}, {238,46,47}, 
-{0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
-LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 1.0}, range2={6.5, 7.5}, rightTitleType=2, rightTitle="pH", axes={1, 1, 1, 1, 1, 1, 2, 2});
-*/
-      end AlbRange;
-
-      model BEcourse
-        parameter Real Pi = 1.15;
-        parameter Real alb = 4.4;
-        parameter Real Hb = 15;
-        Real BE = time*30 - 15;
-        Real pCO2 = 40;
-
-            FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb fixedBE(  BE = BE, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
-          "Normal model set"
-        annotation (Placement(transformation(extent={{20,20},{40,40}})));
-
-      end BEcourse;
-
-      model BE_curves
-        Figures.Figure1_3_BE_curve bE_curve_15 annotation (Placement(visible=
-                true, transformation(
-              origin={-109,-6},
-              extent={{-10,-10},{10,10}},
-              rotation=0)));
-        Figures.Figure1_3_BE_curve bE_curve0 annotation (Placement(visible=true,
-              transformation(
-              origin={-52,-9},
-              extent={{-10,-10},{10,10}},
-              rotation=0)));
-        Figures.Figure1_3_BE_curve bE_curve15 annotation (Placement(visible=
-                true, transformation(
-              origin={17,-9},
-              extent={{-10,-10},{10,10}},
-              rotation=0)));
-        annotation(Icon(coordinateSystem(grid = {1, 1})), Diagram(coordinateSystem(grid = {1, 1})));
-      end BE_curves;
-    end comparisson;
-  end Full_Blood;
-  annotation (uses(Modelica(version="3.2.1")));
-  package Figures
-
-    model Figure1
-      Real pCO2 = time*40 + 20;
-      Thrash.SA_comparison_pCO2 sA_comparison_pCO2_BE_10(BEox=-10, pCO2=pCO2)
-        annotation (Placement(transformation(extent={{-80,20},{-60,40}})));
-      Thrash.SA_comparison_pCO2 sA_comparison_pCO2_BE0(BEox=0, pCO2=pCO2)
-        annotation (Placement(transformation(extent={{-40,20},{-20,40}})));
-      Thrash.SA_comparison_pCO2 sA_comparison_pCO2_BE10(BEox=10, pCO2=pCO2)
-        annotation (Placement(transformation(extent={{0,20},{20,40}})));
-      FullBloodAcidBase.Figures.Figure1_3_BE_curve BE_curve;
-
-      // Figure 1 Dymola Script
-     /*
-createPlot(id=1, position={0, 0, 483, 300}, x="pCO2", y={"sA_comparison_pCO2_BE_10.sAoriginal.pH", "sA_comparison_pCO2_BE0.sAoriginal.pH",
- "sA_comparison_pCO2_BE10.sAoriginal.pH", "sA_comparison_pCO2_BE_10.zander1995.pH",
- "sA_comparison_pCO2_BE0.zander1995.pH", "sA_comparison_pCO2_BE10.zander1995.pH",
- "sA_comparison_pCO2_BE10.sAVanSlyke.pH", "sA_comparison_pCO2_BE0.sAVanSlyke.pH",
- "sA_comparison_pCO2_BE_10.sAVanSlyke.pH"}, range={20.0, 60.00000000000001, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, 
-{0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
-LinePattern.Dot, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
-LinePattern.Solid}, thicknesses={1.0, 1.0, 1.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}, rightTitleType=0);
-  */
-    end Figure1;
-
-    model Figure1_3_BE_curve
-      Real BE = time*60 - 30;
-      output Real pCO2BE( start = 40) = pco2BECoef[1]*BE^6 + pco2BECoef[2]*BE^5 + pco2BECoef[3]*BE^4 + pco2BECoef[4]*BE^3 + pco2BECoef[5]*BE^2  + pco2BECoef[6]*BE + pco2BECoef[7];
-      output Real pHBE( start = 7) = pHBECoef[1]*BE^4 + pHBECoef[2]*BE^3 + pHBECoef[3]*BE^2 + pHBECoef[4]*BE + pHBECoef[5];
-
-    protected
-      constant Real pco2BECoef[:] = {8.3975e-009,   -513.9503e-009,      3.8105e-006,    231.6888e-006,    -46.5581e-003,    353.7105e-003,     39.9871e+000};
-      constant Real pHBECoef[:] = {131.3315e-009,      2.5027e-006,    175.6144e-006,     11.9273e-003,      7.4001e+000};
-
-      // Dymola plot script
-
-      /*
-  createPlot(id=2, position={219, 4, 483, 300}, x="pCO2BE", y={"pHBE"}, range={20.0, 60.00000000000001, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="Figure1_3_BE_curve.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{28,108,200}}, rightTitleType=0);
-  */
-
-    end Figure1_3_BE_curve;
-
-    model figure2A
-      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
-
-    //   Real BetaPlasma = der(plasma_only.pH)/der(BE);
-    //   Real BetaEry = der(normalBloodSA.pH)/der(BE);
-    //   Real BetaBlood = der(plasma.pH)/der(BE);
-    /*
-  FiggeFencl3Detailed                         plasma(
-    SID=SID,
-    pCO2=pCO2,
-    Pi=Pi,
-    alb=alb) "Plasma compartment (Hct = 0)"
-    annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
-  */
-      parameter Real safe_hct = 1;
-      SAnomogram_formalization.SAoriginal plasma(
-        Hct=safe_hct,
-        BEox=BEp,
-        pCO2=pCO2) "No erythrocyte blood with Hct = 0"
-        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
-
-      SAnomogram_formalization.SAoriginal fullErythrocyte(
-        Hct=1,
-        BEox=BEe,
-        pCO2=pCO2) "Full erythrocyte blood with Hct = 1"
-        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
-
-      constant Real fullHb = 33.34;
-      parameter Real Hb = 15;
-      parameter Real Hct = Hb/fullHb;
-
-      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
-      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
-      //Real BE;
-    //   Real BE = 0;
-      Real BE = time*30 - 15;
-      Real mHCO3;
-
-    //  Real SID = 39;
-     Real SID;
-    //  Real pCO2 = time*40 + 20;
-      Real pCO2 = 40;
-      Real Pi = 1.15;
-      parameter Real alb = 4.4;
-
-     FiggeFencl3Detailed                         plasma_only(
-        SID=normalPlasma.SID + BE,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
-
-      SAnomogram_formalization.SAoriginal normalBloodSA(
-        Hct=Hct,
-        BEox=BE,
-        pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
-
-    protected
-      FiggeFenclNSID normalPlasma(
-        pH0=7.4,
-        pCO20=40,
-        alb0=alb,
-        Pi0=Pi)
-        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-    equation
-      plasma.pH = fullErythrocyte.pH;
-      BEp = SID - normalPlasma.SID;
-
-      // grapf of varying pCO2
-      /*
- createPlot(id=3, position={95, 253, 586, 421}, x="pCO2", y={"plasma.pH", "normalBloodSA.pH"}, range={20.0, 65.0, 7.25, 7.7}, grid=true, legend=false, filename="figure2B.mat", leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Dash}, thicknesses={1.0, 0.5}, rightTitleType=0)
-*/
-      annotation (experiment(
-          StopTime=1,
-          __Dymola_NumberOfIntervals=500,
-          Tolerance=1e-003), Diagram(coordinateSystem(preserveAspectRatio=false,
-              extent={{-100,-100},{100,100}}), graphics={
-            Line(
-              points={{-84,52},{-90,52},{-98,52},{-94,20},{-86,18}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Line(
-              points={{-54,16},{-30,2},{-26,-6}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Line(
-              points={{-54,-12},{-36,-14},{-26,-10}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Text(
-              extent={{-24,-14},{-4,0}},
-              lineColor={28,108,200},
-              fillColor={0,0,255},
-              fillPattern=FillPattern.Solid,
-              textString="pH"),
-            Line(
-              points={{10,84},{10,-74},{10,-80},{10,-82}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled})}));
-    end figure2A;
-
-    model figure2B
-      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
-
-    //   Real BetaPlasma = der(plasma_only.pH)/der(BE);
-    //   Real BetaEry = der(normalBloodSA.pH)/der(BE);
-    //   Real BetaBlood = der(plasma.pH)/der(BE);
-    /*
-  FiggeFencl3Detailed                         plasma(
-    SID=SID,
-    pCO2=pCO2,
-    Pi=Pi,
-    alb=alb) "Plasma compartment (Hct = 0)"
-    annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
-  */
-      SAnomogram_formalization.SAoriginal plasma(
-        Hct=0,
-        BEox=BEp,
-        pCO2=pCO2) "No erythrocyte blood with Hct = 0"
-        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
-
-      SAnomogram_formalization.SAoriginal fullErythrocyte(
-        Hct=1,
-        BEox=BEe,
-        pCO2=pCO2) "Full erythrocyte blood with Hct = 1"
-        annotation (Placement(transformation(extent={{-80,-20},{-60,0}})));
-
-      constant Real fullHb = 33.34;
-      parameter Real Hb = 15;
-      parameter Real Hct = Hb/fullHb;
-
-      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
-      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
-      //Real BE;
-      Real BE = 0;
-    //   Real BE = time*40 - 20;
-      Real mHCO3;
-
-    //  Real SID = 39;
-     Real SID;
-     Real pCO2 = time*40 + 20;
-    //  Real pCO2 = 40;
-      Real Pi = 1.15;
-      parameter Real alb = 4.4;
-
-     FiggeFencl3Detailed                         plasma_only(
-        SID=normalPlasma.SID + BE,
-        pCO2=pCO2,
-        Pi=Pi,
-        alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
-
-      SAnomogram_formalization.SAoriginal normalBloodSA(
-        Hct=Hct,
-        BEox=BE,
-        pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
-
-    protected
-      FiggeFenclNSID normalPlasma(
-        pH0=7.4,
-        pCO20=40,
-        alb0=alb,
-        Pi0=Pi)
-        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
-    equation
-      plasma.pH = fullErythrocyte.pH;
-      BEp = SID - normalPlasma.SID;
-
-      // grapf of varying pCO2
-      /*
- createPlot(id=3, position={95, 253, 586, 421}, x="pCO2", y={"plasma.pH", "normalBloodSA.pH"}, range={20.0, 65.0, 7.25, 7.7}, grid=true, legend=false, filename="figure2B.mat", leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Dash}, thicknesses={1.0, 0.5}, rightTitleType=0)
-*/
-      annotation (experiment(
-          StopTime=1,
-          __Dymola_NumberOfIntervals=500,
-          Tolerance=1e-003), Diagram(coordinateSystem(preserveAspectRatio=false,
-              extent={{-100,-100},{100,100}}), graphics={
-            Line(
-              points={{-84,52},{-90,52},{-98,52},{-94,20},{-86,18}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Line(
-              points={{-54,16},{-30,2},{-26,-6}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Line(
-              points={{-54,-12},{-36,-14},{-26,-10}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled}),
-            Text(
-              extent={{-24,-14},{-4,0}},
-              lineColor={28,108,200},
-              fillColor={0,0,255},
-              fillPattern=FillPattern.Solid,
-              textString="pH"),
-            Line(
-              points={{10,84},{10,-74},{10,-80},{10,-82}},
-              color={28,108,200},
-              arrow={Arrow.None,Arrow.Filled})}));
-    end figure2B;
-  end Figures;
-
-  package Tests
-
-    model testBE
-      "Test combination of plasma and full hematocrit blood against original SA during varying BE"
-
-      constant Real fullHb = 33.34;
-      parameter Real Hct = 15/fullHb;
-      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
-      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
-      Real mHCO3;
-      //Real pHFullBlood;
-
-      Real BE;
-      Real pCO2;
-      SAnomogram_formalization.SAoriginal plasma(
-        Hct=0,
-        BEox=BE,
-        pCO2=pCO2)
-        annotation (Placement(transformation(extent={{-40,18},{-20,38}})));
-      SAnomogram_formalization.SAoriginal ery(
-        Hct=1,
-        BEox=BE,
-        pCO2=pCO2)
-        annotation (Placement(transformation(extent={{-42,54},{-22,74}})));
-      SAnomogram_formalization.SAoriginal SABlood(
-        Hct=Hct,
-        BEox=BE,
-        pCO2=pCO2)
-        annotation (Placement(transformation(extent={{40,40},{60,60}})));
-    equation
-      plasma.pH = ery.pH;
-    //   plasma.pCO2 = ;
-    //   ery.pCO2 = pCO2;
-
-      // Hct = time + 1e-6;
-      //Hct = 20/fullHb;
-      BE = time*60 -30;
-      pCO2 = 40;
-    //   pCO2 = time * 40 + 20;
-      annotation (experiment(
-          StopTime=0.94,
-          __Dymola_NumberOfIntervals=5000,
-          Tolerance=1e-006), Diagram(coordinateSystem(preserveAspectRatio=false,
-              extent={{-100,-100},{100,100}}), graphics={
-            Line(points={{4,58},{6,62},{10,70},{20,70},{26,64},{26,56},{8,44},{10,30},
-                  {24,28},{30,34},{30,40}}, color={28,108,200}),
-            Ellipse(extent={{16,20},{24,12}}, lineColor={28,108,200}),
-            Line(points={{-34,44},{-32,44},{-22,44},{-28,44},{-28,50},{-28,40}},
-                color={28,108,200}),
-            Line(points={{0,52},{2,52},{-8,52}}, color={28,108,200}),
-            Line(points={{-8,38},{4,38}}, color={28,108,200})}));
-    end testBE;
-
-    model testpCO2
-      "Test combination of plasma and full hematocrit blood against original SA during varying pCO2"
-
-      SAnomogram_formalization.SAoriginal plasma(
-        Hct=0,
-        BEox=BEp,
-        pCO2=pCO2)
-        annotation (Placement(transformation(extent={{-20,20},{0,40}})));
-      SAnomogram_formalization.SAoriginal ery(
-        Hct=1,
-        BEox=BEe,
-        pCO2=pCO2)
-        annotation (Placement(transformation(extent={{20,20},{40,40}})));
-      SAnomogram_formalization.SAoriginal SABlood(
-        Hct=Hct,
-        BEox=BE,
-        pCO2=pCO2)
-        annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-      constant Real fullHb = 33.34;
-      parameter Real Hct = 15/33.34;
-      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
-      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
-      Real mHCO3;
-      //Real pHFullBlood;
-
-      Real BE;
-      Real pCO2;
-
-    equation
-      plasma.pH = ery.pH;
-      BE = 0;//time*60 -30;
-    //  pCO2 = time*20 + 20;
-       pCO2 = time * 40 + 20;
-      annotation (experiment(
-          StopTime=1,
-          __Dymola_NumberOfIntervals=500,
-          Tolerance=1e-003));
-    end testpCO2;
   end Tests;
 end FullBloodAcidBase;
