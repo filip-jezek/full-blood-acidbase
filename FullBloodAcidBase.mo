@@ -300,7 +300,6 @@ end FiggeFencl3Detailed;
     annotation (experiment(Tolerance=1e-006), __Dymola_experimentSetupOutput);
   end FiggeFencl3pCO2;
 
-
  package Thrash
 
    model FullBloodBase
@@ -1526,9 +1525,6 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
       a - 24.4 = - (2.3 * b + 7.7) * (c - 7.40) + d/(1 - 0.023 * b);
     end SAVanSlyke77;
 
-
-
-
     model SA_comparison_pCO2
       "pH dependent on varying pCO2 by different approximations. We take our implementation of SA nomogram as reference. Compare the object's pH"
       parameter Real Hct = 15/33.34;
@@ -1574,8 +1570,6 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
   end SAnomogram_formalization;
 
   package Full_Blood
-
-
 
     model Full_blood_combo
       "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2"
@@ -1630,13 +1624,6 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
           Tolerance=1e-003));
     end Full_blood_combo;
 
-
-
-
-
-
-
-
     package comparisson
 
       package Auxiliary
@@ -1653,7 +1640,7 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
           Real logpCO2 = log10(pCO2);
           input Real pCO2 = time*40 + 20;
 
-          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb LowAlb(  BE = BE, pCO2 = pCO2, alb = 2, Hb = Hb, Pi = Pi)
+          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb LowAlb(  BE = BE, pCO2 = pCO2, alb = alb/2, Hb = Hb, Pi = Pi)
             "Low Alb"
           annotation (Placement(transformation(extent={{20,20},{40,40}})));
 
@@ -1661,7 +1648,7 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
             "Normal model set"
           annotation (Placement(transformation(extent={{20,20},{40,40}})));
 
-          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb HighAlb(  BE = BE, pCO2 = pCO2, alb = 6.5, Hb = Hb, Pi = Pi)
+          FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb HighAlb(  BE = BE, pCO2 = pCO2, alb = alb*2, Hb = Hb, Pi = Pi)
             "High Alb"
           annotation (Placement(transformation(extent={{20,20},{40,40}})));
 
@@ -1724,7 +1711,6 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
         //     annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
 
         end ResultSetAtBE;
-
 
         model SetAtAlb
 
@@ -1790,27 +1776,21 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
         end ResultSetAtBE_P;
       end Auxiliary;
 
-
-
-
-
-
-
     end comparisson;
   end Full_Blood;
-  annotation (uses(Modelica(version="3.2.1")));
+
   package Figures
 
     model Figure1
       Real pCO2 = time*40 + 20;
-      SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE_10(BEox
-          =-10, pCO2=pCO2)
+      SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE_10(BEox=
+           -15, pCO2=pCO2)
         annotation (Placement(transformation(extent={{-80,20},{-60,40}})));
       SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE0(BEox=0,
           pCO2=pCO2)
         annotation (Placement(transformation(extent={{-40,20},{-20,40}})));
       SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE10(BEox=
-            10, pCO2=pCO2)
+            15, pCO2=pCO2)
         annotation (Placement(transformation(extent={{0,20},{20,40}})));
       FullBloodAcidBase.Figures.Figure1_3_4_BE_curve BE_curve;
 
@@ -2077,7 +2057,7 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash,
 LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash}, thicknesses={0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5}, rightTitleType=0);
 */
 
-    /* FIGURE 4: low, normal and high albumin for BE -10 0 10
+    /* FIGURE 4: low, normal and high albumin for BE -15 0 15
 createPlot(id=4, position={0, 0, 483, 300}, x="pCO2", y={"resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.Normal.sAVanSlyke.pH",
  "resultSetAtBE0.Normal.FF_plasma_only.pH", "resultSetAtBE0.LowAlb.sAVanSlyke.pH",
  "resultSetAtBE0.LowAlb.FF_plasma_only.pH", "resultSetAtBE0.LowAlb.full_blood_combo.pH",
@@ -2105,9 +2085,28 @@ LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid,
 LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, 
 LinePattern.Dot, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
 LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
-LinePattern.Dash, LinePattern.Dash, LinePattern.Dot}, thicknesses={0.5, 0.25, 0.25, 0.25, 0.25, 0.5, 0.0, 0.0, 0.0, 0.5, 0.25, 0.25, 0.5, 0.5, 0.5,
- 0.25, 0.25, 0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.25, 0.0, 0.0, 
-0.0, 0.5}, rightTitleType=0);
+LinePattern.Dash, LinePattern.Dash, LinePattern.Dot}, thicknesses={0.5, 0.25, 0.25, 0.25, 0.25, 0.5, 0.25, 0.25, 0.25, 0.5, 0.25, 0.25, 0.5, 0.5, 0.5,
+ 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 
+ 0.0, 0.5}, rightTitleType=0);
+ 
+ /* FIGURE 4: low and high albumin range for BE -15, 0, 15
+ createPlot(id=4, position={38, 451, 483, 300}, x="pCO2", y={"resultSetAtBE0.LowAlb.sAVanSlyke.pH", "resultSetAtBE0.LowAlb.FF_plasma_only.pH",
+ "resultSetAtBE0.LowAlb.full_blood_combo.pH", "resultSetAtBE0.HighAlb.sAVanSlyke.pH",
+ "resultSetAtBE0.HighAlb.FF_plasma_only.pH", "resultSetAtBE0.HighAlb.full_blood_combo.pH",
+ "resultSetAtBE10.LowAlb.full_blood_combo.pH", "resultSetAtBE10.LowAlb.FF_plasma_only.pH",
+ "resultSetAtBE10.LowAlb.sAVanSlyke.pH", "resultSetAtBE10.HighAlb.full_blood_combo.pH",
+ "resultSetAtBE10.HighAlb.FF_plasma_only.pH", "resultSetAtBE10.HighAlb.sAVanSlyke.pH",
+ "resultSetAtBE_10.LowAlb.FF_plasma_only.pH", "resultSetAtBE_10.HighAlb.full_blood_combo.pH",
+ "resultSetAtBE_10.HighAlb.FF_plasma_only.pH", "resultSetAtBE_10.HighAlb.sAVanSlyke.pH",
+ "resultSetAtBE_10.LowAlb.full_blood_combo.pH", "resultSetAtBE_10.LowAlb.sAVanSlyke.pH"}, range={20.0, 60.0, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{28,108,200}, {0,0,0}, {238,46,47}, {28,108,200}, {0,0,0}, {238,46,47}, 
+{238,46,47}, {0,0,0}, {28,108,200}, {238,46,47}, {0,0,0}, {28,108,200}, 
+{0,0,0}, {238,46,47}, {0,0,0}, {28,108,200}, {238,46,47}, {28,108,200}}, patterns={LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, LinePattern.Solid, 
+LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Dash, LinePattern.Dash}, thicknesses={0.25, 0.25, 0.5, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.5, 0.25, 0.25, 0.25, 0.5, 
+0.25, 0.25, 0.5, 0.25}, rightTitleType=0);
+
 */
     end Figures3_4;
 
@@ -2138,11 +2137,10 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
         // B) VARYUING pCO2, FIXED BE
         /*
     
-    createPlot(id=52, position={96, 378, 483, 300}, x="BE", y={"fixedBE.full_blood_combo.plasma.barGraphHCO3Alb1", "fixedBE.full_blood_combo.plasma.barGraphHCO3Alb2",
+    createPlot(id=52, position={96, 378, 483, 300}, x="pCO2", y={"fixedBE.full_blood_combo.plasma.barGraphHCO3Alb1", "fixedBE.full_blood_combo.plasma.barGraphHCO3Alb2",
  "fixedBE.full_blood_combo.plasma.barGraphHCO3Alb3", "fixedBE.FF_plasma_only.barGraphHCO3Alb1",
- "fixedBE.FF_plasma_only.barGraphHCO3Alb2", "fixedBE.FF_plasma_only.barGraphHCO3Alb3"}, range={-20.0, 20.0, 0.0, 45.0}, autoscale=false, grid=true, legend=false, filename="Figure5.mat", leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
-LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, rightTitleType=0);
-    
+ "fixedBE.FF_plasma_only.barGraphHCO3Alb2", "fixedBE.FF_plasma_only.barGraphHCO3Alb3"}, range={20.0, 60.0, 0.0, 45.0}, autoscale=false, grid=true, legend=false, filename="dsres.mat", leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
+LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, rightTitleType=0);    
     */
       annotation (Placement(transformation(extent={{20,20},{40,40}})));
 
@@ -2501,4 +2499,5 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
               arrow={Arrow.None,Arrow.Filled})}));
     end test_combo;
   end Tests;
+  annotation (uses(Modelica(version="3.2.1")));
 end FullBloodAcidBase;
