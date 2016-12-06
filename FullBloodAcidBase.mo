@@ -2499,5 +2499,130 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
               arrow={Arrow.None,Arrow.Filled})}));
     end test_combo;
   end Tests;
-  annotation (uses(Modelica(version="3.2.1")));
+  annotation (uses(Modelica(version="3.2.1"),
+      Physiomodel(version="0.2.29"),
+      Physiolibrary(version="2.3.1")));
+  package AlbuminBorderFlux
+
+    model AlbuminBalance
+
+      AlbuminSynthesis synthesis(SynthesisBasic=1.6666666666667e-07)
+        annotation (Placement(transformation(extent={{-98,54},{-78,74}})));
+      Degradation degradation
+        annotation (Placement(transformation(extent={{0,54},{20,74}})));
+      Physiolibrary.Chemical.Components.Substance substance
+        annotation (Placement(transformation(extent={{-50,54},{-30,74}})));
+    equation
+      connect(synthesis.q_out, substance.q_out) annotation (Line(
+          points={{-78,64},{-78,64},{-40,64}},
+          color={107,45,134},
+          thickness=1));
+      connect(substance.q_out, degradation.q_in) annotation (Line(
+          points={{-40,64},{-20,64},{0,64}},
+          color={107,45,134},
+          thickness=1));
+      annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{
+                -100,-100},{100,100}})));
+    end AlbuminBalance;
+
+    model AlbuminSynthesis
+    //  parameter Physiolibrary.Types.MassFlowRate  SynthesisBasic "10 mg/min";
+      parameter Physiolibrary.Types.MolarFlowRate SynthesisBasic = 2.75753e-09
+        "10 mg/min";
+      parameter Real[:,3] data =  {{ 20.0,  3.0,  0.0}, { 28.0,  1.0,  -0.2}, { 40.0,  0.0,  0.0}}
+        "COPEffect";
+    Physiolibrary.Blocks.Interpolation.Curve c(
+      x=data[:, 1],
+      y=data[:, 2],
+      slope=data[:, 3],
+      Xscale=101325/760);
+
+    Physiolibrary.Chemical.Interfaces.ChemicalPort_b q_out annotation (extent=[
+          -10,-110; 10,-90], Placement(transformation(extent={{90,-10},{110,10}})));
+
+      Physiolibrary.Types.Pressure COP;
+    //  Physiolibrary.Types.AmountOfSubstance  synthetizedAmount(start=0);
+    //  Physiolibrary.Types.Mass  synthetizedMass(start=0);
+    //protected
+    //  constant Physiolibrary.Types.Time sec=1;
+    //  constant Physiolibrary.Types.Volume ghostPlasmaVol=3.02e-3
+    //    "Strange dependence derived from original HumMod";
+    equation
+      COP =  q_out.conc * Modelica.Constants.R * 310.15;
+      c.u=COP;
+      q_out.q = -SynthesisBasic * c.val;
+
+    //TODO: state
+    //der(synthetizedAmount) = -q_out.q;
+    //  ProteinsMass2AmountOfSubstance(synthetizedMass,ghostPlasmaVol) = synthetizedAmount;
+     annotation (
+        defaultComponentName="synthesis",
+        Icon(coordinateSystem(preserveAspectRatio=true, extent={{-100,-100},{
+                100,100}}), graphics={Rectangle(
+              extent={{-100,-50},{100,50}},
+              lineColor={0,0,127},
+              fillColor={255,255,255},
+              fillPattern=FillPattern.Solid), Text(
+              extent={{-100,-50},{90,50}},
+              lineColor={0,0,255},
+              textString="%name")}),  Diagram(coordinateSystem(preserveAspectRatio=true,
+                       extent={{-100,-100},{100,100}}), graphics),
+        Documentation(revisions="<html>
+<p><i>2009-2010</i></p>
+<p>Marek Matejak, Charles University, Prague, Czech Republic </p>
+</html>"),        Diagram(coordinateSystem(preserveAspectRatio=true, extent={{-100,
+                -100},{100,100}}), graphics));
+    end AlbuminSynthesis;
+
+    model Degradation
+    //  parameter Physiolibrary.Types.MassFlowRate  DegradationBasic "10 mg/min";
+    //  parameter Real[:,3] data =  {{ 0.00,  0.0,  0.0}, { 0.07,  1.0,  40.0}, { 0.09,  6.0,  0.0}}
+    //    "ProteinEffect";
+       parameter Physiolibrary.Types.MolarFlowRate DegradationBasic = 2.75753e-09
+        "10 mg/min";
+       parameter Real[:,3] data =  {{ 0.00,  0.0,  0.0}, { 1.45,  1.0,  1.59}, { 1.97,  6.0,  0.0}}
+        "ProteinEffect";
+
+    Physiolibrary.Blocks.Interpolation.Curve c(
+      x=data[:, 1],
+      y=data[:, 2],
+      slope=data[:, 3]);
+    Physiolibrary.Chemical.Interfaces.ChemicalPort_a q_in annotation (Placement(
+          transformation(extent={{-100,0},{-60,40}}), iconTransformation(extent=
+             {{-110,-10},{-90,10}})));
+
+    //  Physiolibrary.Types.AmountOfSubstance  degradedAmount(start=0);
+    //  Physiolibrary.Types.Mass  degradedMass(start=0);
+    //protected
+    //  constant Physiolibrary.Types.Time sec=1;
+    //  constant Physiolibrary.Types.Volume ghostPlasmaVol=3.02e-3
+    //    "Strange dependence derived from original HumMod";
+    equation
+    //  ProteinsMassConcentration2Concentration(c.u*1000) = q_in.conc;
+      c.u = q_in.conc;
+      q_in.q = DegradationBasic * c.val;
+    //  q_in.q =ProteinsMass2AmountOfSubstance(DegradationBasic*c.val*sec,ghostPlasmaVol)/sec;
+
+    //TODO: state
+    //der(degradedAmount) = q_in.q;
+    //  ProteinsMass2AmountOfSubstance(degradedMass,ghostPlasmaVol) = degradedAmount;
+     annotation (
+        defaultComponentName="degradation",
+        Icon(coordinateSystem(preserveAspectRatio=true, extent={{-100,-100},{
+                100,100}}), graphics={Rectangle(
+              extent={{-100,-50},{100,50}},
+              lineColor={0,0,127},
+              fillColor={255,255,255},
+              fillPattern=FillPattern.Solid), Text(
+              extent={{-88,-50},{100,50}},
+              lineColor={0,0,255},
+              textString="%name")}),  Diagram(coordinateSystem(preserveAspectRatio=true,
+                       extent={{-100,-100},{100,100}}), graphics),
+        Documentation(revisions="<html>
+<p><i>2009-2010</i></p>
+<p>Marek Matejak, Charles University, Prague, Czech Republic </p>
+</html>"),        Diagram(coordinateSystem(preserveAspectRatio=true, extent={{-100,
+                -100},{100,100}}), graphics));
+    end Degradation;
+  end AlbuminBorderFlux;
 end FullBloodAcidBase;
