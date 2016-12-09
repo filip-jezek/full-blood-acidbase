@@ -154,6 +154,7 @@ model FiggeFencl3Detailed "Extension for detailed albumin balance"
   Real ATotMinus = -albConversion*sum(albTotalMinusPart)
       "Part of albumin, which could be negative.";
 
+  Real ach = sum(albChrg);
   Real atch0 = -12.2678 "to demonstrate the low buffer strength of albumin";
   Real atot1 = albHAPlus + albA0;
   Real atot2 = albAMinus + albHA0;
@@ -2503,240 +2504,242 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
   package AlbuminBorderFlux
 
     model AlbuminBalance
+      import FullBloodAcidBase;
 
     Physiolibrary.Chemical.Components.Diffusion UT_Capillary(Conductance(
           displayUnit="l/day") = 3.9351851851852e-09)
-      annotation (Placement(transformation(extent={{-2,70},{10,82}})));
+      annotation (Placement(transformation(extent={{-2,86},{10,98}})));
     Physiolibrary.Chemical.Components.Diffusion MT_Capillary(Conductance(
           displayUnit="l/day") = 7.4074074074074e-09)
-      annotation (Placement(transformation(extent={{-2,38},{10,50}})));
+      annotation (Placement(transformation(extent={{-2,54},{10,66}})));
     Physiolibrary.Chemical.Components.Diffusion LT_Capillary(Conductance(
           displayUnit="l/day") = 1.1805555555556e-08)
-      annotation (Placement(transformation(extent={{0,12},{12,24}})));
+      annotation (Placement(transformation(extent={{0,28},{12,40}})));
     Physiolibrary.Chemical.Sources.UnlimitedSolutePump Transfusion(
           useSoluteFlowInput=false, SoluteFlow=0)
-      annotation (Placement(transformation(extent={{20,-38},{0,-18}})));
+      annotation (Placement(transformation(extent={{20,-22},{0,-2}})));
     Physiolibrary.Chemical.Components.Stream UT_Lymph(useSolutionFlowInput=
             false, SolutionFlow=5.5333333333333e-09)
-      annotation (Placement(transformation(extent={{10,66},{0,56}})));
+      annotation (Placement(transformation(extent={{10,82},{0,72}})));
     Physiolibrary.Chemical.Components.Stream MT_Lymph(useSolutionFlowInput=
             false, SolutionFlow=1.315e-08)
-      annotation (Placement(transformation(extent={{10,34},{0,24}})));
+      annotation (Placement(transformation(extent={{10,50},{0,40}})));
     Physiolibrary.Chemical.Components.Stream LT_Lymph(useSolutionFlowInput=
             false, SolutionFlow=1.5933333333333e-08)
-      annotation (Placement(transformation(extent={{10,8},{0,-2}})));
+      annotation (Placement(transformation(extent={{10,24},{0,14}})));
       Physiolibrary.Chemical.Components.Substance plasma(
         stateName="PlasmaProtein.Mass",
         useNormalizedVolume=false,
-      solute_start=0.00437)
-        annotation (Placement(transformation(extent={{-76,24},{-56,44}})));
+        solute_start=0.00406)
+        annotation (Placement(transformation(extent={{-76,40},{-56,60}})));
       Physiolibrary.Chemical.Components.Substance UpperTorso(
         stateName="UT_InterstitialProtein.Mass",
         useNormalizedVolume=false,
         solute_start=0.00122)
-        annotation (Placement(transformation(extent={{78,56},{58,76}})));
+        annotation (Placement(transformation(extent={{78,72},{58,92}})));
       Physiolibrary.Chemical.Components.Substance MiddleTorso(
         stateName="MT_InterstitialProtein.Mass",
         useNormalizedVolume=false,
       solute_start=0.00299)
-        annotation (Placement(transformation(extent={{78,26},{58,46}})));
+        annotation (Placement(transformation(extent={{78,42},{58,62}})));
       Physiolibrary.Chemical.Components.Substance LowerTorso(
         stateName="LT_InterstitialProtein.Mass",
         useNormalizedVolume=false,
       solute_start=0.0018)
-        annotation (Placement(transformation(extent={{78,-2},{58,18}})));
-      AlbuminSynthesis                               synthesis(
-          UseSythesisFactorInput=false, SynthesisBasic=1.6666666666667e-07)
-        annotation (Placement(transformation(extent={{-80,-60},{-60,-40}})));
+        annotation (Placement(transformation(extent={{78,14},{58,34}})));
+      AlbuminSynthesis                               synthesis(SynthesisBasic=
+            1.6666666666667e-07, UseSythesisFactorInput=false)
+        annotation (Placement(transformation(extent={{-80,-66},{-60,-46}})));
       Degradation                                      degradation(
-        DegradationBasic=1.6666666666667e-07)
-        annotation (Placement(transformation(extent={{0,-60},{20,-40}})));
+          DegradationBasic=1.6666666666667e-07, UseDegradationFactorInput=false)
+        annotation (Placement(transformation(extent={{20,-54},{40,-34}})));
     Physiolibrary.Chemical.Components.Diffusion GlomerulusProtein_Perm(
         Conductance=(0)*(1e-6)/60)
-      annotation (Placement(transformation(extent={{0,-24},{20,-4}})));
+      annotation (Placement(transformation(extent={{0,-8},{20,12}})));
       Physiolibrary.Chemical.Components.Substance Bladder(
         stateName="BladderProtein.Mass",
         useNormalizedVolume=false,
       solute_start=1e-15)
-        annotation (Placement(transformation(extent={{78,-24},{58,-4}})));
+        annotation (Placement(transformation(extent={{78,-8},{58,12}})));
     Physiolibrary.Chemical.Sensors.ConcentrationMeasure concentrationMeasure1
       annotation (Placement(transformation(
-          extent={{-10,-10},{10,10}},
+          extent={{-10,10},{10,-10}},
           rotation=180,
-          origin={-94,16})));
+          origin={44,-24})));
       ProteinDivision proteinDivision
-        annotation (Placement(transformation(extent={{-80,0},{-60,20}})));
-      Physiolibrary.Chemical.Components.Clearance clearance(
-          useSolutionFlowInput=true)
-        annotation (Placement(transformation(extent={{-22,78},{-2,98}})));
-      Modelica.Blocks.Sources.Pulse pulse(
-        width=100,
-        period(displayUnit="h") = 3600,
-        nperiod=1,
-        amplitude=1e-6,
-        startTime(displayUnit="h") = 36000)
-        annotation (Placement(transformation(extent={{22,82},{6,98}})));
+        annotation (Placement(transformation(extent={{52,-38},{60,-30}})));
       Physiolibrary.Types.Constants.VolumeConst volume(k=0.006063)
-        annotation (Placement(transformation(extent={{98,36},{90,44}})));
+        annotation (Placement(transformation(extent={{98,52},{90,60}})));
       Physiolibrary.Types.Constants.VolumeConst volume1(k=0.00185)
-        annotation (Placement(transformation(extent={{98,66},{90,74}})));
+        annotation (Placement(transformation(extent={{98,82},{90,90}})));
       Physiolibrary.Types.Constants.VolumeConst volume2(k=0.00247)
-        annotation (Placement(transformation(extent={{98,8},{90,16}})));
+        annotation (Placement(transformation(extent={{98,24},{90,32}})));
       Physiolibrary.Types.Constants.VolumeConst volume3(k=0.0003)
-        annotation (Placement(transformation(extent={{98,-14},{90,-6}})));
-      Physiolibrary.Types.Constants.VolumeConst volume4(k=0.002807) annotation
-        (Placement(transformation(
+        annotation (Placement(transformation(extent={{98,2},{90,10}})));
+      Physiolibrary.Types.Constants.VolumeConst volume4(k=0.002807) annotation (
+         Placement(transformation(
             extent={{-4,-4},{4,4}},
             rotation=0,
-            origin={-74,52})));
-      Physiolibrary.Types.Constants.pHConst pH(k=7.4)
-        annotation (Placement(transformation(extent={{20,-84},{28,-76}})));
+            origin={-74,68})));
       Physiolibrary.Chemical.Sensors.MolarFlowMeasure molarFlowMeasure
-        annotation (Placement(transformation(extent={{-54,-60},{-34,-40}})));
+        annotation (Placement(transformation(extent={{-54,-66},{-34,-46}})));
       Physiolibrary.Chemical.Sensors.MolarFlowMeasure molarFlowMeasure1
-        annotation (Placement(transformation(extent={{-22,-60},{-2,-40}})));
-      Modelica.Blocks.Math.Add add(k1=-1)
-        annotation (Placement(transformation(extent={{0,-70},{10,-60}})));
+        annotation (Placement(transformation(extent={{-22,-66},{-2,-46}})));
+      Modelica.Blocks.Math.Add add(k1=-1, k2=+1)
+        annotation (Placement(transformation(extent={{0,-86},{10,-76}})));
       ProteinDivision proteinDivision1
-        annotation (Placement(transformation(extent={{20,-70},{30,-60}})));
-      ProteinCharge proteinCharge
-        annotation (Placement(transformation(extent={{40,-80},{60,-60}})));
-      AcidBaseBuffers acidBaseBuffers
-        annotation (Placement(transformation(extent={{80,-80},{100,-60}})));
+        annotation (Placement(transformation(extent={{20,-86},{30,-76}})));
+      ProteinCharge proteinCharge(UseSimpleAlbuminCharge=true)
+        annotation (Placement(transformation(extent={{40,-96},{60,-76}})));
+      AcidBaseBuffers acidBaseBuffers(UseConstantAlb=true)
+        annotation (Placement(transformation(extent={{80,-96},{100,-76}})));
+      Physiolibrary.Chemical.Components.Clearance degradation1(
+          useSolutionFlowInput=true)
+        annotation (Placement(transformation(extent={{20,-70},{40,-50}})));
+      FullBloodAcidBase.AlbuminBorderFlux.pulse pulse(
+        length(displayUnit="h") = 43200,
+        normal=0,
+        startTime(displayUnit="h") = 172800,
+        dose=5e-7)
+        annotation (Placement(transformation(extent={{68,-64},{48,-44}})));
     equation
       connect(UT_Capillary.q_out,UpperTorso. q_out) annotation (Line(
-          points={{10,76},{18,76},{18,66},{68,66}},
+          points={{10,92},{18,92},{18,82},{68,82}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,UT_Capillary. q_in) annotation (Line(
-          points={{-66,34},{-26,34},{-26,76},{-2,76}},
+          points={{-66,50},{-26,50},{-26,92},{-2,92}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,UT_Lymph. q_out) annotation (Line(
-          points={{-66,34},{-26,34},{-26,60},{0,60},{0,61}},
+          points={{-66,50},{-26,50},{-26,76},{0,76},{0,77}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,MT_Capillary. q_in) annotation (Line(
-          points={{-66,34},{-26,34},{-26,42},{-14,42},{-14,44},{-2,44}},
+          points={{-66,50},{-26,50},{-26,58},{-14,58},{-14,60},{-2,60}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(MT_Capillary.q_out,MiddleTorso. q_out) annotation (Line(
-          points={{10,44},{16,44},{16,36},{68,36}},
+          points={{10,60},{16,60},{16,52},{68,52}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(MT_Lymph.q_in,MiddleTorso. q_out) annotation (Line(
-          points={{10,29},{16,29},{16,36},{68,36}},
+          points={{10,45},{16,45},{16,52},{68,52}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,MT_Lymph. q_out) annotation (Line(
-          points={{-66,34},{-26,34},{-26,28},{0,28},{0,29}},
+          points={{-66,50},{-26,50},{-26,44},{0,44},{0,45}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,LT_Capillary. q_in) annotation (Line(
-          points={{-66,34},{-26,34},{-26,18},{0,18}},
+          points={{-66,50},{-26,50},{-26,34},{0,34}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,LT_Lymph. q_out) annotation (Line(
-          points={{-66,34},{-26,34},{-26,2},{0,2},{0,3}},
+          points={{-66,50},{-26,50},{-26,18},{0,18},{0,19}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,GlomerulusProtein_Perm. q_in) annotation (Line(
-          points={{-66,34},{-26,34},{-26,-14},{0,-14}},
+          points={{-66,50},{-26,50},{-26,2},{0,2}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,Transfusion. q_out) annotation (Line(
-          points={{-66,34},{-26,34},{-26,-28},{0,-28}},
+          points={{-66,50},{-26,50},{-26,-12},{0,-12}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(LT_Capillary.q_out,LowerTorso. q_out) annotation (Line(
-          points={{12,18},{18,18},{18,8},{68,8}},
+          points={{12,34},{18,34},{18,24},{68,24}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(LT_Lymph.q_in,LowerTorso. q_out) annotation (Line(
-          points={{10,3},{18,3},{18,8},{68,8}},
+          points={{10,19},{18,19},{18,24},{68,24}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(GlomerulusProtein_Perm.q_out,Bladder. q_out) annotation (Line(
-          points={{20,-14},{68,-14}},
+          points={{20,2},{68,2}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
       connect(plasma.q_out,concentrationMeasure1. q_in) annotation (Line(
-          points={{-66,34},{-94,34},{-94,16}},
+          points={{-66,50},{-26,50},{-26,-24},{44,-24}},
           color={107,45,134},
           thickness=1,
           smooth=Smooth.None));
     connect(concentrationMeasure1.concentration,proteinDivision. totalProteins)
       annotation (Line(
-        points={{-94,24},{-94,10},{-80,10}},
+        points={{44,-32},{44,-34},{52,-34}},
         color={0,0,127},
         smooth=Smooth.None));
     connect(UT_Lymph.q_in,UpperTorso. q_out) annotation (Line(
-        points={{10,61},{18,61},{18,66},{68,66}},
+        points={{10,77},{18,77},{18,82},{68,82}},
         color={107,45,134},
         thickness=1,
         smooth=Smooth.None));
-      connect(pulse.y, clearance.solutionFlow) annotation (Line(points={{5.2,90},
-              {0,90},{0,95},{-12,95}}, color={0,0,127}));
-      connect(clearance.q_in, concentrationMeasure1.q_in) annotation (Line(
-          points={{-22,88},{-26,88},{-26,34},{-94,34},{-94,16}},
-          color={107,45,134},
-          thickness=1));
       connect(MiddleTorso.solutionVolume, volume.y)
-        annotation (Line(points={{72,40},{72,40},{89,40}}, color={0,0,127}));
+        annotation (Line(points={{72,56},{72,56},{89,56}}, color={0,0,127}));
       connect(UpperTorso.solutionVolume, volume1.y)
-        annotation (Line(points={{72,70},{89,70}}, color={0,0,127}));
+        annotation (Line(points={{72,86},{89,86}}, color={0,0,127}));
       connect(LowerTorso.solutionVolume, volume2.y)
-        annotation (Line(points={{72,12},{89,12}}, color={0,0,127}));
-      connect(Bladder.solutionVolume, volume3.y) annotation (Line(points={{72,
-              -10},{72,-10},{89,-10}}, color={0,0,127}));
-      connect(plasma.solutionVolume, volume4.y) annotation (Line(points={{-70,
-              38},{-70,38},{-70,52},{-69,52}}, color={0,0,127}));
+        annotation (Line(points={{72,28},{89,28}}, color={0,0,127}));
+      connect(Bladder.solutionVolume, volume3.y) annotation (Line(points={{72,6},{
+              72,6},{89,6}},           color={0,0,127}));
+      connect(plasma.solutionVolume, volume4.y) annotation (Line(points={{-70,54},
+              {-70,54},{-70,68},{-69,68}},     color={0,0,127}));
       connect(synthesis.q_out, molarFlowMeasure.q_in) annotation (Line(
-          points={{-60,-50},{-54,-50}},
+          points={{-60,-56},{-54,-56}},
           color={107,45,134},
           thickness=1));
       connect(molarFlowMeasure.q_out, plasma.q_out) annotation (Line(
-          points={{-34,-50},{-26,-50},{-26,34},{-66,34}},
+          points={{-34,-56},{-26,-56},{-26,50},{-66,50}},
           color={107,45,134},
           thickness=1));
-      connect(plasma.q_out, molarFlowMeasure1.q_in) annotation (Line(
-          points={{-66,34},{-26,34},{-26,-50},{-22,-50}},
-          color={107,45,134},
-          thickness=1));
-      connect(molarFlowMeasure1.q_out, degradation.q_in) annotation (Line(
-          points={{-2,-50},{-2,-50},{0,-50}},
-          color={107,45,134},
-          thickness=1));
-      connect(add.u1, molarFlowMeasure1.molarFlowRate) annotation (Line(points=
-              {{-1,-62},{-12,-62},{-12,-58}}, color={0,0,127}));
-      connect(add.u2, molarFlowMeasure.molarFlowRate) annotation (Line(points={
-              {-1,-68},{-1,-68},{-44,-68},{-44,-58}}, color={0,0,127}));
-      connect(add.y, proteinDivision1.totalProteins) annotation (Line(points={{
-              10.5,-65},{10.5,-65},{20,-65}}, color={0,0,127}));
-      connect(proteinDivision1.albumin, proteinCharge.u) annotation (Line(
-            points={{30,-62},{40,-62},{40,-61}}, color={0,0,127}));
-      connect(pH.y, proteinCharge.pH) annotation (Line(points={{29,-80},{40,-80},
-              {40,-79}}, color={0,0,127}));
+      connect(add.u1, molarFlowMeasure1.molarFlowRate) annotation (Line(points={{-1,-78},
+              {-12,-78},{-12,-64}},           color={0,0,127}));
+      connect(add.u2, molarFlowMeasure.molarFlowRate) annotation (Line(points={{-1,-84},
+              {-2,-84},{-14,-84},{-44,-84},{-44,-64}},color={0,0,127}));
+      connect(add.y, proteinDivision1.totalProteins) annotation (Line(points={{10.5,
+              -81},{10.5,-81},{20,-81}},      color={0,0,127}));
       connect(proteinCharge.port_a, acidBaseBuffers.port_a) annotation (Line(
-          points={{59,-70},{81,-70},{81,-70}},
+          points={{59,-86},{59,-86},{81,-86}},
           color={107,45,134},
           thickness=1));
+      connect(acidBaseBuffers.pH, proteinCharge.pH) annotation (Line(points={{
+              81,-95},{81,-100},{36,-100},{36,-95},{40,-95}}, color={0,0,127}));
+      connect(molarFlowMeasure1.q_in, plasma.q_out) annotation (Line(
+          points={{-22,-56},{-26,-56},{-26,50},{-66,50}},
+          color={107,45,134},
+          thickness=1));
+      connect(proteinDivision1.albumin, proteinCharge.AlbuminDifferenceMolarFlow)
+        annotation (Line(points={{30,-78},{40,-78},{40,-77}}, color={0,0,127}));
+      connect(proteinDivision.albumin, acidBaseBuffers.albuminConcentration)
+        annotation (Line(points={{60,-31.6},{70,-31.6},{70,-32},{80,-32},{80,
+              -77}}, color={0,0,127}));
+      connect(molarFlowMeasure1.q_out, degradation.q_in) annotation (Line(
+          points={{-2,-56},{10,-56},{10,-44},{20,-44}},
+          color={107,45,134},
+          thickness=1));
+      connect(molarFlowMeasure1.q_out, degradation1.q_in) annotation (Line(
+          points={{-2,-56},{10,-56},{10,-60},{20,-60}},
+          color={107,45,134},
+          thickness=1));
+      connect(degradation1.solutionFlow, pulse.y) annotation (Line(points={{30,
+              -53},{40,-53},{40,-54},{49,-54}}, color={0,0,127}));
       annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,
-                -100},{100,100}})));
+                -100},{100,100}})), experiment(StopTime=1.728e+006,
+            __Dymola_NumberOfIntervals=5000));
     end AlbuminBalance;
 
     model AlbuminSynthesis
@@ -2824,10 +2827,23 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
     //  constant Physiolibrary.Types.Time sec=1;
     //  constant Physiolibrary.Types.Volume ghostPlasmaVol=3.02e-3
     //    "Strange dependence derived from original HumMod";
+      Modelica.Blocks.Interfaces.RealInput DegradationFactor = DegFact if UseDegradationFactorInput
+        annotation (Placement(transformation(extent={{-100,60},{-60,100}}),
+            iconTransformation(extent={{-100,60},{-60,100}})));
+
+    parameter Real DegradationFactorParam = 1
+     annotation (Dialog(enable=not UseDegradationFactorInput));
+    parameter Boolean UseDegradationFactorInput = false
+      annotation(Evaluate=true, HideResult=true, choices(checkBox=true),Dialog(group="External inputs/outputs"));
+    protected
+      Real DegFact;
     equation
+      if not UseDegradationFactorInput then
+        DegFact = DegradationFactorParam;
+      end if;
     //  ProteinsMassConcentration2Concentration(c.u*1000) = q_in.conc;
       c.u = q_in.conc;
-      q_in.q = DegradationBasic * c.val;
+      q_in.q = DegradationBasic * c.val*DegFact;
     //  q_in.q =ProteinsMass2AmountOfSubstance(DegradationBasic*c.val*sec,ghostPlasmaVol)/sec;
 
     //TODO: state
@@ -2858,28 +2874,68 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
         annotation (Placement(transformation(extent={{-120,-110},{-80,-70}})));
       Physiolibrary.Chemical.Interfaces.ChemicalPort_a port_a
         annotation (Placement(transformation(extent={{80,-10},{100,10}})));
-      Modelica.Blocks.Interfaces.RealInput AlbuminDifferenceMolarFlow
+      Physiolibrary.Types.RealIO.ConcentrationInput AlbuminDifferenceMolarFlow
         annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
       constant Real AlbMolarMass( final unit = "g/mol")= 66000;
-      FiggeFencl3Detailed figgeFencl3Base(
+      FullBloodAcidBase.FiggeFencl3 figgeFencl(
         pH = pH,
         pCO2=40,
         Pi=1.15,
-        alb=u*AlbMolarMass)
+        alb=AlbuminDifferenceMolarFlow*AlbMolarMass)
         annotation (Placement(transformation(extent={{-20,0},{0,20}})));
+                //  parameter Real alb (unit = "g/dl")= 4.4;
+      Real bicarbonateFlowRate( unit = "mol/s")= if UseSimpleAlbuminCharge then - AlbuminDifferenceMolarFlow * AlbuminMoleCharge  else - figgeFencl.atch*1000
+        "In FF3 model, the units are in mEq/l concentration.";
+       parameter Boolean UseSimpleAlbuminCharge = true;
+        constant Real AlbuminMoleCharge = -18.6;
+    equation
+      port_a.q = -bicarbonateFlowRate;
       annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,
                 -100},{100,100}})));
-                //  parameter Real alb (unit = "g/dl")= 4.4;
-    equation
-      port_a.q = figgeFencl3Base.atch;
     end ProteinCharge;
 
     model AcidBaseBuffers
 
       Physiolibrary.Chemical.Interfaces.ChemicalPort_a port_a
         annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-      Physiolibrary.Types.RealIO.pHOutput pH
+      Physiolibrary.Types.RealIO.pHOutput pH = figgeFencl3_1.pH
         annotation (Placement(transformation(extent={{-80,-100},{-100,-80}})));
+      FiggeFencl3 figgeFencl3_1(
+        SID=SID,
+        pCO2=pCO2,
+        Pi=1.45,
+        alb=alb)
+        annotation (Placement(transformation(extent={{-40,20},{-20,40}})));
+    /*  
+  SAnomogram_formalization.SAVanSlyke sAVanSlyke
+    annotation (Placement(transformation(extent={{0,20},{20,40}})));
+*/
+      Real BE;
+      Real SID = NSID + BE;
+      Real NSID;
+      parameter Real pCO2 = 40;
+      Real hco3(unit = "mmol/l") = figgeFencl3_1.HCO3*1000
+        "mEq/l = mmol/l = mol/m3";
+      Real hco3MM( unit="mol");
+      Physiolibrary.Types.RealIO.ConcentrationInput albuminConcentration
+        annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
+
+    parameter Boolean UseConstantAlb = true;
+    constant Physiolibrary.Types.MolarMass AlbuminMolarMass = 66;
+    Real alb = if UseConstantAlb then 4.4 else albuminConcentration*AlbuminMolarMass/10;
+    parameter Real plasmaVol = 3;
+    protected
+      FiggeFencl3 normalPlasma(pH=7.4, pCO2 = 40, Pi = 1.15, alb = alb, SID = NSID)
+        annotation (Placement(transformation(extent={{-58,0},{-38,20}})));
+
+      annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,
+                -100},{100,100}})));
+    equation
+    port_a.conc = hco3;
+
+    der(hco3MM) = port_a.q;
+    BE = hco3MM/1000/plasmaVol;
+
     end AcidBaseBuffers;
 
     model ProteinDivision "60% of total plasma protein mass are albumin"
@@ -2917,7 +2973,30 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
     // linear aproximation at point totalProteins = 1.45 mmol/l :
       nonAlbuminMM = 34.16-10*(totalProteins-1.45);
 
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{
+                -100,-100},{100,100}})));
     end ProteinDivision;
+
+    model pulse
+
+      Modelica.Blocks.Interfaces.RealOutput y annotation (Placement(transformation(
+              extent={{80,-10},{100,10}}), iconTransformation(extent={{80,-10},{100,
+                10}})));
+      parameter Modelica.SIunits.Time startTime=0
+        "Output = offset for time < startTime";
+      parameter Modelica.SIunits.Time length=0
+        "Output = offset for time < startTime";
+      parameter Real dose;
+      parameter Real normal;
+
+    equation
+      if time > startTime and time < startTime + length then
+        y = dose;
+      else
+        y = normal;
+      end if;
+
+    end pulse;
   end AlbuminBorderFlux;
   annotation (uses(Modelica(version="3.2.1"),
       Physiomodel(version="0.2.29"),
