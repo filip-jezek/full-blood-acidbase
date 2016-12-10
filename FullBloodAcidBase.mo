@@ -2502,7 +2502,6 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
   end Tests;
 
   package AlbuminBorderFlux
-
     model AlbuminBalance
       import FullBloodAcidBase;
 
@@ -2591,16 +2590,16 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
         annotation (Placement(transformation(extent={{20,-86},{30,-76}})));
       ProteinCharge proteinCharge(UseSimpleAlbuminCharge=true)
         annotation (Placement(transformation(extent={{40,-96},{60,-76}})));
-      AcidBaseBuffers acidBaseBuffers(UseConstantAlb=true)
+      AcidBaseBuffers acidBaseBuffers(UseConstantAlb=true, plasmaVol(displayUnit="l"))
         annotation (Placement(transformation(extent={{80,-96},{100,-76}})));
       Physiolibrary.Chemical.Components.Clearance degradation1(
           useSolutionFlowInput=true)
         annotation (Placement(transformation(extent={{20,-70},{40,-50}})));
       FullBloodAcidBase.AlbuminBorderFlux.pulse pulse(
-        length(displayUnit="h") = 43200,
         normal=0,
         startTime(displayUnit="h") = 172800,
-        dose=5e-7)
+        length(displayUnit="h") = 86400,
+        dose=16e-7)
         annotation (Placement(transformation(extent={{68,-64},{48,-44}})));
     equation
       connect(UT_Capillary.q_out,UpperTorso. q_out) annotation (Line(
@@ -2741,6 +2740,7 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
                 -100},{100,100}})), experiment(StopTime=1.728e+006,
             __Dymola_NumberOfIntervals=5000));
     end AlbuminBalance;
+
 
     model AlbuminSynthesis
     //  parameter Physiolibrary.Types.MassFlowRate  SynthesisBasic "10 mg/min";
@@ -2884,12 +2884,14 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
         alb=AlbuminDifferenceMolarFlow*AlbMolarMass)
         annotation (Placement(transformation(extent={{-20,0},{0,20}})));
                 //  parameter Real alb (unit = "g/dl")= 4.4;
-      Real bicarbonateFlowRate( unit = "mol/s")= if UseSimpleAlbuminCharge then - AlbuminDifferenceMolarFlow * AlbuminMoleCharge  else - figgeFencl.atch*1000
+      Real albuminChargeFlowRate( unit = "mol/s")= if UseSimpleAlbuminCharge then AlbuminDifferenceMolarFlow * AlbuminMoleCharge  else figgeFencl.atch*1000
         "In FF3 model, the units are in mEq/l concentration.";
+      Real bicarbonateFlowRate( unit = "mol/s") = albuminChargeFlowRate
+        "For each negative charge of albumin, a hydrogen ion is built, eats up one bicarbonate.";
        parameter Boolean UseSimpleAlbuminCharge = true;
         constant Real AlbuminMoleCharge = -18.6;
     equation
-      port_a.q = -bicarbonateFlowRate;
+      port_a.q = -bicarbonateFlowRate "Ouflow, therefore negative";
       annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,
                 -100},{100,100}})));
     end ProteinCharge;
@@ -2915,7 +2917,7 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
       Real NSID;
       parameter Real pCO2 = 40;
       Real hco3(unit = "mmol/l") = figgeFencl3_1.HCO3*1000
-        "mEq/l = mmol/l = mol/m3";
+        "mEq/l = mmol/l = mol/m3 = Eq/m3";
       Real hco3MM( unit="mol");
       Physiolibrary.Types.RealIO.ConcentrationInput albuminConcentration
         annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
@@ -2923,19 +2925,24 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
     parameter Boolean UseConstantAlb = true;
     constant Physiolibrary.Types.MolarMass AlbuminMolarMass = 66;
     Real alb = if UseConstantAlb then 4.4 else albuminConcentration*AlbuminMolarMass/10;
-    parameter Real plasmaVol = 3;
+    parameter Physiolibrary.Types.Volume plasmaVol = 0.003;
     protected
       FiggeFencl3 normalPlasma(pH=7.4, pCO2 = 40, Pi = 1.15, alb = alb, SID = NSID)
         annotation (Placement(transformation(extent={{-58,0},{-38,20}})));
 
-      annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,
-                -100},{100,100}})));
     equation
-    port_a.conc = hco3;
+      // DEBUG
+      when time > 1.5*24*3600 then
+        reinit(hco3MM, 0);
+      end when;
+
+      port_a.conc = hco3;
 
     der(hco3MM) = port_a.q;
-    BE = hco3MM/1000/plasmaVol;
+    BE = hco3MM/plasmaVol;
 
+      annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,
+                -100},{100,100}})));
     end AcidBaseBuffers;
 
     model ProteinDivision "60% of total plasma protein mass are albumin"
