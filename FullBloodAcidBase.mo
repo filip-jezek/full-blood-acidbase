@@ -1,4 +1,4 @@
-within ;
+﻿within ;
 package FullBloodAcidBase
 model FiggeFencl3
     "Base class for plasma acidbase after Figge and Fencl 3.0, missing inputs for SID, PCO2, total Pi and total albumin"
@@ -300,6 +300,142 @@ end FiggeFencl3Detailed;
     output Real pH = figgeFencl3Base.pH;
     annotation (experiment(Tolerance=1e-006), __Dymola_experimentSetupOutput);
   end FiggeFencl3pCO2;
+
+model FiggeFencl3Extended
+    "Base class for plasma acidbase after Figge and Fencl 3.0, missing inputs for SID, PCO2, total Pi and total albumin"
+/*
+Rem: Figge-Fencl Quantitative Physicochemical Model
+Rem: of Human Acid-Base Physiology Version 3.0 (8 October, 2012; www.Figge-Fencl.org).
+Rem:
+Rem: Copyright 2003 - 2013 James J. Figge. Update published 28 April, 2013;
+Rem: Update published 27 October, 2013.
+Rem: 
+Rem: The program may be downloaded free of charge for academic and educational use only.
+Rem: This program is not intended for clinical use or for the care of human subjects in clinical trials.
+Rem: This program applies to plasma-like solutions containing albumin. 
+Rem: The program does not account for the contribution of plasma globulins, and has not been tested with clinical data; hence 
+Rem: the program is not suitable for clinical use.
+
+
+Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
+*/
+          // only constants here
+  protected
+  constant Real kw = 0.000000000000044;
+
+  constant Real Kc1 = 0.0000000000244
+      "Kc1 is derived from the parameters in the Henderson-Hasselbalch equation. pK = 6.1; a = 0.230 mM / kPa; 1 Torr = 0.13332236842105 kPa. The value of Kc1 is 2.44E-11 (Eq / L)^2 / Torr.";
+  constant Real Kc2 = 0.00000000011
+      "Kc2 is calculated from Harned and Scholes (1941) for 37 degrees C and ionic strength 0.15 M. The value of Kc2 is 5.5E-11 mol / L x 2 = 1.1E-10 Eq / L.";
+
+  constant Real K1 = 0.0122
+      "K1, K2, and K3 for the phosphoric acid - phosphate system are from Sendroy and Rem: Hastings (1927). pK1 = 1.915; pK2 = 6.66; pK3 = 11.78.";
+  constant Real K2 = 0.000000219
+      "K1, K2, and K3 for the phosphoric acid - phosphate system are from Sendroy and Hastings (1927). pK1 = 1.915; pK2 = 6.66; pK3 = 11.78.";
+  constant Real K3 = 0.00000000000166
+      "K1, K2, and K3 for the phosphoric acid - phosphate system are from Sendroy and Hastings (1927). pK1 = 1.915; pK2 = 6.66; pK3 = 11.78.";
+
+//Rem: Enter desired values for SID, PCO2, [ Pi tot ], and [ Albumin ] in the next four lines.
+  public
+  input Real SID( unit = "meq/l") "Strong ion difference. Normal value 39";
+  input Real pCO2(unit = "mmHg") "CO2 partial pressure. Normal value 40";
+  input Real Pi( unit = "mmol/l") "Total phosphate. Normal value 1.15";
+  input Real alb( unit="g/dl") "Albumin concentration. Normal value 4.4";
+
+  Real H( unit="eq/l")= 10 ^ (-pH);
+  Real pH(start = 10, unit="1");
+  Real HO( unit="eq/l") = kw / H;
+  Real HCO3( unit="eq/l") = Kc1 * pCO2 / H;
+  Real CO3(  unit="eq/l")= Kc2 * HCO3 / H;
+
+  protected
+  Real FNX = K1 * H^2 + 2 * K1 * K2 * H + 3 * K1 * K2 * K3;
+  Real FNY = H^3 + K1 * H^2 + K1 * K2 * H + K1 * K2 * K3;
+  Real FNZ = FNX / FNY;
+  public
+  Real P( unit = "meq/l")= Pi * FNZ;
+  Real Netcharge = SID + 1000 * (H - HO - HCO3 - CO3) - P -X;
+
+  Real NB = 0.4 * (1 - (1 / (1 + 10 ^ (pH - 6.9))))
+      "NB accounts for histidine pK shift due to the NB transition";
+
+  // constant Real albuminResidues[:] = cat(1,{-1 /*cysteine */,-98/*glutamic acid*/,-18/*tyrosine*/,+24/*arginine */, /* lysine >>>*/ 2, 2, 2, 2, 1, 50} ,ones(16) /*histidine residues*/,/* amino terminus and carboxyl terminus*/{1, 1});
+  protected
+  Real albConversion = 1000 * 10 * alb / 66500;
+  constant Real albuminResidues[:] = cat(1,{-1,              -98,                 -18,            +24,                              2, 2, 2, 2, 1, 50}, ones(16),                                                                {1, -1});
+  // Real albuminPks[:] = {8.5 /* CYST*/,3.9 /* GLUT*/,11.7 /* TYR*/,12.5 /* ARG*/,/*LYS >>>*/5.8, 6.15, 7.51, 7.685, 7.86, 10.3,/*HIST>>>*/7.12 - NB, 7.22 - NB, 7.1 - NB, 7.49 - NB, 7.01 - NB, 7.31, 6.75, 6.36, 4.85, 5.76, 6.17, 6.73, 5.82, 5.1, 6.7, 6.2, 8/* amino terminus */,3.1 /*carboxyl terminus*/};
+  Real albuminPks[:] = {8.5,          3.9,          11.7,         12.5,                    5.8, 6.15, 7.51, 7.685, 7.86, 10.3,           7.12 - NB, 7.22 - NB, 7.1 - NB, 7.49 - NB, 7.01 - NB, 7.31, 6.75, 6.36, 4.85, 5.76, 6.17, 6.73, 5.82, 5.1, 6.7, 6.2, 8,                    3.1};
+  Real albChrg[n](each unit = "meq/l") "charge of albumin per unit";
+  constant Integer n = size(albuminResidues, 1);
+  public
+  Real atch = sum(albChrg)*albConversion
+      "albumin total charge. Normal value -12.2678";
+
+    Real X = Xi*(Kx + Kxh*H)/H;
+    parameter Real Kx = 0.00000000011;
+    parameter Real Kxh = 0;
+    parameter Real Xi = 1;
+equation
+  Netcharge + atch = 0;
+
+  for i in 1:n loop
+    if albuminResidues[i] > 0 then
+      // positive charge
+      albChrg[i] = albuminResidues[i] * (1 / (1 + 10 ^ (pH - albuminPks[i])));
+    else
+      // negative charge
+      albChrg[i] = albuminResidues[i] * (1 / (1 + 10 ^ (- pH + albuminPks[i])));
+    end if;
+  end for;
+
+  /* 
+  // debug
+  alb2 = -1 * (1 / (1 + 10 ^ (-(pH - 8.5))))
+  - 98 * (1 / (1 + 10 ^ (-(pH - 3.9))))
+  - 18 * (1 / (1 + 10 ^ (-(pH - 11.7))))
+  + 24 * (1 / (1 + 10 ^ (pH - 12.5)))
+  + 2 * (1 / (1 + 10 ^ (pH - 5.8)))
+  + 2 * (1 / (1 + 10 ^ (pH - 6.15)))
+  + 2 * (1 / (1 + 10 ^ (pH - 7.51)))
+  + 2 * (1 / (1 + 10 ^ (pH - 7.685)))
+  + 1 * (1 / (1 + 10 ^ (pH - 7.86)))
+  + 50 * (1 / (1 + 10 ^ (pH - 10.3)))
+  + (1 / (1 + 10 ^ (pH - 7.12 + NB)))
+  + (1 / (1 + 10 ^ (pH - 7.22 + NB)))
+  + (1 / (1 + 10 ^ (pH - 7.1 + NB)))
+  + (1 / (1 + 10 ^ (pH - 7.49 + NB)))
+  + (1 / (1 + 10 ^ (pH - 7.01 + NB)))
+  + (1 / (1 + 10 ^ (pH - 7.31)))
+  + (1 / (1 + 10 ^ (pH - 6.75)))
+  + (1 / (1 + 10 ^ (pH - 6.36)))
+  + (1 / (1 + 10 ^ (pH - 4.85)))
+  + (1 / (1 + 10 ^ (pH - 5.76)))
+  + (1 / (1 + 10 ^ (pH - 6.17)))
+  + (1 / (1 + 10 ^ (pH - 6.73)))
+  + (1 / (1 + 10 ^ (pH - 5.82)))
+  + (1 / (1 + 10 ^ (pH - 5.1)))
+  + (1 / (1 + 10 ^ (pH - 6.7)))
+  + (1 / (1 + 10 ^ (pH - 6.2)))
+  + (1 / (1 + 10 ^ (pH - 8)))
+  - 1 * (1 / (1 + 10 ^ (-(pH - 3.1))));
+*/
+  annotation (                                 Documentation(info="<html>
+<pre><font style=\"color: #006400; \">Rem:&nbsp;Figge-Fencl&nbsp;Quantitative&nbsp;Physicochemical&nbsp;Model</font>
+<font style=\"color: #006400; \">Rem:&nbsp;of&nbsp;Human&nbsp;Acid-Base&nbsp;Physiology&nbsp;Version&nbsp;3.0&nbsp;(8&nbsp;October,&nbsp;2012;&nbsp;www.Figge-Fencl.org).</font>
+<font style=\"color: #006400; \">Rem:</font>
+<font style=\"color: #006400; \">Rem:&nbsp;Copyright&nbsp;2003&nbsp;-&nbsp;2013&nbsp;James&nbsp;J.&nbsp;Figge.&nbsp;Update&nbsp;published&nbsp;28&nbsp;April,&nbsp;2013;</font>
+<font style=\"color: #006400; \">Rem:&nbsp;Update&nbsp;published&nbsp;27&nbsp;October,&nbsp;2013.</font>
+<font style=\"color: #006400; \">Rem:&nbsp;</font>
+<font style=\"color: #006400; \">Rem:&nbsp;The&nbsp;program&nbsp;may&nbsp;be&nbsp;downloaded&nbsp;free&nbsp;of&nbsp;charge&nbsp;for&nbsp;academic&nbsp;and&nbsp;educational&nbsp;use&nbsp;only.</font>
+<font style=\"color: #006400; \">Rem:&nbsp;This&nbsp;program&nbsp;is&nbsp;not&nbsp;intended&nbsp;for&nbsp;clinical&nbsp;use&nbsp;or&nbsp;for&nbsp;the&nbsp;care&nbsp;of&nbsp;human&nbsp;subjects&nbsp;in&nbsp;clinical&nbsp;trials.</font>
+<font style=\"color: #006400; \">Rem:&nbsp;This&nbsp;program&nbsp;applies&nbsp;to&nbsp;plasma-like&nbsp;solutions&nbsp;containing&nbsp;albumin.&nbsp;</font>
+<font style=\"color: #006400; \">Rem:&nbsp;The&nbsp;program&nbsp;does&nbsp;not&nbsp;account&nbsp;for&nbsp;the&nbsp;contribution&nbsp;of&nbsp;plasma&nbsp;globulins,&nbsp;and&nbsp;has&nbsp;not&nbsp;been&nbsp;tested&nbsp;with&nbsp;clinical&nbsp;data;&nbsp;hence&nbsp;</font>
+<font style=\"color: #006400; \">Rem:&nbsp;the&nbsp;program&nbsp;is&nbsp;not&nbsp;suitable&nbsp;for&nbsp;clinical&nbsp;use.</font>
+<p><br><br><code><font style=\"color: #006400; \">I</font>mplemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016</code></p>
+</html>", revisions="<html>
+<pre><font style=\"color: #006400; \">Filip Jezek, 2016</font></pre>
+</html>"));
+end FiggeFencl3Extended;
 
  package Thrash
 
@@ -1784,14 +1920,15 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
 
     model Figure1
       Real pCO2 = time*40 + 20;
+      Real Hct = 15;
       SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE_10(BEox=
-           -15, pCO2=pCO2)
+           -15, pCO2=pCO2, Hct = Hct)
         annotation (Placement(transformation(extent={{-80,20},{-60,40}})));
       SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE0(BEox=0,
-          pCO2=pCO2)
+          pCO2=pCO2, Hct = Hct)
         annotation (Placement(transformation(extent={{-40,20},{-20,40}})));
       SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE10(BEox=
-            15, pCO2=pCO2)
+            15, pCO2=pCO2, Hct = Hct)
         annotation (Placement(transformation(extent={{0,20},{20,40}})));
       FullBloodAcidBase.Figures.Figure1_3_4_BE_curve BE_curve;
 
@@ -2499,6 +2636,127 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
               color={28,108,200},
               arrow={Arrow.None,Arrow.Filled})}));
     end test_combo;
+
+    model SA_Figge_Fit
+      Real pCO2 = time*40 + 20;
+      parameter Real Kx( min = 0, max = 1e-3, nominal = 1e-7) = 0.00000000011 "K fixed";
+      parameter Real Kxh = 0 "K dependent on H+";
+      parameter Real Xi( min = -10, max = 10) = 1 "charge";
+
+      Real error = (sA_comparison_pCO2_BE0.plasma_only.pH - sA_comparison_pCO2_BE0.sAoriginal.pH)^2;
+    //  Real intError;
+      SA_Figge_comparison_pCO2                    sA_comparison_pCO2_BE_10(BEox=
+           -15, pCO2=pCO2, Hct = 0,
+        Kx = Kx,
+        Xi = Xi,
+        Kxh = Kxh)
+        annotation (Placement(transformation(extent={{-80,20},{-60,40}})));
+      SA_Figge_comparison_pCO2 sA_comparison_pCO2_BE0(BEox=0,
+          pCO2=pCO2, Hct = 0,
+        Kx = Kx,
+        Xi = Xi,
+        Kxh = Kxh)
+        annotation (Placement(transformation(extent={{-40,20},{-20,40}})));
+      SA_Figge_comparison_pCO2 sA_comparison_pCO2_BE10(BEox=
+            15, pCO2=pCO2, Hct = 0,
+        Kx = Kx,
+        Xi = Xi,
+        Kxh = Kxh)
+        annotation (Placement(transformation(extent={{0,20},{20,40}})));
+      FullBloodAcidBase.Figures.Figure1_3_4_BE_curve BE_curve;
+
+      // Figure 1 Dymola Script
+     /*
+createPlot(id=1, position={0, 0, 483, 300}, x="pCO2", y={"sA_comparison_pCO2_BE_10.sAoriginal.pH", "sA_comparison_pCO2_BE0.sAoriginal.pH",
+ "sA_comparison_pCO2_BE10.sAoriginal.pH", "sA_comparison_pCO2_BE_10.zander1995.pH",
+ "sA_comparison_pCO2_BE0.zander1995.pH", "sA_comparison_pCO2_BE10.zander1995.pH",
+ "sA_comparison_pCO2_BE10.sAVanSlyke.pH", "sA_comparison_pCO2_BE0.sAVanSlyke.pH",
+ "sA_comparison_pCO2_BE_10.sAVanSlyke.pH"}, range={20.0, 60.00000000000001, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, 
+{0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
+LinePattern.Dot, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Solid}, thicknesses={1.0, 1.0, 1.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}, rightTitleType=0);
+*/
+
+    // fig 5 comparisson to Figge
+    /*
+createPlot(id=5, position={95, 90, 586, 421}, x="pCO2", y={"sA_comparison_pCO2_BE0.zander1995.pH", "sA_comparison_pCO2_BE0.sAoriginal.pH",
+ "sA_comparison_pCO2_BE0.plasma_only.pH", "sA_comparison_pCO2_BE_10.plasma_only.pH",
+ "sA_comparison_pCO2_BE_10.zander1995.pH", "sA_comparison_pCO2_BE_10.sAoriginal.pH",
+ "sA_comparison_pCO2_BE10.plasma_only.pH", "sA_comparison_pCO2_BE10.zander1995.pH",
+ "sA_comparison_pCO2_BE10.sAoriginal.pH"}, range={20.0, 60.0, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, filename="SA_FIgge_Fit.mat", logX=true, colors={{0,140,72}, {238,46,47}, {0,0,0}, {0,0,0}, {0,140,72}, {238,46,47}, {0,0,0}, 
+{0,140,72}, {238,46,47}}, patterns={LinePattern.Dot, LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Dot, LinePattern.Dash, LinePattern.Solid, LinePattern.Dot, 
+LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5});
+*/
+    equation
+    //  der(intError) = error;
+    end SA_Figge_Fit;
+
+    model SA_Figge_comparison_pCO2
+      "pH dependent on varying pCO2 by different approximations. We take our implementation of SA nomogram as reference. Compare the object's pH"
+      parameter Real Hct = 15/33.34;
+      parameter Real BEox = 0;
+      parameter Real sO2 = 1;
+      output Real pHZander = zander1995.pH;
+      output Real pHNomogram = sAoriginal.pH;
+      output Real pHVanSlyke = sAVanSlyke.pH;
+      input Real pCO2 = time*40 + 20;
+      parameter Real Pi = 1.15;
+      parameter Real alb = 4.4;
+      parameter Real Kx;
+      parameter Real Xi;
+      parameter Real Kxh;
+      FiggeFencl3Extended                         plasma_only(
+        SID=normalPlasma.SID + BEox,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb,
+        Kx = Kx,
+        Xi = Xi,
+        Kxh = Kxh) "Plasma model acc to FiggeFencl for comparison only"
+                                                               annotation (Placement(transformation(extent={{60,-20},{80,0}})));
+
+      SAnomogram_formalization.Zander1995 zander1995(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{-100,40},{-80,60}})));
+      SAnomogram_formalization.Kofr2009 kofr2009(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{-20,40},{0,60}})));
+      SAnomogram_formalization.SAoriginal sAoriginal(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{34,40},{54,60}})));
+      SAnomogram_formalization.SAVanSlyke sAVanSlyke(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{80,40},{100,60}})));
+      SAnomogram_formalization.SAVanSlyke77 sAVanSlyke77(
+        pCO2=pCO2,
+        BEox=BEox,
+        Hct=Hct,
+        sO2=sO2)
+        annotation (Placement(transformation(extent={{-60,40},{-40,60}})));
+
+    protected
+      FiggeFenclNSID normalPlasma(
+        pH0=7.4,
+        pCO20=40,
+        alb0=alb,
+        Pi0=Pi)
+        annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
+      annotation (experiment(Tolerance=0.001), __Dymola_experimentSetupOutput,
+        __Dymola_Commands(file="def.mos" "def"));
+    end SA_Figge_comparison_pCO2;
   end Tests;
 
   package AlbuminBorderFlux
@@ -2740,7 +2998,6 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
                 -100},{100,100}})), experiment(StopTime=1.728e+006,
             __Dymola_NumberOfIntervals=5000));
     end AlbuminBalance;
-
 
     model AlbuminSynthesis
     //  parameter Physiolibrary.Types.MassFlowRate  SynthesisBasic "10 mg/min";
@@ -3005,7 +3262,8 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
 
     end pulse;
   end AlbuminBorderFlux;
-  annotation (uses(Modelica(version="3.2.1"),
+  annotation (uses(
       Physiomodel(version="0.2.29"),
-      Physiolibrary(version="2.3.1")));
+      Physiolibrary(version="2.3.1"),
+      Modelica(version="3.2.2")));
 end FullBloodAcidBase;
