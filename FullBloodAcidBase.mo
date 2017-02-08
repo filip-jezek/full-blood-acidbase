@@ -1711,7 +1711,7 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
     model Full_blood_combo
       "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2"
 
-      FiggeFencl3Detailed                         plasma(
+      replaceable FiggeFencl3Detailed                         plasma(
         SID=SID,
         pCO2=pCO2,
         Pi=Pi,
@@ -1726,31 +1726,25 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
       constant Real fullHb = 33.34;
       input Real Hb = 15;
       input Real Hct = Hb/fullHb;
-      parameter Real k = 1
-        "pisvajcova konstanta - kolik mHCO3 zvostane v erytrocytu? Nebo jina nepresnost? Ideal 0.77";
 
       Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
-      Real BEe( unit = "meq/l")= BE + k*mHCO3/Hct;
+      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
 
       Real mHCO3;
-      //Real pHFullBlood;
 
       Real SID;
       input Real BE = 0;
-    //  Real BE = time*40 - 20;
       input Real pCO2 = 40;
-    //  Real logpco2 = log10(pCO2);
-    //  input Real pCO2 = time*40 + 20;
       input Real Pi = 1.15;
       input Real alb = 4.4;
       output Real pH = fullErythrocyte.pH;
-    //  Real bdHb = der(mHCO3)/der(plasma.pH);
+
     protected
       FiggeFenclNSID normalPlasma(
         pH0=7.4,
         pCO20=40,
         alb0=alb,
-        Pi0=Pi)
+        Pi0=Pi) "Computation of NSID"
         annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
     equation
       plasma.pH = fullErythrocyte.pH;
@@ -1862,11 +1856,12 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
 
             FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hb/33.34, sO2 = 1, Alb= alb)
             annotation (Placement(transformation(extent={{-14,40},{6,60}})));
+            Full_Blood.Wolf_full_blood wolf_full_blood(pCO2 = pCO2, BE = BE, AlbP = alb/AlbMW*1000*10/0.94);
             input Real BE, pCO2;
-            input Real df = 1 "dilution factor";
             input Real alb, Pi;
             input Real Hb;
         protected
+            constant Real AlbMW = 66463;
             FiggeFenclNSID normalPlasma(
             pH0=7.4,
             pCO20=40,
@@ -1914,11 +1909,153 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
       end Auxiliary;
 
     end comparisson;
+
+    model Wolf_full_blood "Implementation of the Wolf acidbase model, reduced to Plasma and Erythrocyte"
+      //default parameters
+      //concentration in erythroctytes
+      parameter Real NaE(unit="mmol/l") = 10/0.73;
+      parameter Real KE(unit="mmol/l") = 99/0.73;
+      parameter Real ClE(unit="mmol/l") = 53.8/0.73;
+      parameter Real Hb(unit="mmol/l") = 5.3/0.73;
+      parameter Real DPG(unit="mmol/l") = 4.4/0.73;
+      parameter Real ATP(unit="mmol/l") = 1.8/0.73;
+      parameter Real GSH(unit="mmol/l") = 2.2/0.73;
+      parameter Real imE(unit="mmol/l") = 20.2/0.73;
+      parameter Real PiE(unit="mmol/l") = 0.67/0.73;
+      //concentrations in plasma nad intersticium
+      parameter Real NaP(unit="mmol/l") = 140/0.94;
+      parameter Real KP(unit="mmol/l") = 4.1/0.94;
+      parameter Real CaP(unit="mmol/l") = 2.3/0.94;
+      parameter Real MgP(unit="mmol/l") = 0.8/0.94;
+      parameter Real ClP(unit="mmol/l") = 105/0.94;
+      parameter Real PiP(unit="mmol/l") = 1.16/0.94;
+      input Real AlbP(unit="mmol/l") = 0.65/0.94;
+      parameter Real imP(unit="mmol/l") = 6/0.94;
+      //charge on inpermeable solutes
+      parameter Real ZimE = -9.2;
+      parameter Real ZimP = -5.3;
+      //volumes and CO2 preassure
+      parameter Real Vblood(unit="l") = 5;
+      input Real pCO2(unit="torr") = 20 + 40*time;
+      //
+      //derived parameters
+      //water volumes in compartments
+      parameter Real Vew0(unit="l") = 0.44 * 0.73 * Vblood;
+      parameter Real Vpw0(unit="l") = (1 - 0.44) * 0.94 * Vblood;
+      //masses in erythrocytes
+      parameter Real m0NaE(unit="mmol") = NaE * Vew0;
+      parameter Real m0KE(unit="mmol") = KE * Vew0;
+      parameter Real m0ClE(unit="mmol") = ClE * Vew0;
+      parameter Real m0Hb(unit="mmol") = Hb * Vew0;
+      parameter Real m0DPG(unit="mmol") = DPG * Vew0;
+      parameter Real m0ATP(unit="mmol") = ATP * Vew0;
+      parameter Real m0GSH(unit="mmol") = GSH * Vew0;
+      parameter Real m0imE(unit="mmol") = imE * Vew0;
+      parameter Real m0PiE(unit="mmol") = PiE * Vew0;
+      //masses in plasma and intersticium
+      parameter Real m0NaP(unit="mmol") = NaP * Vpw0;
+      parameter Real m0KP(unit="mmol") = KP * Vpw0;
+      parameter Real m0CaP(unit="mmol") = CaP * Vpw0;
+      parameter Real m0MgP(unit="mmol") = MgP * Vpw0;
+      parameter Real m0ClP(unit="mmol") = ClP * Vpw0;
+      parameter Real m0PiP(unit="mmol") = PiP * Vpw0;
+      Real m0AlbP(unit="mmol") = AlbP * Vpw0;
+      parameter Real m0imP(unit="mmol") = imP * Vpw0;
+      //overall masses of mobile ions
+      parameter Real MCl(unit="mmol") = m0ClE + m0ClP;
+      //
+      //masses of mobile ions - 13 unknowns
+      Real mClE(unit="mmol");
+      Real mClP(unit="mmol",start = m0ClP);
+      //
+      //volumes of water - 3 unknowns
+      Real Vew(unit="l",start = Vew0);
+      Real Vpw(unit="l",start = Vpw0);
+      //
+      // concentrations of bicarbonates - 3 unknowns
+      Real HCO3E(unit="mmol/l");
+      Real HCO3P(unit="mmol/l");
+      //
+      //pH dependatn chargers
+      Real ZPi = (-1) - 10 ^ (pHP - 6.87) / (1 + 10 ^ (pHP - 6.87));
+      Real ZAlb = (-10.7) - 16 * (10 ^ (pHP - 7.42) / (1 + 10 ^ (pHP - 7.42)));
+      Real ZHb = 15.6 - 23 * (10 ^ (pHE - 6.69) / (1 + 10 ^ (pHE - 6.69))) - 4 * (10 ^ (pHE - 7.89) / (1 + 10 ^ (pHE - 7.89))) + 1.5 * ((1 - 0.75) / 0.75);
+      Real ZDPG = (-3) - 1 * (10 ^ (pHE - 7.56) / (1 + 10 ^ (pHE - 7.56))) - 1 * (10 ^ (pHE - 7.32) / (1 + 10 ^ (pHE - 7.32)));
+      Real ZATP = (-3) - 1 * (10 ^ (pHE - 6.8) / (1 + 10 ^ (pHE - 6.8)));
+      Real ZGSH = (-1) - 1 * (10 ^ (pHE - 8.54) / (1 + 10 ^ (pHE - 8.54))) - 1 * (10 ^ (pHE - 9.42) / (1 + 10 ^ (pHE - 9.42)));
+      Real fiHb = 1 + 0.115 * C_Hb + 0.0256 * C_Hb ^ 2;
+      //carbonates
+      Real CO3E(unit="mmol/l") = HCO3E * 10 ^ (pHE - 10.2);
+      Real CO3P(unit="mmol/l") = HCO3P * 10 ^ (pHP - 10.2);
+      //concentrations
+      Real C_NaE(unit="mmol/l",start = NaE) = m0NaE / Vew;
+      Real C_KE(unit="mmol/l",start = KE) = m0KE / Vew;
+      Real C_ClE(unit="mmol/l",start = ClE) = mClE / Vew;
+      Real C_Hb(unit="mmol/l",start = Hb) = m0Hb / Vew;
+      Real C_DPG(unit="mmol/l",start = DPG) = m0DPG / Vew;
+      Real C_ATP(unit="mmol/l",start = ATP) = m0ATP / Vew;
+      Real C_GSH(unit="mmol/l",start = GSH) = m0GSH / Vew;
+      Real C_imE(unit="mmol/l",start = imE) = m0imE / Vew;
+      Real C_PiE(unit="mmol/l",start = PiE) = m0PiE / Vew;
+      //
+      Real C_NaP(unit="mmol/l",start = NaP) = m0NaP / Vpw;
+      Real C_KP(unit="mmol/l",start = KP) = m0KP / Vpw;
+      Real C_CaP(unit="mmol/l",start = CaP) = m0CaP / Vpw;
+      Real C_MgP(unit="mmol/l",start = MgP) = m0MgP / Vpw;
+      Real C_ClP(unit="mmol/l",start = ClP) = mClP / Vpw;
+      Real C_PiP(unit="mmol/l",start = PiP) = m0PiP / Vpw;
+      Real C_AlbP(unit="mmol/l",start = AlbP) = m0AlbP / Vpw;
+      Real C_imP(unit="mmol/l",start = imP) = m0imP / Vpw;
+      //osmolality
+      Real Oe = (0.93 * C_NaE + 0.93 * C_KE + 0.93 * C_ClE + 0.93 * C_PiE + fiHb * C_Hb + C_DPG + C_ATP + C_GSH + C_imE + HCO3E + CO3E);//*0.73;
+      Real Op = (0.93 * C_NaP + 0.93 * C_KP + 0.93 * C_ClP + C_CaP + C_MgP + HCO3P + CO3P + 0.93 * C_PiP + C_AlbP + C_imP);// *0.94;
+      //electric charge
+      Real Qe = (C_NaE + C_KE - C_ClE - HCO3E - 2 * CO3E + ZHb * C_Hb + ZDPG * C_DPG + ZATP * C_ATP + ZGSH * C_GSH + ZimE)*Vew;
+      Real Qp = (C_NaP + C_KP + 2 * C_CaP + 2 * C_MgP - C_ClP - HCO3P - 2 * CO3P + ZPi * C_PiP + ZAlb * C_AlbP + ZimP)*Vpw+X;
+      parameter Real X(unit="mEq")=0;
+      //
+      input Real BE = 0;
+     //Real SID;
+      Real fH = (Vew + Vew / 0.73 * (1 - 0.73)) / (Vew + Vew / 0.73 * (1 - 0.73) + Vpw + Vpw / 0.94 * (1 - 0.94));
+      Real rCl = C_ClE / C_ClP;
+      Real rHCO3 = HCO3E / HCO3P;
+      //addition of species
+      Real XCl(unit="mmol");//= 0;
+
+      Real HE(start=10^(-7.2));
+      Real HP(start=10^(-7.37));
+      //other unknowns
+      //pH
+      Real pHE(start = 7.22)=-log10(HE);
+      Real pHP(start = 7.4)=-log10(HP);
+    equation
+      //mass conservation - 6 equations
+      MCl = mClE + mClP - XCl;
+      //volume conservation - 1 equation
+      Vew0 + Vpw0 = Vew + Vpw;
+      //
+      //donnan equilibrium - 7 equations
+      C_ClE / C_ClP = HP / HE;
+      //
+      //electroneutrality - 3 equations
+      Qe = 0;
+      Qp = 0;
+        //osmotic equilibrium - 2 equations
+      Op=Oe;
+      //
+      //carbonates and pH
+      HCO3E = 0.026 * pCO2 * 10 ^ (pHE - 6.11);
+      HCO3P = 0.0306 * pCO2 * 10 ^ (pHP - 6.11);
+      //
+      BE = (1 - 0.023 * 9) * (HCO3P - 24.4 + (2.3 * 9 + 7.7) * (pHP - 7.4));
+      annotation(Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})), Diagram(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})));
+      //SID = (1 - (1 - HCO3E / HCO3P) * fH * fB) * HCO3P + (1 - fH * fB) * (C_AlbP * (8 * pHP - 41) + C_PiP * (0.3 * pHP - 0.4)) + C_Hb * fB * (10.2 * pHP - 73.6) + C_DPG * fH * fB * (0.7 * pHP - 0.5);
+    end Wolf_full_blood;
   end Full_Blood;
 
   package Figures
 
-    model Figure1
+    model Figure1 "Comparison of SA nomogram formalisations"
       Real pCO2 = time*40 + 20;
       Real Hct = 15;
       SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE_10(BEox=
@@ -1945,7 +2082,7 @@ LinePattern.Solid}, thicknesses={1.0, 1.0, 1.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.
   */
     end Figure1;
 
-    model Figure1_3_4_BE_curve
+    model Figure2_4_BE_curve "BE curve for graphs with SA nomogram"
       Real BE = time*60 - 30;
       output Real pCO2BE( start = 40) = pco2BECoef[1]*BE^6 + pco2BECoef[2]*BE^5 + pco2BECoef[3]*BE^4 + pco2BECoef[4]*BE^3 + pco2BECoef[5]*BE^2  + pco2BECoef[6]*BE + pco2BECoef[7];
       output Real pHBE( start = 7) = pHBECoef[1]*BE^4 + pHBECoef[2]*BE^3 + pHBECoef[3]*BE^2 + pHBECoef[4]*BE + pHBECoef[5];
@@ -1960,10 +2097,9 @@ LinePattern.Solid}, thicknesses={1.0, 1.0, 1.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.
   createPlot(id=2, position={219, 4, 483, 300}, x="pCO2BE", y={"pHBE"}, range={20.0, 60.00000000000001, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="Figure1_4_BE_curve.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{28,108,200}}, rightTitleType=0);
   */
 
-    end Figure1_3_4_BE_curve;
+    end Figure2_4_BE_curve;
 
-    model figure2A
-      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
+    model figure3A "Verification of the Method during variable BE"
 
     //   Real BetaPlasma = der(plasma_only.pH)/der(BE);
     //   Real BetaEry = der(normalBloodSA.pH)/der(BE);
@@ -1976,7 +2112,6 @@ LinePattern.Solid}, thicknesses={1.0, 1.0, 1.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.
     alb=alb) "Plasma compartment (Hct = 0)"
     annotation (Placement(transformation(extent={{-80,8},{-60,28}})));
   */
-      parameter Real safe_hct = 1;
       SAnomogram_formalization.SAoriginal plasma(
         Hct=0,
         BEox=BEp,
@@ -2059,10 +2194,9 @@ createPlot(id=21, position={0, 0, 483, 300}, x="BE", y={"plasma.pH", "normalBloo
               color={28,108,200},
               arrow={Arrow.None,Arrow.Filled})}),
         __Dymola_experimentSetupOutput);
-    end figure2A;
+    end figure3A;
 
-    model figure2B
-      "Test Figge-fencl plasma and SA full hemoatocrite blood during variable pCO2 against "
+    model figure3B "Verification of the Method during variable pCO2"
 
     //   Real BetaPlasma = der(plasma_only.pH)/der(BE);
     //   Real BetaEry = der(normalBloodSA.pH)/der(BE);
@@ -2158,9 +2292,9 @@ createPlot(id=22, position={95, 253, 483, 300}, x="pCO2", y={"plasma.pH", "norma
               points={{10,84},{10,-74},{10,-80},{10,-82}},
               color={28,108,200},
               arrow={Arrow.None,Arrow.Filled})}));
-    end figure2B;
+    end figure3B;
 
-    model Figures3_4
+    model Figure4
       Real logpCO2 = log10(pCO2);
       Real pCO2 = time*40 + 20;
       parameter Real Hb = 15;
@@ -2246,7 +2380,7 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.25, 0.25, 0.5, 0.25, 0.25, 0
 0.25, 0.25, 0.5, 0.25}, rightTitleType=0);
 
 */
-    end Figures3_4;
+    end Figure4;
 
     model Figure5
       parameter Real Pi = 1.15;
@@ -2300,7 +2434,6 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
       Real dilutionFactor = 0.5 + time;
       Real Hb = 15*dilutionFactor;
       Full_Blood.comparisson.Auxiliary.SetAtAlb dilluted(
-        df=dilutionFactor,
         BE=BE,
         pCO2=pCO2*dilutionFactor,
         alb=alb*dilutionFactor,
@@ -2308,7 +2441,6 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
         Pi=Pi*dilutionFactor) "Dilluted"
         annotation (Placement(transformation(extent={{-80,-40},{-60,-20}})));
       Full_Blood.comparisson.Auxiliary.SetAtAlb compensatedpCO2(
-        df=dilutionFactor,
         BE=BE,
         pCO2=pCO2,
         alb=alb*dilutionFactor,
@@ -2316,7 +2448,6 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
         Pi=Pi*dilutionFactor) "Dilluted"
         annotation (Placement(transformation(extent={{-80,-40},{-60,-20}})));
       Full_Blood.comparisson.Auxiliary.SetAtAlb nondilluted(
-        df=dilutionFactor,
         BE=BE,
         pCO2=pCO2,
         alb=alb,
@@ -2757,6 +2888,35 @@ LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5});
       annotation (experiment(Tolerance=0.001), __Dymola_experimentSetupOutput,
         __Dymola_Commands(file="def.mos" "def"));
     end SA_Figge_comparison_pCO2;
+
+    model Test_Combo_Wolf
+      Real pCO2 = 20 + time*60;
+      Real BE = 0;
+      Full_Blood.Full_blood_combo full_blood_combo( pCO2 = pCO2, BE = BE)
+        annotation (Placement(transformation(extent={{-60,0},{-40,20}})));
+      Full_Blood.Wolf_full_blood wolf_full_blood(pCO2 = pCO2, BE = BE)
+        annotation (Placement(transformation(extent={{0,0},{20,20}})));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+    end Test_Combo_Wolf;
+
+    model Test_Combo_Wolf_at_BE
+      Real pCO2 = 20 + time*60;
+      Test_Combo_Wolf test_Combo_Wolf_15( pCO2 = pCO2, BE = -15)
+        annotation (Placement(transformation(extent={{-60,0},{-40,20}})));
+      Test_Combo_Wolf test_Combo_Wolf0( pCO2 = pCO2, BE = 0)
+        annotation (Placement(transformation(extent={{-20,0},{0,20}})));
+      Test_Combo_Wolf test_Combo_Wolf15( pCO2 = pCO2, BE = 15)
+        annotation (Placement(transformation(extent={{20,0},{40,20}})));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+
+    /*        
+// Dymola plot command
+
+createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.full_blood_combo.pH", "test_Combo_Wolf_15.wolf_full_blood.pHP", "test_Combo_Wolf0.full_blood_combo.pH", "test_Combo_Wolf0.wolf_full_blood.pHP", "test_Combo_Wolf15.wolf_full_blood.pHP", "test_Combo_Wolf15.full_blood_combo.pH"}, range={20.0, 80.0, 7.0, 7.8}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=2, leftTitle="pH", colors={{238,46,47}, {0,0,0}, {238,46,47}, {0,0,0}, {0,0,0}, {238,46,47}}, patterns={LinePattern.Solid, LinePattern.Dash, LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5});
+*/
+    end Test_Combo_Wolf_at_BE;
   end Tests;
 
   package AlbuminBorderFlux
