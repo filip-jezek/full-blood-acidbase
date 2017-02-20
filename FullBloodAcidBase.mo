@@ -145,6 +145,7 @@ model FiggeFencl3Detailed "Extension for detailed albumin balance"
   Real albPositivePart[n], albNegativePart[n];
   Real albTotalPlusPart[n], albTotalMinusPart[n];
   public
+  Real HCO3mEqL = HCO3*1000;
   Real albHAPlus = albConversion*sum(albPositivePart) "A0 + H+ = HA+";
   Real albAMinus = -albConversion*sum(albNegativePart) "A- + H+ = HA0";
   Real albA0 = (ATotPlus - albHAPlus) "A0 + H+ = HA+";
@@ -1854,6 +1855,10 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
             Pi=Pi,
             alb=alb) "Plasma model acc to FiggeFencl for comparison only" annotation (Placement(transformation(extent={{60,-20},{80,0}})));
 
+            SAnomogram_formalization.SAoriginal normalBloodSA(
+            Hb = Hb,
+            BEox=BE,
+            pCO2=pCO2) "SA original for comparison only"   annotation (Placement(transformation(extent={{60,20},{80,40}})));
             FullBloodAcidBase.SAnomogram_formalization.SAVanSlyke sAVanSlyke(  pCO2 = pCO2, BEox = BE, Hct = Hb/33.34, sO2 = 1, Alb= alb)
             annotation (Placement(transformation(extent={{-14,40},{6,60}})));
             Full_Blood.Wolf_full_blood wolf_full_blood(pCO2 = pCO2, BE = BE, AlbP = alb/AlbMW*1000*10/0.94);
@@ -1952,7 +1957,7 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
       parameter Real m0GSH(unit="mmol") = GSH * Vew0;
       parameter Real m0imE(unit="mmol") = imE * Vew0;
       parameter Real m0PiE(unit="mmol") = PiE * Vew0;
-      //masses in plasma and intersticium
+      //masses in plasma
       parameter Real m0NaP(unit="mmol") = NaP * Vpw0;
       parameter Real m0KP(unit="mmol") = KP * Vpw0;
       parameter Real m0CaP(unit="mmol") = CaP * Vpw0;
@@ -1962,7 +1967,7 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
       Real m0AlbP(unit="mmol") = AlbP * Vpw0;
       parameter Real m0imP(unit="mmol") = imP * Vpw0;
       //overall masses of mobile ions
-      parameter Real MCl(unit="mmol") = m0ClE + m0ClP;
+      Real MCl(unit="mmol");// = m0ClE + m0ClP;
       //
       //masses of mobile ions - 13 unknowns
       Real mClE(unit="mmol");
@@ -2020,7 +2025,7 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
       Real rCl = C_ClE / C_ClP;
       Real rHCO3 = HCO3E / HCO3P;
       //addition of species
-      Real XCl(unit="mmol");//= 0;
+      parameter Real XCl(unit="mmol") = 0;
 
       Real HE(start=10^(-7.2));
       Real HP(start=10^(-7.37));
@@ -2048,16 +2053,17 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
       HCO3P = 0.0306 * pCO2 * 10 ^ (pHP - 6.11);
       //
       BE = (1 - 0.023 * 9) * (HCO3P - 24.4 + (2.3 * 9 + 7.7) * (pHP - 7.4));
-      annotation(Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})), Diagram(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})));
       //SID = (1 - (1 - HCO3E / HCO3P) * fH * fB) * HCO3P + (1 - fH * fB) * (C_AlbP * (8 * pHP - 41) + C_PiP * (0.3 * pHP - 0.4)) + C_Hb * fB * (10.2 * pHP - 73.6) + C_DPG * fH * fB * (0.7 * pHP - 0.5);
+      annotation(Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})), Diagram(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})));
     end Wolf_full_blood;
   end Full_Blood;
 
   package Figures
 
     model Figure1 "Comparison of SA nomogram formalisations"
-      Real pCO2 = time*40 + 20;
-      Real Hct = 15;
+      Real pCO2 = time*60 + 20;
+      parameter Real Hb = 15;
+      parameter Real Hct = Hb/33.34;
       SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE_10(BEox=
            -15, pCO2=pCO2, Hct = Hct)
         annotation (Placement(transformation(extent={{-80,20},{-60,40}})));
@@ -2067,18 +2073,19 @@ LinePattern.Dash, LinePattern.Solid, LinePattern.Solid}, thicknesses={0.5, 0.25,
       SAnomogram_formalization.SA_comparison_pCO2 sA_comparison_pCO2_BE10(BEox=
             15, pCO2=pCO2, Hct = Hct)
         annotation (Placement(transformation(extent={{0,20},{20,40}})));
-      FullBloodAcidBase.Figures.Figure1_3_4_BE_curve BE_curve;
+      FullBloodAcidBase.Figures.Figure2_4_BE_curve BE_curve;
 
       // Figure 1 Dymola Script
      /*
-createPlot(id=1, position={0, 0, 483, 300}, x="pCO2", y={"sA_comparison_pCO2_BE_10.sAoriginal.pH", "sA_comparison_pCO2_BE0.sAoriginal.pH",
+ createPlot(id=1, position={522, 188, 483, 300}, x="pCO2", y={"sA_comparison_pCO2_BE_10.sAoriginal.pH", "sA_comparison_pCO2_BE0.sAoriginal.pH",
  "sA_comparison_pCO2_BE10.sAoriginal.pH", "sA_comparison_pCO2_BE_10.zander1995.pH",
  "sA_comparison_pCO2_BE0.zander1995.pH", "sA_comparison_pCO2_BE10.zander1995.pH",
  "sA_comparison_pCO2_BE10.sAVanSlyke.pH", "sA_comparison_pCO2_BE0.sAVanSlyke.pH",
- "sA_comparison_pCO2_BE_10.sAVanSlyke.pH"}, range={20.0, 60.00000000000001, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, 
-{0,0,0}, {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
+ "sA_comparison_pCO2_BE_10.sAVanSlyke.pH"}, range={20.0, 80.0, 7.0, 7.8}, erase=false, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{0,140,72}, {0,140,72}, {0,140,72}, {0,0,0}, {0,0,0}, {0,0,0}, {28,108,200}, 
+{28,108,200}, {28,108,200}}, patterns={LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, LinePattern.Dot, 
 LinePattern.Dot, LinePattern.Dot, LinePattern.Solid, LinePattern.Solid, 
-LinePattern.Solid}, thicknesses={1.0, 1.0, 1.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}, rightTitleType=0);
+LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}, rightTitleType=0);
+ 
   */
     end Figure1;
 
@@ -2296,7 +2303,7 @@ createPlot(id=22, position={95, 253, 483, 300}, x="pCO2", y={"plasma.pH", "norma
 
     model Figure4
       Real logpCO2 = log10(pCO2);
-      Real pCO2 = time*40 + 20;
+      Real pCO2 = time*60 + 20;
       parameter Real Hb = 15;
 
       Full_Blood.comparisson.Auxiliary.ResultSetAtBE resultSetAtBE_10(
@@ -2316,6 +2323,19 @@ createPlot(id=22, position={95, 253, 483, 300}, x="pCO2", y={"plasma.pH", "norma
         annotation (Placement(transformation(extent={{-58,20},{-38,40}})));
 
         // PLOTS
+        /*
+    fig 2 - Full blood combination compared to full blood SA, Figge of plasma and Wolf model
+    createPlot(id=3, position={192, 255, 483, 300}, x="pCO2", y={"resultSetAtBE_10.Normal.FF_plasma_only.pH", "resultSetAtBE_10.Normal.full_blood_combo.pH",
+ "resultSetAtBE_10.normalBloodSA.pH", "resultSetAtBE0.Normal.FF_plasma_only.pH",
+ "resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.normalBloodSA.pH",
+ "resultSetAtBE10.Normal.FF_plasma_only.pH", "resultSetAtBE10.Normal.full_blood_combo.pH",
+ "resultSetAtBE10.normalBloodSA.pH", "resultSetAtBE0.Normal.wolf_full_blood.pHP",
+ "resultSetAtBE_10.Normal.wolf_full_blood.pHP", "resultSetAtBE10.Normal.wolf_full_blood.pHP"}, range={20.0, 80.0, 7.0, 7.8}, erase=false, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{0,0,0}, {238,46,47}, {0,140,72}, {0,0,0}, {238,46,47}, {0,140,72}, {0,0,0}, 
+{238,46,47}, {0,140,72}, {217,67,180}, {217,67,180}, {217,67,180}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, LinePattern.Solid, 
+LinePattern.Solid, LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, 
+LinePattern.Dash, LinePattern.Dot, LinePattern.Dot, LinePattern.Dot}, thicknesses={0.25, 0.5, 0.5, 0.25, 0.5, 0.5, 0.25, 0.5, 0.5, 0.5, 0.5, 0.5}, rightTitleType=0);
+    
+    */
 
         /* FIGURE 3: Full blood combination compared to full blood SA, Figge of plasma and SA of Hct 0 (thus plasma as well)
     createPlot(id=3, position={70, 340, 483, 300}, x="pCO2", y={"resultSetAtBE_10.plasmaSA.pH", "resultSetAtBE_10.Normal.FF_plasma_only.pH", 
@@ -2323,7 +2343,7 @@ createPlot(id=22, position={95, 253, 483, 300}, x="pCO2", y={"plasma.pH", "norma
  "resultSetAtBE0.plasmaSA.pH", "resultSetAtBE0.Normal.FF_plasma_only.pH", 
 "resultSetAtBE0.Normal.full_blood_combo.pH", "resultSetAtBE0.normalBloodSA.pH",
  "resultSetAtBE10.plasmaSA.pH", "resultSetAtBE10.Normal.FF_plasma_only.pH", 
-"resultSetAtBE10.Normal.full_blood_combo.pH", "resultSetAtBE10.normalBloodSA.pH"}, range={20.0, 60.0, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="BErange_alb_Hb5.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{0,0,0}, {0,0,0}, {238,46,47}, {0,140,72}, {0,0,0}, {0,0,0}, {238,46,47}, 
+"resultSetAtBE10.Normal.full_blood_combo.pH", "resultSetAtBE10.normalBloodSA.pH"}, range={20.0, 80.0, 7.000000000000005, 7.799800000000000001}, autoscale=false, grid=true, legend=false, filename="BErange_alb_Hb5.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{0,0,0}, {0,0,0}, {238,46,47}, {0,140,72}, {0,0,0}, {0,0,0}, {238,46,47}, 
 {0,140,72}, {0,0,0}, {0,0,0}, {238,46,47}, {0,140,72}}, patterns={LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
 LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, 
 LinePattern.Dash, LinePattern.Solid, LinePattern.Solid, LinePattern.Dash}, thicknesses={0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5}, rightTitleType=0);
@@ -2345,7 +2365,7 @@ createPlot(id=4, position={0, 0, 483, 300}, x="pCO2", y={"resultSetAtBE0.Normal.
  "resultSetAtBE_10.Normal.full_blood_combo.pH", "resultSetAtBE_10.Normal.FF_plasma_only.pH",
  "resultSetAtBE_10.Normal.sAVanSlyke.pH", "resultSetAtBE_10.HighAlb.full_blood_combo.pH",
  "resultSetAtBE_10.HighAlb.FF_plasma_only.pH", "resultSetAtBE_10.HighAlb.sAVanSlyke.pH",
- "resultSetAtBE_10.LowAlb.full_blood_combo.pH"}, range={20.0, 60.0, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="BErange_alb_Hb5.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {28,108,200}, {0,0,0}, {28,108,200}, {0,0,0}, {238,46,47}, 
+ "resultSetAtBE_10.LowAlb.full_blood_combo.pH"}, range={20.0, 80.0, 7.00000005, 7.79998001}, autoscale=false, grid=true, legend=false, filename="BErange_alb_Hb5.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{238,46,47}, {28,108,200}, {0,0,0}, {28,108,200}, {0,0,0}, {238,46,47}, 
 {28,108,200}, {0,0,0}, {238,46,47}, {238,46,47}, {0,0,0}, {28,108,200}, 
 {238,46,47}, {238,46,47}, {238,46,47}, {0,0,0}, {28,108,200}, {238,46,47}, 
 {0,0,0}, {28,108,200}, {0,0,0}, {28,108,200}, {238,46,47}, {238,46,47}, 
@@ -2370,7 +2390,7 @@ LinePattern.Dash, LinePattern.Dash, LinePattern.Dot}, thicknesses={0.5, 0.25, 0.
  "resultSetAtBE10.HighAlb.FF_plasma_only.pH", "resultSetAtBE10.HighAlb.sAVanSlyke.pH",
  "resultSetAtBE_10.LowAlb.FF_plasma_only.pH", "resultSetAtBE_10.HighAlb.full_blood_combo.pH",
  "resultSetAtBE_10.HighAlb.FF_plasma_only.pH", "resultSetAtBE_10.HighAlb.sAVanSlyke.pH",
- "resultSetAtBE_10.LowAlb.full_blood_combo.pH", "resultSetAtBE_10.LowAlb.sAVanSlyke.pH"}, range={20.0, 60.0, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{28,108,200}, {0,0,0}, {238,46,47}, {28,108,200}, {0,0,0}, {238,46,47}, 
+ "resultSetAtBE_10.LowAlb.full_blood_combo.pH", "resultSetAtBE_10.LowAlb.sAVanSlyke.pH"}, range={20.0, 80.0, 7.000000005, 7.800000001}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{28,108,200}, {0,0,0}, {238,46,47}, {28,108,200}, {0,0,0}, {238,46,47}, 
 {238,46,47}, {0,0,0}, {28,108,200}, {238,46,47}, {0,0,0}, {28,108,200}, 
 {0,0,0}, {238,46,47}, {0,0,0}, {28,108,200}, {238,46,47}, {28,108,200}}, patterns={LinePattern.Dash, LinePattern.Dash, LinePattern.Dash, LinePattern.Solid, 
 LinePattern.Solid, LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, 
@@ -2388,7 +2408,7 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.25, 0.25, 0.5, 0.25, 0.25, 0
       parameter Real Hb = 15;
       Real BE = time*40 - 20;
       Real BEfixed = 0;
-      Real pCO2 = time*40 + 20;
+      Real pCO2 = time*60 + 20;
       Real pCO2fixed = 40;
 
       FullBloodAcidBase.Full_Blood.comparisson.Auxiliary.SetAtAlb fixedBE(  BE = BEfixed, pCO2 = pCO2, alb = alb, Hb = Hb, Pi = Pi)
@@ -2426,13 +2446,14 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
     //
       parameter Real pCO2 = 40;
     //  Real BE = 38.8*dilutionFactor - normalPlasma.SID;
-      Real BE= plasma.SID - normalPlasma.SID;
+      Real BE= ndp.SID*dilutionFactor - normalPlasma.SID;
       Real newSID = ndp.SID*dilutionFactor;
       // mnoram normal SID is 38.97
       parameter Real alb = 4.4;
       parameter Real Pi = 1.15;
-      Real dilutionFactor = 0.5 + time;
+      Real dilutionFactor = 1.25 - time;
       Real Hb = 15*dilutionFactor;
+      Real HbPerCent = Hb/15*100;
       Full_Blood.comparisson.Auxiliary.SetAtAlb dilluted(
         BE=BE,
         pCO2=pCO2*dilutionFactor,
@@ -2486,6 +2507,8 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
 createPlot(id=6, position={46, 289, 586, 421}, x="dilutionFactor", y={"compensatedpCO2.FF_plasma_only.pH", "dilluted.FF_plasma_only.pH", 
 "dilluted.full_blood_combo.pH", "compensatedpCO2.full_blood_combo.pH"}, range={0.5, 1.25, 7.1000000000000005, 7.500000000000001}, grid=true, legend=false, filename="dsres.mat", bottomTitleType=2, bottomTitle="Dilution factor", colors={{0,0,0}, {0,0,0}, {238,46,47}, {238,46,47}}, patterns={LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.5});
 */
+
+    // dilution comparison to Zander
 
     end Figure6;
 
@@ -2892,9 +2915,10 @@ LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5});
     model Test_Combo_Wolf
       Real pCO2 = 20 + time*60;
       Real BE = 0;
+      parameter Real a = 0.65/0.94;
       Full_Blood.Full_blood_combo full_blood_combo( pCO2 = pCO2, BE = BE)
         annotation (Placement(transformation(extent={{-60,0},{-40,20}})));
-      Full_Blood.Wolf_full_blood wolf_full_blood(pCO2 = pCO2, BE = BE)
+      Full_Blood.Wolf_full_blood wolf_full_blood(pCO2 = pCO2, BE = BE, AlbP = a)
         annotation (Placement(transformation(extent={{0,0},{20,20}})));
       annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
             coordinateSystem(preserveAspectRatio=false)));
