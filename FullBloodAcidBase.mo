@@ -1,4 +1,4 @@
-within ;
+﻿within ;
 package FullBloodAcidBase
 model FiggeFencl3
     "Base class for plasma acidbase after Figge and Fencl 3.0, missing inputs for SID, PCO2, total Pi and total albumin"
@@ -3476,8 +3476,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         flow Real q( unit="m3/s");
         stream Real BC[BCE]( each unit="mmol/l")
                                                 "Blood contents";
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics
-              ={Polygon(
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+                Polygon(
                 points={{0,100},{-100,0},{0,-100},{100,0},{0,100}},
                 lineColor={200,0,3},
                 lineThickness=0.5)}),                                  Diagram(
@@ -3818,15 +3818,14 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
 
           Interfaces.BloodIn bloodIn annotation (Placement(transformation(extent={{-10,-100},
                     {10,-80}}), iconTransformation(extent={{-10,-100},{10,-80}})));
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
-                  Rectangle(extent={{-100,100},{100,-100}}, lineColor={0,0,0}),
-                  Rectangle(extent={{-90,80},{90,0}}, lineColor={0,0,0})}), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
         equation
           bloodIn.q = 0;
           bloodIn.BC = zeros(size(bloodIn.BC, 1)) "nothing goes out";
 
-
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+                  Rectangle(extent={{-100,100},{100,-100}}, lineColor={0,0,0}),
+                  Rectangle(extent={{-90,80},{90,0}}, lineColor={0,0,0})}), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end BloodSensorBase;
 
         model CirculationPart
@@ -3837,17 +3836,88 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
         protected
           Interfaces.ConcentrationConnector cCon
             annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-        equation
-          connect(bIn, bOut) annotation (Line(
-              points={{-90,0},{-90,0},{-90,-80},{-46,-80},{90,-80},{90,0}},
-              color={200,0,3},
-              thickness=0.5));
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
                 coordinateSystem(preserveAspectRatio=false), graphics={Line(
-                  points={{-66,32},{-90,32},{-90,14}},
+                  points={{-78,4},{-54,4},{-54,16}},
                   color={200,0,3},
                   thickness=0.5,
-                  arrow={Arrow.Open,Arrow.Open})}));
+                  arrow={Arrow.Open,Arrow.Open}),
+                Line(
+                  points={{-86,0},{90,0},{90,2}},
+                  color={238,46,47},
+                  thickness=0.5,
+                  pattern=LinePattern.Dash),
+                Line(
+                  points={{-50,32},{-50,0}},
+                  color={238,46,47},
+                  thickness=0.5,
+                  pattern=LinePattern.Dash)}),
+            __Dymola_DymolaStoredErrors(thetext="model CirculationPart
+  extends Parts.Auxiliary.OneBloodPort;
+
+protected 
+  Interfaces.ConcentrationConnector cCon
+    annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+  annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+        coordinateSystem(preserveAspectRatio=false), graphics={Line(
+          points={{-78,4},{-54,4},{-54,16}},
+          color={200,0,3},
+          thickness=0.5,
+          arrow={Arrow.Open,Arrow.Open}),
+        Line(
+          points={{-86,0},{90,0},{90,2}},
+          color={238,46,47},
+          thickness=0.5,
+          pattern=LinePattern.Dash),
+        Line(
+          points={{-50,32},{-50,0}},
+          color={238,46,47},
+          thickness=0.5,
+          pattern=LinePattern.Dash)}));
+
+equation
+  
+  bIn.q + bOut.q + cCon.q[BCE.Water];
+  bIn.p = bOut.q*resistance;
+
+  for i in BCE loop
+    if i == BCE.tO2 then
+      bOut.BC[BCE.tO2] = inStream(bIn.BC[BCE.tO2]) - consumedO2/bIn.q;
+    elseif i == BCE.tCO2 then
+      bOut.BC[BCE.tCO2] = inStream(bIn.BC[BCE.tCO2]) + producedCO2/bIn.q;
+    else
+      bOut.BC[i] = inStream(bIn.BC[i]);
+    end if;
+  end for;
+
+
+  assert(bIn.q >= 0, \"The blood in tissues cannot flow backwards!\");
+  for i in BCE loop
+      0 = bIn.BC[i] \"This should never happen, as the flow is projected from In to Out only\";
+  end for;
+end CirculationPart;
+"));
+
+        equation
+
+            bIn.q + bOut.q = 0;
+          bIn.p = bOut.q*resistance;
+
+          for i in BCE loop
+            if i == BCE.tO2 then
+              bOut.BC[BCE.tO2] = inStream(bIn.BC[BCE.tO2]) - consumedO2/bIn.q;
+            elseif i == BCE.tCO2 then
+              bOut.BC[BCE.tCO2] = inStream(bIn.BC[BCE.tCO2]) + producedCO2/bIn.q;
+            else
+              bOut.BC[i] = inStream(bIn.BC[i]);
+            end if;
+          end for;
+
+
+          assert(bIn.q >= 0, "The blood in tissues cannot flow backwards!");
+          for i in BCE loop
+              0 = bIn.BC[i] "This should never happen, as the flow is projected from In to Out only";
+          end for;
         end CirculationPart;
       end Auxiliary;
 
