@@ -3506,8 +3506,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       end BloodOut;
 
       connector ConcentrationConnector
-        Real conc[BCE];
-        flow Real q[BCE];
+        Real conc[BCE]( final unit = "mol/m3");
+        flow Real q[BCE]( final unit = "mol/s");
         annotation (defaultComponentName = "cCon",Icon(coordinateSystem(preserveAspectRatio=false), graphics={
                 Rectangle(
                 extent={{-100,100},{100,-100}},
@@ -3526,7 +3526,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         import FullBloodAcidBase.WBABB.Constants.*;
 
         Interfaces.BloodOut bloodOut
-          annotation (Placement(transformation(extent={{80,80},{100,100}})));
+          annotation (Placement(transformation(extent={{80,-10},{100,10}}),
+              iconTransformation(extent={{80,-10},{100,10}})));
 
       parameter Real K(unit = "mmol/l") = 4.4;
       parameter Real Water(unit = "mmol/l") = waterRatio*1000/waterMolarMass;
@@ -3550,6 +3551,26 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       parameter Real Lactate(unit = "mmol/l") = 1;
       parameter Real Acetate(unit = "mmol/l") = 0;
       parameter Real Citrate(unit = "mmol/l") = 0;
+
+      Real WaterInStream = actualStream(bloodOut.BC[BCE.Water]);
+      Real KactualStream = actualStream(bloodOut.BC[BCE.K]);
+      Real NaactualStream = actualStream(bloodOut.BC[BCE.Na]);
+      Real CaactualStream = actualStream(bloodOut.BC[BCE.Ca]);
+      Real MgactualStream = actualStream(bloodOut.BC[BCE.Mg]);
+      Real ClactualStream = actualStream(bloodOut.BC[BCE.Cl]);
+      Real AlbactualStream = actualStream(bloodOut.BC[BCE.Alb]);
+      Real ProtactualStream = actualStream(bloodOut.BC[BCE.Prot]);
+      Real PactualStream = actualStream(bloodOut.BC[BCE.P]);
+      Real tO2actualStream = actualStream(bloodOut.BC[BCE.tO2]);
+      Real tCO2actualStream = actualStream(bloodOut.BC[BCE.tCO2]);
+      Real BEoxactualStream = actualStream(bloodOut.BC[BCE.BEox]);
+      Real HbactualStream = actualStream(bloodOut.BC[BCE.Hb]);
+      Real GlucoseactualStream = actualStream(bloodOut.BC[BCE.Glucose]);
+      Real UreaactualStream = actualStream(bloodOut.BC[BCE.Urea]);
+      Real UnchrgactualStream = actualStream(bloodOut.BC[BCE.Unchrg]);
+      Real LactateactualStream = actualStream(bloodOut.BC[BCE.Lactate]);
+      Real AcetateactualStream = actualStream(bloodOut.BC[BCE.Acetate]);
+      Real CitrateactualStream = actualStream(bloodOut.BC[BCE.Citrate]);
 
       equation
 
@@ -3630,6 +3651,116 @@ BEox = bloodOut.BC[BCE.BEox];
       equation
         bloodOut.p = pressure;
       end BloodPressureSource;
+
+      model BCQSource
+        import FullBloodAcidBase.WBABB.Interfaces.BCE;
+        import FullBloodAcidBase.WBABB.Constants.*;
+        Interfaces.ConcentrationConnector cCon
+          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+
+      parameter Real Kflow(unit = "mmol/l") = 0;
+      parameter Real Waterflow(unit = "mmol/l") = waterRatioflow*1000/waterMolarMass;
+      parameter Real waterRatioflow(unit = "1") = 0;
+      parameter Real Naflow(unit = "mmol/l")=0;
+      parameter Real Caflow(unit = "mmol/l")=0 "Ionized Ca";
+      parameter Real Mgflow(unit = "mmol/l")=0 "Ionized Mg";
+      parameter Real Clflow(unit = "mmol/l")= 0;
+      parameter Real Albflow(unit = "mmol/l") = AlbMassflow / albuminMolarMass;
+      parameter Real AlbMassflow( unit = "kg/m3") = 0;
+      parameter Real Protflow(unit = "mmol/l") = Albflow/0.6*0.4;
+      parameter Real Pflow(unit = "mmol/l")=0;
+      parameter Real tO2flow(unit = "mmol/l") = 0;
+      parameter Real tCO2flow(unit = "mmol/l") = 0;
+      parameter Real BEoxflow(unit = "mmol/l")= 0;
+      parameter Real Hbflow(unit = "mmol/l") = HbMassflow / HbMolarMass;
+      parameter Real HbMassflow( unit = "kg/m3")=0;
+      parameter Real Glucoseflow(unit = "mmol/l") = 0;
+      parameter Real Ureaflow(unit = "mmol/l") = 0;
+      parameter Real Unchrgflow(unit = "mmol/l") = 0;
+      parameter Real Lactateflow(unit = "mmol/l") = 0;
+      parameter Real Acetateflow(unit = "mmol/l") = 0;
+      parameter Real Citrateflow(unit = "mmol/l") = 0;
+
+      equation
+
+        Waterflow = cCon.q[BCE.Water];
+        Kflow = cCon.q[BCE.K];
+        Naflow = cCon.q[BCE.Na];
+        Caflow = cCon.q[BCE.Ca];
+        Mgflow = cCon.q[BCE.Mg];
+        Clflow = cCon.q[BCE.Cl];
+        Albflow = cCon.q[BCE.Alb];
+        Protflow = cCon.q[BCE.Prot];
+        Pflow = cCon.q[BCE.P];
+        tO2flow = cCon.q[BCE.tO2];
+        tCO2flow = cCon.q[BCE.tCO2];
+        BEoxflow = cCon.q[BCE.BEox];
+        Hbflow = cCon.q[BCE.Hb];
+        Glucoseflow = cCon.q[BCE.Glucose];
+        Ureaflow = cCon.q[BCE.Urea];
+        Unchrgflow = cCon.q[BCE.Unchrg];
+        Lactateflow = cCon.q[BCE.Lactate];
+        Acetateflow = cCon.q[BCE.Acetate];
+        Citrateflow = cCon.q[BCE.Citrate];
+
+      end BCQSource;
+
+      model BCConcSource
+        import FullBloodAcidBase.WBABB.Interfaces.BCE;
+        import FullBloodAcidBase.WBABB.Constants.*;
+        Interfaces.ConcentrationConnector cCon
+          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+
+      parameter Real Kflow(unit = "mmol/l") = 0;
+      parameter Real Waterflow(unit = "mmol/l") = waterRatioflow*1000/waterMolarMass;
+      parameter Real waterRatioflow(unit = "1") = 0;
+      parameter Real Naflow(unit = "mmol/l")=0;
+      parameter Real Caflow(unit = "mmol/l")=0 "Ionized Ca";
+      parameter Real Mgflow(unit = "mmol/l")=0 "Ionized Mg";
+      parameter Real Clflow(unit = "mmol/l")= 0;
+      parameter Real Albflow(unit = "mmol/l") = AlbMassflow / albuminMolarMass;
+      parameter Real AlbMassflow( unit = "kg/m3") = 0;
+      parameter Real Protflow(unit = "mmol/l") = Albflow/0.6*0.4;
+      parameter Real Pflow(unit = "mmol/l")=0;
+      parameter Real tO2flow(unit = "mmol/l") = 0;
+      parameter Real tCO2flow(unit = "mmol/l") = 0;
+      parameter Real BEoxflow(unit = "mmol/l")= 0;
+      parameter Real Hbflow(unit = "mmol/l") = HbMassflow / HbMolarMass;
+      parameter Real HbMassflow( unit = "kg/m3")=0;
+      parameter Real Glucoseflow(unit = "mmol/l") = 0;
+      parameter Real Ureaflow(unit = "mmol/l") = 0;
+      parameter Real Unchrgflow(unit = "mmol/l") = 0;
+      parameter Real Lactateflow(unit = "mmol/l") = 0;
+      parameter Real Acetateflow(unit = "mmol/l") = 0;
+      parameter Real Citrateflow(unit = "mmol/l") = 0;
+
+      equation
+
+        Waterflow = cCon.conc[BCE.Water];
+        Kflow = cCon.conc[BCE.K];
+        Naflow = cCon.conc[BCE.Na];
+        Caflow = cCon.conc[BCE.Ca];
+        Mgflow = cCon.conc[BCE.Mg];
+        Clflow = cCon.conc[BCE.Cl];
+        Albflow = cCon.conc[BCE.Alb];
+        Protflow = cCon.conc[BCE.Prot];
+        Pflow = cCon.conc[BCE.P];
+        tO2flow = cCon.conc[BCE.tO2];
+        tCO2flow = cCon.conc[BCE.tCO2];
+        BEoxflow = cCon.conc[BCE.BEox];
+        Hbflow = cCon.conc[BCE.Hb];
+        Glucoseflow = cCon.conc[BCE.Glucose];
+        Ureaflow = cCon.conc[BCE.Urea];
+        Unchrgflow = cCon.conc[BCE.Unchrg];
+        Lactateflow = cCon.conc[BCE.Lactate];
+        Acetateflow = cCon.conc[BCE.Acetate];
+        Citrateflow = cCon.conc[BCE.Citrate];
+
+      end BCConcSource;
     end Sources;
 
     package Constants
@@ -3830,13 +3961,22 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
 
         model CirculationPart
           extends Parts.Auxiliary.OneBloodPort;
+          import FullBloodAcidBase.WBABB.Interfaces.BCE;
 
-          Interfaces.BloodIn bIn
-            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        protected
           Interfaces.ConcentrationConnector cCon
             annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false),
+                graphics={
+                Line(
+                  points={{-86,0},{90,0},{90,2}},
+                  color={238,46,47},
+                  thickness=0.5,
+                  pattern=LinePattern.Dash),
+                Line(
+                  points={{-50,32},{-50,0}},
+                  color={238,46,47},
+                  thickness=0.5,
+                  pattern=LinePattern.Dash)}),                           Diagram(
                 coordinateSystem(preserveAspectRatio=false), graphics={Line(
                   points={{-78,4},{-54,4},{-54,16}},
                   color={200,0,3},
@@ -3851,68 +3991,17 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
                   points={{-50,32},{-50,0}},
                   color={238,46,47},
                   thickness=0.5,
-                  pattern=LinePattern.Dash)}),
-            __Dymola_DymolaStoredErrors(thetext="model CirculationPart
-  extends Parts.Auxiliary.OneBloodPort;
-
-protected 
-  Interfaces.ConcentrationConnector cCon
-    annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-  annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-        coordinateSystem(preserveAspectRatio=false), graphics={Line(
-          points={{-78,4},{-54,4},{-54,16}},
-          color={200,0,3},
-          thickness=0.5,
-          arrow={Arrow.Open,Arrow.Open}),
-        Line(
-          points={{-86,0},{90,0},{90,2}},
-          color={238,46,47},
-          thickness=0.5,
-          pattern=LinePattern.Dash),
-        Line(
-          points={{-50,32},{-50,0}},
-          color={238,46,47},
-          thickness=0.5,
-          pattern=LinePattern.Dash)}));
-
-equation
-  
-  bIn.q + bOut.q + cCon.q[BCE.Water];
-  bIn.p = bOut.q*resistance;
-
-  for i in BCE loop
-    if i == BCE.tO2 then
-      bOut.BC[BCE.tO2] = inStream(bIn.BC[BCE.tO2]) - consumedO2/bIn.q;
-    elseif i == BCE.tCO2 then
-      bOut.BC[BCE.tCO2] = inStream(bIn.BC[BCE.tCO2]) + producedCO2/bIn.q;
-    else
-      bOut.BC[i] = inStream(bIn.BC[i]);
-    end if;
-  end for;
-
-
-  assert(bIn.q >= 0, \"The blood in tissues cannot flow backwards!\");
-  for i in BCE loop
-      0 = bIn.BC[i] \"This should never happen, as the flow is projected from In to Out only\";
-  end for;
-end CirculationPart;
-"));
+                  pattern=LinePattern.Dash)}));
 
         equation
+        //TODO
+          bIn.q + bOut.q + cCon.q[BCE.Water]/cCon.conc[BCE.Water] = 0;
+          bIn.p = bOut.p;
 
-            bIn.q + bOut.q = 0;
-          bIn.p = bOut.q*resistance;
-
-          for i in BCE loop
-            if i == BCE.tO2 then
-              bOut.BC[BCE.tO2] = inStream(bIn.BC[BCE.tO2]) - consumedO2/bIn.q;
-            elseif i == BCE.tCO2 then
-              bOut.BC[BCE.tCO2] = inStream(bIn.BC[BCE.tCO2]) + producedCO2/bIn.q;
-            else
-              bOut.BC[i] = inStream(bIn.BC[i]);
-            end if;
-          end for;
-
+          // concentration mixing through the flow
+          bOut.BC[:]*bOut.q = actualStream(bIn.BC[:])*bIn.q + cCon.q[:];
+          // set concentrations
+          cCon.conc[:] = actualStream(bIn.BC[:]);
 
           assert(bIn.q >= 0, "The blood in tissues cannot flow backwards!");
           for i in BCE loop
@@ -3921,7 +4010,7 @@ end CirculationPart;
         end CirculationPart;
       end Auxiliary;
 
-      model Tissues
+      model Tissue
         extends Auxiliary.OneBloodPort;
         import FullBloodAcidBase.WBABB.Interfaces.BCE;
         parameter Real resistance;
@@ -3942,7 +4031,6 @@ end CirculationPart;
           end if;
         end for;
 
-
         assert(bIn.q >= 0, "The blood in tissues cannot flow backwards!");
         for i in BCE loop
             0 = bIn.BC[i] "This should never happen, as the flow is projected from In to Out only";
@@ -3957,6 +4045,126 @@ end CirculationPart;
                 fillColor={255,170,170},
                 fillPattern=FillPattern.Solid,
                 textString="%class")}));
+      end Tissue;
+
+      package Tissues
+
+        package Tests
+
+          model TestWater
+            Plasma plasma(plasmaInitialVolume(displayUnit="l") = 0.001)
+              annotation (Placement(transformation(extent={{-40,20},{-20,40}})));
+            Sources.BCConcSource bCConcSource annotation (Placement(
+                  transformation(extent={{-68,20},{-88,40}})));
+            ConcentrationResistor concentrationResistor(R=1) annotation (
+                Placement(transformation(extent={{-42,20},{-62,40}})));
+          equation
+            connect(plasma.cCon1, concentrationResistor.cCon) annotation (Line(
+                points={{-39,30},{-44,30},{-43,30}},
+                color={0,0,0},
+                thickness=0.5));
+            connect(concentrationResistor.cCon1, bCConcSource.cCon) annotation
+              (Line(
+                points={{-61,30},{-69,30}},
+                color={0,0,0},
+                thickness=0.5));
+            annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
+                Diagram(coordinateSystem(preserveAspectRatio=false)));
+          end TestWater;
+        end Tests;
+
+        model Plasma
+          import FullBloodAcidBase.WBABB.Interfaces.BCE;
+
+          Interfaces.ConcentrationConnector cCon2
+            annotation (Placement(transformation(extent={{80,-10},{100,10}})));
+          Interfaces.ConcentrationConnector cCon1
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+          Real tBC[BCE];
+          Real volume( unit = "m3", start = plasmaInitialVolume, fixed = true);
+
+          parameter Real plasmaInitialVolume(unit = "m3");
+        initial equation
+          tBC[BCE.Na]/volume = 1;
+        equation
+
+          der(volume) = cCon1.q[BCE.Water] + cCon2.q[BCE.Water];
+        //  0 = cCon1.q[BCE.Water] + cCon2.q[BCE.Water];
+          der(tBC) = cCon1.q + cCon2.q;
+          cCon1.conc = cCon2.conc;
+
+          for i in BCE loop
+            cCon1.conc[i] = tBC[i]/volume;
+          end for;
+
+        end Plasma;
+
+        model Interstitia
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          Interfaces.ConcentrationConnector cCon1
+            annotation (Placement(transformation(extent={{80,-10},{100,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end Interstitia;
+
+        model Cells
+          parameter Real consumedO2(unit="mol/s", displayUnit = "mmol/s");
+          parameter Real producedCO2(unit="mol/s", displayUnit = "mmol/s");
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end Cells;
+
+        model Tissues
+          extends Parts.Auxiliary.CirculationPart;
+          Parts.Tissues.Interstitia interstitia
+            annotation (Placement(transformation(extent={{20,20},{40,40}})));
+          Parts.Tissues.Cells cells
+            annotation (Placement(transformation(extent={{60,20},{80,40}})));
+          Parts.Tissues.Plasma plasma
+            annotation (Placement(transformation(extent={{-20,20},{0,40}})));
+        equation
+          connect(plasma.cCon2, interstitia.cCon) annotation (Line(
+              points={{-1,30},{21,30}},
+              color={0,0,0},
+              thickness=0.5));
+          connect(interstitia.cCon1, cells.cCon) annotation (Line(
+              points={{39,30},{50,30},{61,30}},
+              color={0,0,0},
+              thickness=0.5));
+          connect(cCon, plasma.cCon1) annotation (Line(
+              points={{-50,30},{-36,30},{-36,30},{-19,30}},
+              color={0,0,0},
+              thickness=0.5));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end Tissues;
+
+        model PIMembrane
+
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          Interfaces.ConcentrationConnector cCon1
+            annotation (Placement(transformation(extent={{80,-10},{100,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+          Real OsmP;
+          Real OsmI;
+          Real ChargeP;
+          Real ChargeI;
+
+        equation
+          // charges must be zero
+
+          // osmotic balances must be equal
+
+          // partial pressures of blood gases must be equal
+
+        end PIMembrane;
       end Tissues;
 
       model bloodABBMeasurement
@@ -4038,6 +4246,180 @@ end CirculationPart;
                 textString="ABB")}),                                   Diagram(
               coordinateSystem(preserveAspectRatio=false)));
       end bloodABBMeasurement;
+
+      package Respiration
+
+        model RespirationO2
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          Modelica.Blocks.Interfaces.RealInput RespirationDrive
+            annotation (Placement(transformation(extent={{60,60},{100,100}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end RespirationO2;
+
+        model RespirationCO2
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          Modelica.Blocks.Interfaces.RealInput RespirationDrive
+            annotation (Placement(transformation(extent={{60,60},{100,100}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end RespirationCO2;
+
+        model RespirationDrive
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          Modelica.Blocks.Interfaces.RealOutput RespirationDrive
+            annotation (Placement(transformation(extent={{60,-100},{100,-60}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end RespirationDrive;
+
+        model Respiration
+          extends Parts.Auxiliary.CirculationPart;
+          Parts.Respiration.RespirationDrive respirationDrive
+            annotation (Placement(transformation(extent={{-20,60},{20,100}})));
+          Parts.Respiration.RespirationO2 respirationO2_1
+            annotation (Placement(transformation(extent={{-20,10},{20,50}})));
+          Parts.Respiration.RespirationCO2 respirationCO2_1
+            annotation (Placement(transformation(extent={{-20,-40},{20,0}})));
+        equation
+          connect(respirationDrive.RespirationDrive, respirationCO2_1.RespirationDrive)
+            annotation (Line(points={{16,64},{28,64},{40,64},{40,-4},{16,-4}},
+                color={0,0,127}));
+          connect(respirationDrive.RespirationDrive, respirationO2_1.RespirationDrive)
+            annotation (Line(points={{16,64},{28,64},{40,64},{40,46},{16,46}},
+                color={0,0,127}));
+          connect(cCon, respirationO2_1.cCon) annotation (Line(
+              points={{-50,30},{-34,30},{-18,30}},
+              color={0,0,0},
+              thickness=0.5));
+          connect(cCon, respirationDrive.cCon) annotation (Line(
+              points={{-50,30},{-32,30},{-32,80},{-18,80}},
+              color={0,0,0},
+              thickness=0.5));
+          connect(cCon, respirationCO2_1.cCon) annotation (Line(
+              points={{-50,30},{-42,30},{-32,30},{-32,-20},{-18,-20}},
+              color={0,0,0},
+              thickness=0.5));
+        end Respiration;
+      end Respiration;
+
+      package Kidney
+
+        model KidneyWaterBalance
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end KidneyWaterBalance;
+
+        model KidneyOsmoticBalance
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end KidneyOsmoticBalance;
+
+        model KidneypHcorrection
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end KidneypHcorrection;
+
+        model Kidney
+          extends Parts.Auxiliary.CirculationPart;
+
+        public
+          Parts.Kidney.KidneyWaterBalance kidneyWaterBalance
+            annotation (Placement(transformation(extent={{-20,60},{20,100}})));
+          Parts.Kidney.KidneyOsmoticBalance kidneyOsmoticBalance
+            annotation (Placement(transformation(extent={{-20,10},{20,50}})));
+          Parts.Kidney.KidneypHcorrection kidneypHcorrection
+            annotation (Placement(transformation(extent={{-20,-40},{20,0}})));
+        equation
+          connect(cCon, kidneyWaterBalance.cCon) annotation (Line(
+              points={{-50,30},{-34,30},{-34,80},{-18,80}},
+              color={0,0,0},
+              thickness=0.5));
+          connect(cCon, kidneypHcorrection.cCon) annotation (Line(
+              points={{-50,30},{-34,30},{-34,-20},{-18,-20}},
+              color={0,0,0},
+              thickness=0.5));
+          connect(cCon, kidneyOsmoticBalance.cCon) annotation (Line(
+              points={{-50,30},{-34,30},{-18,30}},
+              color={0,0,0},
+              thickness=0.5));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+        end Kidney;
+      end Kidney;
+
+      package Metabolism
+
+        model MetabolismAcetate
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
+              Diagram(coordinateSystem(preserveAspectRatio=false)));
+        end MetabolismAcetate;
+
+        model MetabolismCitrate
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
+              Diagram(coordinateSystem(preserveAspectRatio=false)));
+        end MetabolismCitrate;
+
+        model MetabolismLactate
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
+              Diagram(coordinateSystem(preserveAspectRatio=false)));
+        end MetabolismLactate;
+
+        model Liver
+          extends Parts.Auxiliary.CirculationPart;
+          MetabolismAcetate metabolismAcetate
+            annotation (Placement(transformation(extent={{-20,70},{0,90}})));
+          MetabolismCitrate metabolismCitrate
+            annotation (Placement(transformation(extent={{-20,40},{0,60}})));
+          MetabolismLactate metabolismLactate
+            annotation (Placement(transformation(extent={{-20,10},{0,30}})));
+        equation
+          connect(cCon, metabolismLactate.cCon) annotation (Line(
+              points={{-50,30},{-34,30},{-34,20},{-19,20}},
+              color={0,0,0},
+              thickness=0.5));
+          connect(cCon, metabolismCitrate.cCon) annotation (Line(
+              points={{-50,30},{-34,30},{-34,50},{-19,50}},
+              color={0,0,0},
+              thickness=0.5));
+          connect(cCon, metabolismAcetate.cCon) annotation (Line(
+              points={{-50,30},{-50,30},{-34,30},{-34,80},{-34,80},{-20,80},{
+                  -20,80},{-19,80}},
+              color={0,0,0},
+              thickness=0.5));
+        end Liver;
+      end Metabolism;
+
+      model ConcentrationResistor
+        import FullBloodAcidBase.WBABB.Interfaces.BCE;
+        Interfaces.ConcentrationConnector cCon
+          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
+        Interfaces.ConcentrationConnector cCon1
+          annotation (Placement(transformation(extent={{80,-10},{100,10}})));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+        parameter Real R;
+      equation
+        cCon.conc - cCon1.conc = cCon.q*R;
+        cCon.q + cCon1.q = zeros(size(cCon.q, 1));
+
+
+      end ConcentrationResistor;
     end Parts;
 
     package Tests
@@ -4051,7 +4433,7 @@ end CirculationPart;
           annotation (Placement(transformation(extent={{-82,12},{-64,32}})));
         Sources.BloodPressureSource bloodPressureSource(pressure=0)
           annotation (Placement(transformation(extent={{20,12},{40,32}})));
-        Parts.Tissues tissues(
+        Parts.Tissue tissues(
           resistance=1,
           consumedO2(displayUnit="mmol/day") = 0.00025462962962963,
           producedCO2(displayUnit="mmol/day") = 0.00025462962962963)
@@ -4453,166 +4835,10 @@ end CirculationPart;
       end bloodABBMeasurementTestHack;
     end Thrash;
 
-    package NotImplemented
-      model RespirationO2
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        Modelica.Blocks.Interfaces.RealInput RespirationDrive
-          annotation (Placement(transformation(extent={{60,60},{100,100}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end RespirationO2;
-
-      model RespirationCO2
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        Modelica.Blocks.Interfaces.RealInput RespirationDrive
-          annotation (Placement(transformation(extent={{60,60},{100,100}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end RespirationCO2;
-
-      model RespirationDrive
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        Modelica.Blocks.Interfaces.RealOutput RespirationDrive
-          annotation (Placement(transformation(extent={{60,-100},{100,-60}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end RespirationDrive;
-
-      model Respiration
-        extends Parts.Auxiliary.CirculationPart;
-        RespirationDrive respirationDrive
-          annotation (Placement(transformation(extent={{-20,60},{20,100}})));
-        RespirationO2 respirationO2_1
-          annotation (Placement(transformation(extent={{-20,10},{20,50}})));
-        RespirationCO2 respirationCO2_1
-          annotation (Placement(transformation(extent={{-20,-40},{20,0}})));
-      equation
-        connect(respirationDrive.RespirationDrive, respirationCO2_1.RespirationDrive)
-          annotation (Line(points={{16,64},{28,64},{40,64},{40,-4},{16,-4}},
-              color={0,0,127}));
-        connect(respirationDrive.RespirationDrive, respirationO2_1.RespirationDrive)
-          annotation (Line(points={{16,64},{28,64},{40,64},{40,46},{16,46}},
-              color={0,0,127}));
-        connect(cCon, respirationO2_1.cCon) annotation (Line(
-            points={{-50,30},{-34,30},{-18,30}},
-            color={0,0,0},
-            thickness=0.5));
-        connect(cCon, respirationDrive.cCon) annotation (Line(
-            points={{-50,30},{-32,30},{-32,80},{-18,80}},
-            color={0,0,0},
-            thickness=0.5));
-        connect(cCon, respirationCO2_1.cCon) annotation (Line(
-            points={{-50,30},{-42,30},{-32,30},{-32,-20},{-18,-20}},
-            color={0,0,0},
-            thickness=0.5));
-      end Respiration;
-
-      model Plasma
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{80,-10},{100,10}})));
-        Interfaces.ConcentrationConnector bIn
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end Plasma;
-
-      model Interstitia
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        Interfaces.ConcentrationConnector cCon1
-          annotation (Placement(transformation(extent={{80,-10},{100,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end Interstitia;
-
-      model Cells
-        parameter Real consumedO2(unit="mol/s", displayUnit = "mmol/s");
-        parameter Real producedCO2(unit="mol/s", displayUnit = "mmol/s");
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end Cells;
-
-      model Tissues
-        extends Parts.Auxiliary.CirculationPart;
-        Interstitia interstitia
-          annotation (Placement(transformation(extent={{20,20},{40,40}})));
-        Cells cells annotation (Placement(transformation(extent={{60,20},{80,40}})));
-        Plasma plasma annotation (Placement(transformation(extent={{-20,20},{0,
-                  40}})));
-      equation
-        connect(plasma.cCon, interstitia.cCon) annotation (Line(
-            points={{-1,30},{21,30}},
-            color={0,0,0},
-            thickness=0.5));
-        connect(interstitia.cCon1, cells.cCon) annotation (Line(
-            points={{39,30},{50,30},{61,30}},
-            color={0,0,0},
-            thickness=0.5));
-        connect(cCon, plasma.bIn) annotation (Line(
-            points={{-50,30},{-36,30},{-36,30},{-19,30}},
-            color={0,0,0},
-            thickness=0.5));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end Tissues;
-
-      model KidneyWaterBalance
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end KidneyWaterBalance;
-
-      model KidneyOsmoticBalance
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end KidneyOsmoticBalance;
-
-      model KidneypHcorrection
-        Interfaces.ConcentrationConnector cCon
-          annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end KidneypHcorrection;
-
-      model Kidney
-        extends Parts.Auxiliary.CirculationPart;
-
-      public
-        KidneyWaterBalance kidneyWaterBalance
-          annotation (Placement(transformation(extent={{-20,60},{20,100}})));
-        KidneyOsmoticBalance kidneyOsmoticBalance
-          annotation (Placement(transformation(extent={{-20,10},{20,50}})));
-        KidneypHcorrection kidneypHcorrection
-          annotation (Placement(transformation(extent={{-20,-40},{20,0}})));
-      equation
-        connect(cCon, kidneyWaterBalance.cCon) annotation (Line(
-            points={{-50,30},{-34,30},{-34,80},{-18,80}},
-            color={0,0,0},
-            thickness=0.5));
-        connect(cCon, kidneypHcorrection.cCon) annotation (Line(
-            points={{-50,30},{-34,30},{-34,-20},{-18,-20}},
-            color={0,0,0},
-            thickness=0.5));
-        connect(cCon, kidneyOsmoticBalance.cCon) annotation (Line(
-            points={{-50,30},{-34,30},{-18,30}},
-            color={0,0,0},
-            thickness=0.5));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end Kidney;
-
-      model Liver
-        extends Parts.Auxiliary.CirculationPart;
-      end Liver;
-    end NotImplemented;
+    model TotalModel
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+    end TotalModel;
   end WBABB;
   annotation (uses(
       Physiomodel(version="0.2.29"),
