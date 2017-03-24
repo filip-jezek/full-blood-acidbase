@@ -3657,8 +3657,6 @@ BEox = bloodOut.BC[BCE.BEox];
         import FullBloodAcidBase.WBABB.Constants.*;
         Interfaces.ConcentrationConnector cCon
           annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
 
       parameter Real Kflow(unit = "mmol/l") = 0;
       parameter Real Waterflow(unit = "mmol/l") = waterRatioflow*1000/waterMolarMass;
@@ -3705,6 +3703,8 @@ BEox = bloodOut.BC[BCE.BEox];
         Acetateflow = cCon.q[BCE.Acetate];
         Citrateflow = cCon.q[BCE.Citrate];
 
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end BCQSource;
 
       model BCConcSource
@@ -3712,8 +3712,6 @@ BEox = bloodOut.BC[BCE.BEox];
         import FullBloodAcidBase.WBABB.Constants.*;
         Interfaces.ConcentrationConnector cCon
           annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
 
       parameter Real Kflow(unit = "mmol/l") = 0;
       parameter Real Waterflow(unit = "mmol/l") = waterRatioflow*1000/waterMolarMass;
@@ -3760,6 +3758,8 @@ BEox = bloodOut.BC[BCE.BEox];
         Acetateflow = cCon.conc[BCE.Acetate];
         Citrateflow = cCon.conc[BCE.Citrate];
 
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end BCConcSource;
     end Sources;
 
@@ -3946,18 +3946,29 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
         end OneBloodPort;
 
         model BloodSensorBase
-
+          extends FullBloodAcidBase.WBABB.Icons.MeasurementIcon;
           Interfaces.BloodIn bloodIn annotation (Placement(transformation(extent={{-10,-100},
                     {10,-80}}), iconTransformation(extent={{-10,-100},{10,-80}})));
         equation
           bloodIn.q = 0;
           bloodIn.BC = zeros(size(bloodIn.BC, 1)) "nothing goes out";
 
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
-                  Rectangle(extent={{-100,100},{100,-100}}, lineColor={0,0,0}),
-                  Rectangle(extent={{-90,80},{90,0}}, lineColor={0,0,0})}), Diagram(
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),    Diagram(
                 coordinateSystem(preserveAspectRatio=false)));
         end BloodSensorBase;
+
+        partial model CConMeasurement
+          extends FullBloodAcidBase.WBABB.Icons.MeasurementIcon;
+        public
+          Interfaces.ConcentrationConnector cCon
+            annotation (Placement(transformation(extent={{-10,-100},{10,-80}})));
+        equation
+          cCon.q = zeros(size(cCon.q, 1)) "nothing goes out";
+
+          annotation (Icon(graphics={
+                  Rectangle(extent={{-100,100},{100,-100}}, lineColor={0,0,0}),
+                  Rectangle(extent={{-90,80},{90,0}}, lineColor={0,0,0})}));
+        end CConMeasurement;
 
         model CirculationPart
           extends Parts.Auxiliary.OneBloodPort;
@@ -3965,6 +3976,21 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
 
           Interfaces.ConcentrationConnector cCon
             annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+
+        equation
+        //TODO
+          bIn.q + bOut.q + cCon.q[BCE.Water]/cCon.conc[BCE.Water] = 0;
+          bIn.p = bOut.p;
+
+          // concentration mixing through the flow
+          bOut.BC[:]*bOut.q = actualStream(bIn.BC[:])*bIn.q + cCon.q[:];
+          // set concentrations
+          cCon.conc[:] = actualStream(bIn.BC[:]);
+
+          assert(bIn.q >= 0, "The blood in tissues cannot flow backwards!");
+          for i in BCE loop
+              0 = bIn.BC[i] "This should never happen, as the flow is projected from In to Out only";
+          end for;
           annotation (Icon(coordinateSystem(preserveAspectRatio=false),
                 graphics={
                 Line(
@@ -3992,22 +4018,90 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
                   color={238,46,47},
                   thickness=0.5,
                   pattern=LinePattern.Dash)}));
-
-        equation
-        //TODO
-          bIn.q + bOut.q + cCon.q[BCE.Water]/cCon.conc[BCE.Water] = 0;
-          bIn.p = bOut.p;
-
-          // concentration mixing through the flow
-          bOut.BC[:]*bOut.q = actualStream(bIn.BC[:])*bIn.q + cCon.q[:];
-          // set concentrations
-          cCon.conc[:] = actualStream(bIn.BC[:]);
-
-          assert(bIn.q >= 0, "The blood in tissues cannot flow backwards!");
-          for i in BCE loop
-              0 = bIn.BC[i] "This should never happen, as the flow is projected from In to Out only";
-          end for;
         end CirculationPart;
+
+        model ABBMeasurement
+
+          replaceable totalO2Physiomodel totalO2Base1 constrainedby
+            totalO2Physiomodel
+            annotation (Placement(transformation(extent={{-30,48},{-10,68}})));
+          replaceable totalCO2Physiomodel totalCO2Base1 constrainedby
+            totalCO2Physiomodel
+            annotation (Placement(transformation(extent={{-20,-50},{0,-30}})));
+          replaceable ABBVanSlyke aBBB1 constrainedby ABBVanSlyke
+            annotation (Placement(transformation(extent={{18,-8},{50,24}})));
+
+          Modelica.Blocks.Interfaces.RealInput P
+            annotation (Placement(transformation(extent={{-100,-10},{-90,0}}),
+                iconTransformation(extent={{-100,-10},{-90,0}})));
+          Modelica.Blocks.Interfaces.RealInput Alb
+            annotation (Placement(transformation(extent={{-100,-30},{-90,-20}}),
+                iconTransformation(extent={{-100,-30},{-90,-20}})));
+          Modelica.Blocks.Interfaces.RealInput BEox
+            annotation (Placement(transformation(extent={{-100,-50},{-90,-40}}),
+                iconTransformation(extent={{-100,-50},{-90,-40}})));
+          Modelica.Blocks.Interfaces.RealInput tCO2 annotation (Placement(
+                transformation(rotation=0, extent={{-100,-100},{-80,-80}}),
+                iconTransformation(extent={{-100,-100},{-80,-80}})));
+          Modelica.Blocks.Interfaces.RealInput Hb annotation (Placement(transformation(
+                  rotation=0, extent={{-100,10},{-80,30}}), iconTransformation(extent={{
+                    -100,10},{-80,30}})));
+          Modelica.Blocks.Interfaces.RealInput tO2 annotation (Placement(transformation(
+                  rotation=0, extent={{-100,80},{-80,100}}),iconTransformation(extent={{-100,80},
+                    {-80,100}})));
+          Modelica.Blocks.Interfaces.RealOutput pH
+            annotation (Placement(transformation(extent={{80,50},{100,70}})));
+          Modelica.Blocks.Interfaces.RealOutput HCO3
+            annotation (Placement(transformation(extent={{80,10},{100,30}})));
+          Modelica.Blocks.Interfaces.RealOutput pCO2
+            annotation (Placement(transformation(extent={{80,-30},{100,-10}})));
+          Modelica.Blocks.Interfaces.RealOutput pO2
+            annotation (Placement(transformation(extent={{80,-70},{100,-50}})));
+        equation
+          connect(totalO2Base1.pCO2,totalCO2Base1. pCO2) annotation (Line(points={{-20,49},
+                  {-18,49},{-18,20},{-18,-31}},          color={0,0,127}));
+          connect(totalO2Base1.sO2,totalCO2Base1. sO2) annotation (Line(points={{-15,49},
+                  {-8,49},{-8,-36},{-8,-37},{-2,-37}}, color={0,0,127}));
+          connect(totalCO2Base1.pO2,totalO2Base1. pO2) annotation (Line(points={{-2,-43},
+                  {-2,-43},{-2,-44},{70,-44},{70,67},{-11,67}}, color={0,0,127}));
+          connect(totalCO2Base1.pCO2,aBBB1. pCO2) annotation (Line(points={{-18,-31},{-18,
+                  4},{-18,17.6},{18,17.6}},
+                                      color={0,0,127}));
+          connect(totalO2Base1.sO2,aBBB1. sO2)
+            annotation (Line(points={{-15,49},{-8,49},{-8,14},{18,14},{18,12.8}},
+                                                                color={0,0,127}));
+          connect(BEox,aBBB1. BEox) annotation (Line(points={{-95,-45},{-54,-45},
+                  {-54,-36},{-54,-8},{18,-8},{18,-6.4}},
+                              color={0,0,127}));
+          connect(Hb, aBBB1.Hb) annotation (Line(points={{-90,20},{16,20},{16,22.4},{18,
+                  22.4}}, color={0,0,127}));
+          connect(Hb, totalCO2Base1.Hb) annotation (Line(points={{-90,20},{-90,20},{-30,
+                  20},{-30,-41},{-26,-41},{-20,-41}}, color={0,0,127}));
+          connect(tCO2, totalCO2Base1.tCO2) annotation (Line(points={{-90,-90},
+                  {-40,-90},{-40,-45},{-20,-45}},
+                                        color={0,0,127}));
+          connect(Hb, totalO2Base1.Hb) annotation (Line(points={{-90,20},{-66,20},{-66,49},
+                  {-30,49}}, color={0,0,127}));
+          connect(tO2, totalO2Base1.tO2) annotation (Line(points={{-90,90},{-84,
+                  90},{-30,90},{-30,61}},
+                                 color={0,0,127}));
+          connect(totalO2Base1.pO2, pO2) annotation (Line(points={{-11,67},{70,67},{70,-58},
+                  {70,-60},{90,-60}}, color={0,0,127}));
+          connect(totalCO2Base1.pCO2, pCO2) annotation (Line(points={{-18,-31},{-18,-31},
+                  {-18,-20},{90,-20}}, color={0,0,127}));
+          connect(aBBB1.pH, totalO2Base1.pH) annotation (Line(points={{50,22.4},{62,22.4},
+                  {62,22},{62,57},{-12,57}}, color={0,0,127}));
+          connect(aBBB1.pH, pH) annotation (Line(points={{50,22.4},{62,22.4},{62,22},{62,
+                  60},{90,60}}, color={0,0,127}));
+          connect(aBBB1.pH, totalCO2Base1.pH) annotation (Line(points={{50,22.4},{62,22.4},
+                  {62,22},{62,-31},{-2,-31}}, color={0,0,127}));
+          connect(aBBB1.HCO3, HCO3) annotation (Line(points={{50,16},{66,16},{66,16},{82,
+                  16},{82,20},{90,20}}, color={0,0,127}));
+          connect(Alb, aBBB1.Alb) annotation (Line(points={{-95,-25},{-60,-25},
+                  {-60,0},{18,0}}, color={0,0,127}));
+          connect(P, aBBB1.P) annotation (Line(points={{-95,-5},{-74,-5},{-74,
+                  6.4},{18,6.4}}, color={0,0,127}));
+        end ABBMeasurement;
       end Auxiliary;
 
       model Tissue
@@ -4063,25 +4157,74 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
                 points={{-39,30},{-44,30},{-43,30}},
                 color={0,0,0},
                 thickness=0.5));
-            connect(concentrationResistor.cCon1, bCConcSource.cCon) annotation
-              (Line(
+            connect(concentrationResistor.cCon1, bCConcSource.cCon) annotation (
+               Line(
                 points={{-61,30},{-69,30}},
                 color={0,0,0},
                 thickness=0.5));
             annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
                 Diagram(coordinateSystem(preserveAspectRatio=false)));
           end TestWater;
+
+          model testPI
+            Plasma plasma(plasmaInitialVolume(displayUnit="l") = 0.002)
+              annotation (Placement(transformation(extent={{-60,20},{-80,40}})));
+            PIMembrane pIMembrane(R={1,1,1,1,1,1,1e9,1e9,1,1e9,1e9,1e9,1e9,1,1,
+                  1,1,1,1})
+              annotation (Placement(transformation(extent={{-22,20},{-2,40}})));
+            Plasma Interstitia(plasmaInitialVolume(displayUnit="l") = 0.01)
+              annotation (Placement(transformation(extent={{40,20},{60,40}})));
+            ConcentrationABBMeasurement concentrationABBMeasurement annotation
+              (Placement(transformation(extent={{-60,60},{-40,80}})));
+            ConcentrationABBMeasurement concentrationABBMeasurement1
+              annotation (Placement(transformation(extent={{40,60},{20,80}})));
+          equation
+            connect(plasma.cCon, pIMembrane.cCon) annotation (Line(
+                points={{-61,30},{-21,30}},
+                color={0,0,0},
+                thickness=0.5));
+            connect(Interstitia.cCon, pIMembrane.cCon1) annotation (Line(
+                points={{41,30},{20,30},{-3,30}},
+                color={0,0,0},
+                thickness=0.5));
+            connect(plasma.cCon, concentrationABBMeasurement.cCon) annotation (
+                Line(
+                points={{-61,30},{-46,30},{-46,61},{-50,61}},
+                color={0,0,0},
+                thickness=0.5));
+            connect(Interstitia.cCon, concentrationABBMeasurement1.cCon)
+              annotation (Line(
+                points={{41,30},{24,30},{24,61},{30,61}},
+                color={0,0,0},
+                thickness=0.5));
+            connect(concentrationABBMeasurement1.pO2, pIMembrane.u5)
+              annotation (Line(points={{20,65},{16,65},{16,34},{-2.4,34},{-2.4,
+                    32}}, color={0,0,127}));
+            connect(pIMembrane.u4, concentrationABBMeasurement1.pCO2)
+              annotation (Line(points={{-2.2,34.8},{20,34.8},{20,69}}, color={0,
+                    0,127}));
+            connect(concentrationABBMeasurement1.HCO3, pIMembrane.u3)
+              annotation (Line(points={{20,73},{16,73},{16,68},{-2.2,68},{-2.2,
+                    38.8}}, color={0,0,127}));
+            connect(concentrationABBMeasurement.pO2, pIMembrane.u2) annotation
+              (Line(points={{-40,65},{-40,65},{-40,34},{-22,34},{-22,32}},
+                  color={0,0,127}));
+            connect(pIMembrane.u1, concentrationABBMeasurement.pCO2)
+              annotation (Line(points={{-21.8,34.8},{-21.8,51.4},{-40,51.4},{
+                    -40,69}}, color={0,0,127}));
+            connect(concentrationABBMeasurement.HCO3, pIMembrane.u) annotation
+              (Line(points={{-40,73},{-32,73},{-32,38.8},{-21.8,38.8}}, color={
+                    0,0,127}));
+            annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
+                Diagram(coordinateSystem(preserveAspectRatio=false)));
+          end testPI;
         end Tests;
 
         model Plasma
           import FullBloodAcidBase.WBABB.Interfaces.BCE;
 
-          Interfaces.ConcentrationConnector cCon2
-            annotation (Placement(transformation(extent={{80,-10},{100,10}})));
-          Interfaces.ConcentrationConnector cCon1
+          Interfaces.ConcentrationConnector cCon
             annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
           Real tBC[BCE];
           Real volume( unit = "m3", start = plasmaInitialVolume, fixed = true);
 
@@ -4090,15 +4233,15 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
           tBC[BCE.Na]/volume = 1;
         equation
 
-          der(volume) = cCon1.q[BCE.Water] + cCon2.q[BCE.Water];
-        //  0 = cCon1.q[BCE.Water] + cCon2.q[BCE.Water];
-          der(tBC) = cCon1.q + cCon2.q;
-          cCon1.conc = cCon2.conc;
+          der(volume) = cCon.q[BCE.Water];
+          der(tBC) = cCon.q;
 
           for i in BCE loop
-            cCon1.conc[i] = tBC[i]/volume;
+            cCon.conc[i] = tBC[i]/volume;
           end for;
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end Plasma;
 
         model Interstitia
@@ -4150,102 +4293,67 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
             annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
           Interfaces.ConcentrationConnector cCon1
             annotation (Placement(transformation(extent={{80,-10},{100,10}})));
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
-          Real OsmP;
-          Real OsmI;
-          Real ChargeP;
-          Real ChargeI;
-
+        //   Real OsmP;
+        //   Real OsmI;
+        //   Real ChargeP;
+        //   Real ChargeI;
+          Real R[:] = {1,1,1,1,1,c,1e9,1e9,1,a,b,1e9,1e9,1,1,1,1,1,1};
+          Real a, b, c;
+          Modelica.Blocks.Interfaces.RealInput u = u3
+            annotation (Placement(transformation(extent={{-118,68},{-78,108}})));
+          Modelica.Blocks.Interfaces.RealInput u1 = u4
+            annotation (Placement(transformation(extent={{-118,28},{-78,68}})));
+          Modelica.Blocks.Interfaces.RealInput u2 = u5
+            annotation (Placement(transformation(extent={{-120,0},{-80,40}})));
+          Modelica.Blocks.Interfaces.RealInput u3
+            annotation (Placement(transformation(extent={{118,68},{78,108}})));
+          Modelica.Blocks.Interfaces.RealInput u4
+            annotation (Placement(transformation(extent={{118,28},{78,68}})));
+          Modelica.Blocks.Interfaces.RealInput u5
+            annotation (Placement(transformation(extent={{116,0},{76,40}})));
         equation
+          cCon.conc - cCon1.conc = cCon.q.*R;
+          cCon.q + cCon1.q = zeros(size(cCon.q, 1));
           // charges must be zero
 
           // osmotic balances must be equal
 
           // partial pressures of blood gases must be equal
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end PIMembrane;
+
+        model Equals
+
+          Modelica.Blocks.Interfaces.RealInput u annotation (Placement(transformation(
+                  extent={{-100,-20},{-60,20}}), iconTransformation(extent={{-100,-20},{
+                    -60,20}})));
+          Modelica.Blocks.Interfaces.RealInput u1
+            annotation (Placement(transformation(extent={{100,-20},{60,20}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={Line(
+                    points={{-40,20},{40,20}}, color={0,0,0}), Line(points={{-40,-20},{40,
+                      -20}}, color={0,0,0})}), Diagram(coordinateSystem(
+                  preserveAspectRatio=false)));
+        equation
+          u = u1;
+        end Equals;
+
+        model Osm
+          extends FullBloodAcidBase.WBABB.Parts.Auxiliary.CConMeasurement;
+          import FullBloodAcidBase.WBABB.Interfaces.BCE;
+          Modelica.Blocks.Interfaces.RealOutput Osm = cCon.conc[BCE.K] + cCon.conc[BCE.Na]
+              + cCon.conc[BCE.Ca] + cCon.conc[BCE.Mg] + cCon.conc[BCE.Cl] + cCon.conc[BCE.Hb] + cCon.conc[BCE.Glucose]
+              + cCon.conc[BCE.Urea] + cCon.conc[BCE.Unchrg] + cCon.conc[BCE.Lactate];
+
+           annotation (Placement(transformation(
+                  extent={{80,-10},{100,10}}), iconTransformation(extent={{80,-10},{100,
+                    10}})));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+
+        end Osm;
       end Tissues;
-
-      model bloodABBMeasurement
-        extends FullBloodAcidBase.WBABB.Parts.Auxiliary.BloodSensorBase;
-        import FullBloodAcidBase.WBABB.Interfaces.BCE;
-
-        replaceable Auxiliary.totalO2Physiomodel
-                                        totalO2Base1 constrainedby
-          Auxiliary.totalO2Base
-          annotation (Placement(transformation(extent={{-30,48},{-10,68}})));
-        replaceable Auxiliary.totalCO2Physiomodel totalCO2Base1 constrainedby
-          Auxiliary.totalCO2Base
-          annotation (Placement(transformation(extent={{-20,-50},{0,-30}})));
-        replaceable Auxiliary.ABBVanSlyke aBBB1 constrainedby Auxiliary.ABBBase
-          annotation (Placement(transformation(extent={{18,-8},{50,24}})));
-      protected
-        Modelica.Blocks.Interfaces.RealInput Hb = inStream(bloodIn.BC[BCE.Hb])
-          annotation (Placement(transformation(extent={{-120,2},{-80,42}})));
-        Modelica.Blocks.Interfaces.RealInput tO2 = inStream(bloodIn.BC[BCE.tO2])
-          annotation (Placement(transformation(extent={{-120,40},{-80,80}})));
-        Modelica.Blocks.Interfaces.RealInput tCO2 = inStream(bloodIn.BC[BCE.tCO2])
-          annotation (Placement(transformation(extent={{-120,-66},{-80,-26}})));
-        Modelica.Blocks.Interfaces.RealInput P = inStream(bloodIn.BC[BCE.P])
-          annotation (Placement(transformation(extent={{-8,2},{2,12}})));
-        Modelica.Blocks.Interfaces.RealInput Alb = inStream(bloodIn.BC[BCE.Alb])
-          annotation (Placement(transformation(extent={{-8,-6},{2,4}})));
-        Modelica.Blocks.Interfaces.RealInput BEox = inStream(bloodIn.BC[BCE.BEox])
-          annotation (Placement(transformation(extent={{-8,-14},{2,-4}})));
-      equation
-        connect(aBBB1.pH, totalO2Base1.pH) annotation (Line(points={{50,22.4},{48,22.4},
-                {48,22},{54,22},{54,58},{-14,58},{-14,57},{-12,57}},
-                                               color={0,0,127}));
-        connect(totalO2Base1.Hb, Hb) annotation (Line(points={{-30,49},{-32,49},{-32,22},
-                {-100,22}}, color={0,0,127}));
-        connect(aBBB1.Hb, Hb) annotation (Line(points={{18,22.4},{16,22.4},{16,22},{-100,
-                22}},      color={0,0,127}));
-        connect(totalCO2Base1.Hb, Hb) annotation (Line(points={{-20,-41},{-32,-41},{-32,
-                22},{-100,22}}, color={0,0,127}));
-        connect(aBBB1.pH, totalCO2Base1.pH) annotation (Line(points={{50,22.4},{48,22.4},
-                {48,22},{54,22},{54,-30},{-2,-30},{-2,-31}},
-                                            color={0,0,127}));
-        connect(totalO2Base1.tO2, tO2) annotation (Line(points={{-30,61},{-100,61},{-100,
-                62},{-100,62},{-100,60},{-100,60}},
-                               color={0,0,127}));
-        connect(totalO2Base1.pCO2, totalCO2Base1.pCO2) annotation (Line(points={{-20,49},
-                {-18,49},{-18,20},{-18,-31}},          color={0,0,127}));
-        connect(totalO2Base1.sO2, totalCO2Base1.sO2) annotation (Line(points={{-15,49},
-                {-8,49},{-8,-36},{-8,-37},{-2,-37}}, color={0,0,127}));
-        connect(totalCO2Base1.pO2, totalO2Base1.pO2) annotation (Line(points={{-2,-43},
-                {-2,-43},{-2,-44},{62,-44},{62,67},{-11,67}}, color={0,0,127}));
-        connect(totalCO2Base1.pCO2,aBBB1. pCO2) annotation (Line(points={{-18,-31},{-18,
-                4},{-18,17.6},{18,17.6}},
-                                    color={0,0,127}));
-        connect(totalO2Base1.sO2, aBBB1.sO2)
-          annotation (Line(points={{-15,49},{-8,49},{-8,14},{18,14},{18,12.8}},
-                                                              color={0,0,127}));
-        connect(aBBB1.P, P) annotation (Line(points={{18,6.4},{18,6},{18,6},{16,6},{16,
-                7},{-3,7}},
-              color={0,0,127}));
-        connect(aBBB1.Alb, Alb)
-          annotation (Line(points={{18,0},{18,0},{18,2},{18,2},{18,-1},{-3,-1}},
-                                                                   color={0,0,127}));
-        connect(BEox, aBBB1.BEox) annotation (Line(points={{-3,-9},{18,-9},{18,-6},{18,
-                -6},{18,-6},{18,-6.4}},
-                            color={0,0,127}));
-        connect(totalCO2Base1.tCO2, tCO2) annotation (Line(points={{-20,-45},{-20,-45},
-                {-20,-46},{-100,-46}}, color={0,0,127}));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
-                                                                     Text(
-                extent={{-100,-120},{100,-20}},
-                lineColor={0,0,127},
-                fillColor={255,170,170},
-                fillPattern=FillPattern.Solid,
-                textString="%class"),                                Text(
-                extent={{-90,0},{90,80}},
-                lineColor={0,0,0},
-                fillColor={255,170,170},
-                fillPattern=FillPattern.Solid,
-                textString="ABB")}),                                   Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end bloodABBMeasurement;
 
       package Respiration
 
@@ -4405,21 +4513,149 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
         end Liver;
       end Metabolism;
 
+      model bloodABBMeasurement
+        extends FullBloodAcidBase.WBABB.Parts.Auxiliary.BloodSensorBase;
+        import FullBloodAcidBase.WBABB.Interfaces.BCE;
+
+      protected
+        Modelica.Blocks.Interfaces.RealInput Hb = inStream(bloodIn.BC[BCE.Hb])
+          annotation (Placement(transformation(extent={{-120,30},{-80,70}})));
+        Modelica.Blocks.Interfaces.RealInput tO2 = inStream(bloodIn.BC[BCE.tO2])
+          annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
+        Modelica.Blocks.Interfaces.RealInput tCO2 = inStream(bloodIn.BC[BCE.tCO2])
+          annotation (Placement(transformation(extent={{-120,-110},{-80,-70}})));
+        Modelica.Blocks.Interfaces.RealInput Alb =  inStream(bloodIn.BC[BCE.Alb])
+          annotation (Placement(transformation(extent={{-120,-40},{-80,0}})));
+        Modelica.Blocks.Interfaces.RealInput BEox = inStream(bloodIn.BC[BCE.BEox])
+          annotation (Placement(transformation(extent={{-120,-70},{-80,-30}})));
+        Modelica.Blocks.Interfaces.RealInput P =    inStream(bloodIn.BC[BCE.P])
+          annotation (Placement(transformation(extent={{-120,-10},{-80,30}})));
+      public
+        Auxiliary.ABBMeasurement aBBMeasurement annotation (Placement(
+              transformation(rotation=0, extent={{-74,-62},{86,98}})));
+
+        Modelica.Blocks.Interfaces.RealOutput pH
+          annotation (Placement(transformation(extent={{90,60},{110,80}})));
+        Modelica.Blocks.Interfaces.RealOutput HCO3
+          annotation (Placement(transformation(extent={{90,20},{110,40}})));
+        Modelica.Blocks.Interfaces.RealOutput pCO2
+          annotation (Placement(transformation(extent={{90,-20},{110,0}})));
+        Modelica.Blocks.Interfaces.RealOutput pO2
+          annotation (Placement(transformation(extent={{90,-60},{110,-40}})));
+      equation
+        connect(aBBMeasurement.Hb,
+                                 Hb) annotation (Line(points={{-66,34},{-66,34},{-100,
+                34},{-100,50}},
+                            color={0,0,127}));
+        connect(aBBMeasurement.tO2,
+                                  tO2) annotation (Line(points={{-66,90},{-66,90},{-100,
+                90}},          color={0,0,127}));
+        connect(tCO2, aBBMeasurement.tCO2) annotation (Line(points={{-100,-90},{-66,-90},
+                {-66,-54}},                     color={0,0,127}));
+        connect(P, aBBMeasurement.P) annotation (Line(points={{-100,10},{-78,10},{-78,
+                14},{-70,14}}, color={0,0,127}));
+        connect(Alb, aBBMeasurement.Alb) annotation (Line(points={{-100,-20},{-78,-20},
+                {-78,-2},{-70,-2}},
+                                  color={0,0,127}));
+        connect(aBBMeasurement.BEox, BEox) annotation (Line(points={{-70,-18},{-76,-18},
+                {-76,-50},{-100,-50}}, color={0,0,127}));
+        connect(aBBMeasurement.pH, pH) annotation (Line(points={{78,66},{92,66},{92,70},
+                {100,70}}, color={0,0,127}));
+        connect(aBBMeasurement.HCO3, HCO3) annotation (Line(points={{78,34},{94,34},{94,
+                30},{100,30}}, color={0,0,127}));
+        connect(aBBMeasurement.pCO2, pCO2) annotation (Line(points={{78,2},{94,2},{94,
+                -10},{100,-10}}, color={0,0,127}));
+        connect(aBBMeasurement.pO2, pO2) annotation (Line(points={{78,-30},{94,-30},{94,
+                -50},{100,-50}}, color={0,0,127}));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+                                                                     Text(
+                extent={{-100,-120},{100,-20}},
+                lineColor={0,0,127},
+                fillColor={255,170,170},
+                fillPattern=FillPattern.Solid,
+                textString="%class"),                                Text(
+                extent={{-90,0},{90,80}},
+                lineColor={0,0,0},
+                fillColor={255,170,170},
+                fillPattern=FillPattern.Solid,
+                textString="ABB")}),                                   Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end bloodABBMeasurement;
+
       model ConcentrationResistor
         import FullBloodAcidBase.WBABB.Interfaces.BCE;
         Interfaces.ConcentrationConnector cCon
           annotation (Placement(transformation(extent={{-100,-10},{-80,10}})));
         Interfaces.ConcentrationConnector cCon1
           annotation (Placement(transformation(extent={{80,-10},{100,10}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
         parameter Real R;
       equation
         cCon.conc - cCon1.conc = cCon.q*R;
         cCon.q + cCon1.q = zeros(size(cCon.q, 1));
 
-
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end ConcentrationResistor;
+
+      model ConcentrationABBMeasurement
+        import FullBloodAcidBase.WBABB.Interfaces.BCE;
+        extends Auxiliary.CConMeasurement;
+        extends FullBloodAcidBase.WBABB.Icons.MeasurementIcon;
+
+      public
+        Auxiliary.ABBMeasurement aBBMeasurement annotation (Placement(
+              transformation(rotation=0, extent={{-74,-62},{86,98}})));
+      protected
+        Modelica.Blocks.Interfaces.RealInput Hb = cCon.conc[BCE.Hb]
+          annotation (Placement(transformation(extent={{-120,30},{-80,70}})));
+        Modelica.Blocks.Interfaces.RealInput tO2 = cCon.conc[BCE.tO2]
+          annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
+        Modelica.Blocks.Interfaces.RealInput Alb =  cCon.conc[BCE.Alb]
+          annotation (Placement(transformation(extent={{-120,-40},{-80,0}})));
+        Modelica.Blocks.Interfaces.RealInput BEox = cCon.conc[BCE.BEox]
+          annotation (Placement(transformation(extent={{-120,-70},{-80,-30}})));
+        Modelica.Blocks.Interfaces.RealInput P =    cCon.conc[BCE.P]
+          annotation (Placement(transformation(extent={{-120,-10},{-80,30}})));
+        Modelica.Blocks.Interfaces.RealInput tCO2 = cCon.conc[BCE.tCO2]
+          annotation (Placement(transformation(extent={{-120,-110},{-80,-70}})));
+
+      public
+        Modelica.Blocks.Interfaces.RealOutput pH
+          annotation (Placement(transformation(extent={{90,60},{110,80}})));
+        Modelica.Blocks.Interfaces.RealOutput HCO3
+          annotation (Placement(transformation(extent={{90,20},{110,40}})));
+        Modelica.Blocks.Interfaces.RealOutput pCO2
+          annotation (Placement(transformation(extent={{90,-20},{110,0}})));
+        Modelica.Blocks.Interfaces.RealOutput pO2
+          annotation (Placement(transformation(extent={{90,-60},{110,-40}})));
+      equation
+        connect(aBBMeasurement.Hb,Hb)
+                                     annotation (Line(points={{-66,34},{-66,34},{-100,
+                34},{-100,50}},
+                            color={0,0,127}));
+        connect(aBBMeasurement.tO2,tO2)
+                                       annotation (Line(points={{-66,90},{-66,90},{-100,
+                90}},          color={0,0,127}));
+        connect(tCO2,aBBMeasurement. tCO2) annotation (Line(points={{-100,-90},{-66,-90},
+                {-66,-54}},                     color={0,0,127}));
+        connect(P,aBBMeasurement. P) annotation (Line(points={{-100,10},{-78,10},{-78,
+                14},{-70,14}}, color={0,0,127}));
+        connect(Alb,aBBMeasurement. Alb) annotation (Line(points={{-100,-20},{-78,-20},
+                {-78,-2},{-70,-2}},
+                                  color={0,0,127}));
+        connect(aBBMeasurement.BEox,BEox)  annotation (Line(points={{-70,-18},{-76,-18},
+                {-76,-50},{-100,-50}}, color={0,0,127}));
+        connect(aBBMeasurement.pH,pH)  annotation (Line(points={{78,66},{92,66},{92,70},
+                {100,70}}, color={0,0,127}));
+        connect(aBBMeasurement.HCO3,HCO3)  annotation (Line(points={{78,34},{94,34},{94,
+                30},{100,30}}, color={0,0,127}));
+        connect(aBBMeasurement.pCO2,pCO2)  annotation (Line(points={{78,2},{94,2},{94,
+                -10},{100,-10}}, color={0,0,127}));
+        connect(aBBMeasurement.pO2,pO2)  annotation (Line(points={{78,-30},{94,-30},{94,
+                -50},{100,-50}}, color={0,0,127}));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end ConcentrationABBMeasurement;
     end Parts;
 
     package Tests
@@ -4839,6 +5075,20 @@ Real pO2mmHg( unit = "mmHg") = pO2*pa2mmHg "pO2 in torr";
       annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
             coordinateSystem(preserveAspectRatio=false)));
     end TotalModel;
+
+    package Icons
+
+      model MeasurementIcon
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics
+              ={Rectangle(extent={{-100,100},{100,-100}}, lineColor={0,0,0},
+                fillColor={255,255,255},
+                fillPattern=FillPattern.Solid),
+                Rectangle(extent={{-90,80},{90,0}}, lineColor={0,0,0},
+                fillColor={255,255,170},
+                fillPattern=FillPattern.Solid)}), Diagram(coordinateSystem(
+                preserveAspectRatio=false)));
+      end MeasurementIcon;
+    end Icons;
   end WBABB;
   annotation (uses(
       Physiomodel(version="0.2.29"),
