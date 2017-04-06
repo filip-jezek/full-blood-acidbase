@@ -40,23 +40,23 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
 
   //Rem: Enter desired values for SID, PCO2, [ Pi tot ], and [ Albumin ] in the next four lines.
     public
-    input Real SID( unit = "meq/l") "Strong ion difference. Normal value 39";
-    input Real pCO2(unit = "mmHg") "CO2 partial pressure. Normal value 40";
+    input Real SID( displayUnit = "meq/l") "Strong ion difference. Normal value 39";
+    input Real pCO2(displayUnit = "mmHg") "CO2 partial pressure. Normal value 40";
     input Real Pi( unit = "mmol/l") "Total phosphate. Normal value 1.15";
-    input Real alb( unit="g/dl") "Albumin concentration. Normal value 4.4";
+    input Real alb( unit= "g/dl") "Albumin concentration. Normal value 4.4";
 
-    Real H( unit="eq/l")= 10 ^ (-pH);
+    Real H( displayUnit="eq/l")= 10 ^ (-pH);
     Real pH(start = 10, unit="1");
-    Real HO( unit="eq/l") = kw / H;
-    Real HCO3( unit="eq/l") = Kc1 * pCO2 / H;
-    Real CO3(  unit="eq/l")= Kc2 * HCO3 / H;
+    Real HO( displayUnit="eq/l") = kw / H;
+    Real HCO3( displayUnit="eq/l") = Kc1 * pCO2 / H;
+    Real CO3(  displayUnit="eq/l")= Kc2 * HCO3 / H;
 
     protected
     Real FNX = K1 * H^2 + 2 * K1 * K2 * H + 3 * K1 * K2 * K3;
     Real FNY = H^3 + K1 * H^2 + K1 * K2 * H + K1 * K2 * K3;
     Real FNZ = FNX / FNY;
     public
-    Real P( unit = "meq/l")= Pi * FNZ;
+    Real P( displayUnit = "meq/l")= Pi * FNZ;
     Real Netcharge = SID + 1000 * (H - HO - HCO3 - CO3) - P;
 
     Real NB = 0.4 * (1 - (1 / (1 + 10 ^ (pH - 6.9))))
@@ -68,7 +68,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
     constant Real albuminResidues[:] = cat(1,{-1,              -98,                 -18,            +24,                              2, 2, 2, 2, 1, 50}, ones(16),                                                                {1, -1});
     // Real albuminPks[:] = {8.5 /* CYST*/,3.9 /* GLUT*/,11.7 /* TYR*/,12.5 /* ARG*/,/*LYS >>>*/5.8, 6.15, 7.51, 7.685, 7.86, 10.3,/*HIST>>>*/7.12 - NB, 7.22 - NB, 7.1 - NB, 7.49 - NB, 7.01 - NB, 7.31, 6.75, 6.36, 4.85, 5.76, 6.17, 6.73, 5.82, 5.1, 6.7, 6.2, 8/* amino terminus */,3.1 /*carboxyl terminus*/};
     Real albuminPks[:] = {8.5,          3.9,          11.7,         12.5,                    5.8, 6.15, 7.51, 7.685, 7.86, 10.3,           7.12 - NB, 7.22 - NB, 7.1 - NB, 7.49 - NB, 7.01 - NB, 7.31, 6.75, 6.36, 4.85, 5.76, 6.17, 6.73, 5.82, 5.1, 6.7, 6.2, 8,                    3.1};
-    Real albChrg[n](each unit = "meq/l") "charge of albumin per unit";
+    Real albChrg[n](each displayUnit = "meq/l") "charge of albumin per unit";
     constant Integer n = size(albuminResidues, 1);
     public
     Real atch = sum(albChrg)*albConversion
@@ -229,8 +229,8 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
 
     model FiggeFenclNSID
       "Calculation of normal SID using plasma figge fencl"
-      parameter Real pH0(unit = "mmHg") = 7.4;
-      input Real pCO20(unit = "mmHg") = 40;
+      parameter Real pH0(displayUnit = "mmHg") = 7.4;
+      input Real pCO20(displayUnit = "mmHg") = 40;
       input Real Pi0( unit = "mmol/l");//= 1.15;
       input Real alb0( unit="g/dl");//= 4.4;
       Real SID;// = figgeFencl3.SID;
@@ -273,12 +273,6 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
 
     model Zander1995
       extends BaseAcidBase;
-     //   Real Hb = Hct*33.34;
-     // input Real Hct;
-     // input Real BEox;
-     // input Real sO2 = 1;
-     // input Real pCO2;
-
       Real pH;
       Real BE = (1 - 0.0143*Hb)*(
                   (0.0304*pCO2*(10^(pH-6.1)) - 24.26)
@@ -290,11 +284,6 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
 
     model Kofr2009
         extends BaseAcidBase;
-     //   Real Hb = Hct*33.34;
-     // input Real Hct;
-     // input Real BEox;
-     // input Real sO2 = 1;
-     // input Real pCO2;
 
     Real a[:] = {996.35 - 10.35*Hb,
      35.16875 + 0.25875*Hb,
@@ -317,11 +306,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
 
     model SAoriginal
           extends BaseAcidBase;
-     //   Real Hb = Hct*33.34;
-     // input Real Hct;
-     // input Real BEox;
-     // input Real sO2 = 1;
-     // input Real pCO2;
+
     protected
       constant Real pco2BBCoef[:] = {2.1125e-009,  -640.9926e-009,     72.7649e-006,     -3.2862e-003,    -38.1749e-003,      8.2352e+000,    -97.0551e+000};
       constant Real pco2BECoef[:] = {8.3975e-009,   -513.9503e-009,      3.8105e-006,    231.6888e-006,    -46.5581e-003,    353.7105e-003,     39.9871e+000};
@@ -333,8 +318,6 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       Real pHBB( start = 7) = pHBBCoef[1]*BB^6 + pHBBCoef[2]*BB^5 + pHBBCoef[3]*BB^4 + pHBBCoef[4]*BB^3 + pHBBCoef[5]*BB^2  + pHBBCoef[6]*BB + pHBBCoef[7];
       Real pHBE( start = 7) = pHBECoef[1]*BE^4 + pHBECoef[2]*BE^3 + pHBECoef[3]*BE^2 + pHBECoef[4]*BE + pHBECoef[5];
 
-    //   Real BB(start = 60) = BE+0.42*Hb+41.7;
-    //   Real BE( start = -1)= BEox+0.2*(1-sO2)*Hb;
       Real BB = BE+0.42*Hb+41.7;
       Real BE = BEox+0.2*(1-sO2)*Hb;
 
@@ -385,7 +368,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       Real b(unit = "mmol/l") = Hb*0.6206
         "hemoglobin concentration in blood/(mmol/l)";
       Real c(unit = "1") = pH "pH of plasma at 37 degrees C";
-      Real d(unit = "mEq/l") = BEox - 0.3*(1-sO2)
+      Real d(displayUnit = "mEq/l") = BEox - 0.3*(1-sO2)
         "base excess concentration in blood/(mmol/l)";
 
       Real pH( start = 7.4)= 6.1 + log10(a/(0.230*pCO2*133/1000));
