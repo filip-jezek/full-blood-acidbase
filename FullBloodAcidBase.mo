@@ -1,4 +1,4 @@
-within ;
+﻿within ;
 package FullBloodAcidBase
 
   package FiggeFencl
@@ -1053,6 +1053,956 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
     end Test_Combo_Wolf_at_BE;
   end Tests;
 
+  package FullBloodSubmodelComponent
+
+    package Components
+      model CombinedModel
+        constant Real mmHgToPa( unit="1/Pa") = 1/133;
+        constant   Real albConversion = 1000 * 10 / 66500;
+        constant Real HbConversion = 16000/1000/10 "Conversion from mol/m3 of single hem to g/dl. One hem has around 16 kDa.";
+        Full_Blood.CombinedModel combinedModel(
+          BE=BEox,
+          pCO2=pCO2*mmHgToPa,
+          alb=Alb*albConversion,
+          Hb=ctHb*HbConversion,
+          Pi=Pi)
+          annotation (Placement(transformation(extent={{-20,0},{0,20}})));
+        Physiolibrary.Types.RealIO.PressureInput pCO2
+          annotation (Placement(transformation(extent={{-120,30},{-80,70}})));
+        Physiolibrary.Types.RealIO.ConcentrationInput BEox
+          annotation (Placement(transformation(extent={{-120,-10},{-80,30}})));
+        Physiolibrary.Types.RealIO.ConcentrationInput Alb
+          annotation (Placement(transformation(extent={{-120,-50},{-80,-10}})));
+        Physiolibrary.Types.RealIO.ConcentrationInput Pi
+          annotation (Placement(transformation(extent={{-120,-90},{-80,-50}})));
+        Physiolibrary.Types.RealIO.pHOutput pH = combinedModel.pH;
+          annotation (Placement(transformation(extent={{80,0},{100,20}})),
+            Documentation(info="<html>
+<p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Interface using the SI units, as the Combined model relies on units originally  used by the cited models.</span></p>
+</html>"));
+        Physiolibrary.Types.RealIO.ConcentrationInput ctHb
+          annotation (Placement(transformation(extent={{-40,70},{0,110}})));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end CombinedModel;
+
+      package OSA
+
+        function aFrom
+          input Real pH;
+          input Real pCO2;
+          input Real MetHb;
+          input Real HbF;
+          input Real cDPG;
+          output Real returnValue;
+        protected
+          Real dadpH =   -0.88;
+          Real dadlnpCO2 =   0.048;
+          Real dadxMetHb =   -0.7;
+          Real dadxHbF =   -0.25;
+          Real dadcDPG0 =   0.3;
+          Real pH0 =   7.40;
+          Real pCO20 =   5.33;
+          Real dadcDPGxHbF =   -0.1;
+          Real cDPG0 =   5.0;
+        algorithm
+          returnValue:= dadpH*(pH - pH0)
+              + dadlnpCO2*log(pCO2/pCO20)
+              + dadxMetHb*MetHb
+              + dadxHbF*HbF
+              + (dadcDPG0 + dadcDPGxHbF*HbF)*(cDPG/cDPG0 - 1.0);
+        end aFrom;
+
+        function sCO
+          input Real FCOHb;
+          input Real FMetHb;
+          output Real returnValue;
+        protected
+          Real xFCOHb;
+        algorithm
+          if FCOHb < 0 then
+             xFCOHb := 0;
+          else xFCOHb := FCOHb;
+          end if;
+          returnValue := xFCOHb/(1.0 - FMetHb);
+        end sCO;
+
+        function antilogit
+          input Real x;
+          output Real returnValue;
+        algorithm
+          returnValue := exp(x)/(1.0 + exp(x));
+        end antilogit;
+
+        function logit
+          input Real x;
+          output Real returnValue;
+        algorithm
+          returnValue :=  log(x/(1 - x));
+        end logit;
+
+        function h
+          input Real a;
+          output Real returnValue;
+        protected
+          Real h0 =   3.5;
+        algorithm
+          returnValue:=h0+a;
+        end h;
+
+        function x
+         input Real pO2CO;
+         input Real a;
+         input Real T;
+         output Real returnValue;
+        protected
+         Real p0 =    7.0;
+         Real T0 =   37.0;
+         Real dbdT =   0.055;
+        algorithm
+         returnValue := log(pO2CO/p0) - a - dbdT*(T - T0);
+        end x;
+
+        function dydx
+          input Real pO2CO;
+          input Real a;
+          input Real T;
+          output Real returnValue;
+        protected
+          Real k =    0.5342857;
+        algorithm
+          returnValue :=1 + h(a)*k*(1 - (tanh(k*x(pO2CO, a, T)))^2);
+        end dydx;
+
+        function y
+          input Real pO2CO;
+          input Real a;
+          input Real T;
+          output Real returnValue;
+        protected
+          Real y0 =   1.8747;
+          Real k =   0.5342857;
+        algorithm
+          returnValue := y0 + x(pO2CO, a, T) + h(a)*tanh(k*x(pO2CO, a, T));
+        end y;
+
+        function sO2CO
+          input Real pO2CO;
+          input Real a;
+          input Real T;
+          output Real returnValue;
+        algorithm
+          returnValue := antilogit(y(pO2CO, a, T));
+        end sO2CO;
+
+        function MpCOof
+          input Real pO2CO;
+          input Real a;
+          input Real T;
+          input Real FCOHb;
+          input Real FMetHb;
+          output Real returnValue;
+        algorithm
+          returnValue := (pO2CO/sO2CO(pO2CO, a, T))*sCO(FCOHb, FMetHb);
+        end MpCOof;
+
+        function pO2fr
+          input Real sO2;
+          input Real a;
+          input Real T;
+          input Real FCOHb;
+          input Real FMetHb;
+          output Real returnValue;
+        protected
+          Real pO2CO;
+          Real sO2CO;
+          Real ym;
+          Real yc;
+          Real dydxc;
+          Real p0 =    7.0;
+          Real dbdT =    0.055;
+          Real T0 =   37;
+          Boolean doit;
+          Real Epsilon =   0.000001;
+        algorithm
+          pO2CO := exp(log(p0) + a + dbdT*(T - T0));
+          sO2CO := sO2 + sCO(FCOHb, FMetHb)*(1 - sO2);
+          ym := logit(sO2CO);
+          doit := false;
+          while not doit loop
+            yc := y(pO2CO, a, T);
+            dydxc := dydx(pO2CO, a, T);
+            pO2CO := exp(log(pO2CO) + (ym - yc)/dydxc);
+            doit := abs(ym - yc) < Epsilon;
+          end while;
+            returnValue := pO2CO - MpCOof(pO2CO, a, T, FCOHb, FMetHb);
+        end pO2fr;
+
+        function sO2fr
+          input Real pO2CO;
+          input Real a;
+          input Real T;
+          input Real FCOHb;
+          input Real FMetHb;
+          output Real returnValue;
+        protected
+          Real sO2COc;
+          Real sCOc;
+        algorithm
+          sO2COc := sO2CO(pO2CO, a, T);
+          sCOc := sCO(FCOHb, FMetHb);
+          returnValue := (sO2COc - sCOc)/(1 - sCOc);
+        end sO2fr;
+
+        function sO2of "calculation of oxygen hemoglobin saturation"
+          input Real pO2T "Po2 at given temperature in kPa";
+          input Real pHT "pH at given temperature";
+          input Real pCO2T "pCO2 at given temperature in kPa";
+          input Real cDPG "2'3 DPG koncentration in mmol/l";
+          input Real FCOHb "substance fraction of carboxyhemoglobin";
+          input Real FMetHb "substance fraction of hemiglobin";
+          input Real FHbF "substance fraction of fetal hemoglobin";
+          input Real TPt "temperature in?C";
+          output Real returnValue "oxygen hemoglobin saturation";
+        protected
+          Real MpCOa;
+          Real MpCOb;
+          Real sCOc;
+          Boolean doit;
+          Real a;
+          Real Epsilon =  0.000001;
+        algorithm
+          a := aFrom(pHT, pCO2T, FMetHb, FHbF, cDPG);
+          sCOc := sCO(FCOHb, FMetHb);
+          if sCOc > 0 then
+             MpCOa := pO2fr(sCOc, a, TPt, 0, FMetHb);
+          else MpCOa := 0;
+          end if;
+          MpCOb := MpCOa;
+          doit := false;
+          while (not doit) loop
+              MpCOb := 0.6*MpCOa + 0.4*MpCOb;
+              MpCOa := MpCOof(pO2T + MpCOb, a, TPt, FCOHb, FMetHb);
+              doit := (abs(MpCOa - MpCOb) < Epsilon);
+          end while;
+          returnValue := sO2fr(pO2T + MpCOa, a, TPt, FCOHb, FMetHb);
+        end sO2of;
+
+        function aO2
+         input Real temp;
+         output Real returnValue;
+        algorithm
+          returnValue := exp(log(0.0105) - 0.0115*(temp - 37.0) + 0.5*0.00042*(temp - 37.0)^2);
+        end aO2;
+
+        function dissO2 "concentration of dissolved oxygen in blood"
+          input Real pO2;
+          input Real temp;
+          output Real returnValue "dissolved blood oxygen in mmol/l";
+        algorithm
+          returnValue := aO2(temp)*pO2;
+        end dissO2;
+
+        function ceHbof "effective hemoglobin concentration in mmol/l"
+          input Real ctHb "concentration of hemoglobin in mmol/l";
+          input Real FCOHb "substance fraction of carboxyhemoglobin";
+          input Real FMetHb "substance fraction of hemoglobin";
+          output Real returnValue "effective contentration of hemoglobin";
+        algorithm
+           returnValue := ctHb*(1 - FCOHb - FMetHb);
+        end ceHbof;
+
+        function O2totalSI "Calculation of concentration of total oxygen"
+          input Real ctHb "conentration of hemoglobin in mmol/l";
+          input Real pO2 "pO2 at givent temperature in Pa";
+          input Real pHp "pH in plasma at given temperature";
+          input Real pCO2 "pCO2 at given temperature in Pa";
+          input Real cDPG "concentration of 2,3 diphosphoglycerate in mmol/l";
+          input Real FCOHb "substance fraction of carboxyhemoglobin";
+          input Real FMetHb "substance fraction of hemiglobin";
+          input Real FHbF "substance fraction of fetal hemogobin";
+          input Real temp "temperature in °K";
+          output Real ctO2
+            "concentration of total blood oxygen concentration in mmol/l";
+          output Real sO2t "oxygen saturation of hemoglobin at given temperature";
+          output Real dissO2t
+            "koncentration of dissolved oxygen in blood in mmol/l";
+          output Real ceHb "effective hemoglobin concentration in mmol/l";
+        algorithm
+
+          sO2t := sO2of( pO2/1000, pHp, pCO2/1000, cDPG, FCOHb, FMetHb, FHbF, temp-273.15);
+          ceHb := ceHbof(ctHb, FCOHb, FMetHb);
+          dissO2t := dissO2(pO2/1000, temp-273.15);
+          ctO2 := dissO2t + sO2t * ceHb;
+        end O2totalSI;
+
+        function lg
+          input Real x;
+          output Real result;
+        algorithm
+            result := (log(x))/log( 10); //it is not necessary, in Modelica exists embeded function log10
+        end lg;
+
+        function antilg
+          input Real x;
+          output Real result;
+        algorithm
+          result :=exp( log(10)*x);
+        end antilg;
+
+        function aCO2of
+          input Real T;
+          output Real result;
+        protected
+         Real aCO2T0 =   0.23;              //mM/kPa
+         Real dlgaCO2dT =   -0.0092;              // lg(mM/kPa)/K
+         Real T0 =  37;
+        algorithm
+         result:= aCO2T0 * antilg(dlgaCO2dT*(T - T0));
+        end aCO2of;
+
+        function pKof
+         input Real T;
+         output Real result;
+        protected
+           Real pKT0 = 6.1;
+           Real dpKdT = -0.0026;
+           Real T0 = 37;
+        algorithm
+           result := pKT0 + dpKdT*(T - T0);
+        end pKof;
+
+        function cHCO3of "calculation of plasma bicarbonate concentration"
+          input Real pH "plasma pH at given temperature in mmol/l";
+          input Real pCO2 "pCO2 in kPa";
+          input Real T "temperature in °C";
+          output Real HCO3p "plasma bicarbonate concentration in mmol/l";
+        algorithm
+          HCO3p := pCO2*aCO2of( T)*antilg( pH - pKof( T));
+        end cHCO3of;
+
+        function pCO22of
+          input Real pCO21;
+          input Real T1;
+          input Real T2;
+          input Real cHb;
+          input Real cAlb;
+          input Real pH1;
+          output Real result;
+        protected
+          Real betaX;
+          Real dpHdT1;
+          Real pH2;
+          Real cHCO3;
+          Real dlgpCO2dT1;
+          Real pCO22;
+          Real dpHdT2;
+          Real dlgpCO2dT2;
+          Real dpHdTmean;
+          Real dlgpCO2dTmean;
+          Real cAlbN= 0.66;
+        algorithm
+           betaX := 7.7 + 8*(cAlb - cAlbN) + 2.3*cHb;
+
+           dpHdT1 := (-0.0026 -
+              betaX*0.016*(1/(2.3*cHCO3of( pH1, pCO21, T1)) +
+              1/(2.3*pCO21*aCO2of( T1))))/(1 +
+              betaX*(1/(2.3*cHCO3of( pH1, pCO21, T1)) +
+              1/(2.3*pCO21*aCO2of( T1))));
+           pH2 := pH1 + dpHdT1*(T2 - T1);
+
+           cHCO3 := cHCO3of( pH1, pCO21, T1);
+           dlgpCO2dT1 := -0.0026 - (-0.0092) -
+              dpHdT1 + (1/(2.3*cHCO3))*(betaX*dpHdT1 + betaX*0.016);
+           pCO22 := antilg( lg( pCO21) + dlgpCO2dT1*(T2 - T1));
+
+           dpHdT2 := (-0.0026 -
+              betaX*0.016*(1/(2.3*cHCO3of( pH2, pCO22, T2)) +
+              1/(2.3*pCO22*aCO2of( T2))))/(1 +
+              betaX*(1/(2.3*cHCO3of( pH2, pCO22, T2)) +
+              1/(2.3*pCO22*aCO2of( T2))));
+           dpHdTmean := (dpHdT1 + dpHdT2)/2;
+           pH2 := pH1 + dpHdTmean*(T2 - T1);
+
+           cHCO3 := cHCO3of( pH2, pCO22, T2);
+           dlgpCO2dT2 := -0.0026 - (-0.0092) -
+               dpHdT2 + (1/(2.3*cHCO3))*(betaX*dpHdT2 + betaX*0.016);
+           dlgpCO2dTmean := (dlgpCO2dT1 + dlgpCO2dT2)/2;
+
+           result := antilg( lg( pCO21) + dlgpCO2dTmean*(T2 - T1));
+        end pCO22of;
+
+        function pH2of
+          input Real pH1;
+          input Real T1;
+          input Real T2;
+          input Real cHb;
+          input Real cAlb;
+          input Real pCO21;
+          output Real result;
+        protected
+          Real betaX;
+          Real dpHdT1;
+          Real pH2;
+          Real cHCO3;
+          Real dlgpCO2dT1;
+          Real pCO22;
+          Real dpHdT2;
+          Real dpHdTmean;
+          Real cAlbN = 0.66;
+        algorithm
+          betaX := 7.7 + 8*(cAlb - cAlbN) + 2.3*cHb;
+          dpHdT1 := (-0.0026 -
+             betaX*0.016*(1/(2.3*cHCO3of( pH1, pCO21, T1)) +
+                1/(2.3*pCO21*aCO2of( T1))))/(1 +
+             betaX*(1/(2.3*cHCO3of( pH1, pCO21, T1)) +
+                1/(2.3*pCO21*aCO2of( T1))));
+          pH2 := pH1 + dpHdT1*(T2 - T1);
+
+          cHCO3 := cHCO3of( pH1, pCO21, T1);
+          dlgpCO2dT1 := -0.0026 - (-0.0092) -
+          dpHdT1 + (1/(2.3*cHCO3))*(betaX*dpHdT1 + betaX*0.016);
+          pCO22 := antilg( lg( pCO21) + dlgpCO2dT1*(T2 - T1));
+
+          dpHdT2 := (-0.0026 -
+             betaX*0.016*(1/(2.3*cHCO3of( pH2, pCO22, T2)) +
+                1/(2.3*pCO22*aCO2of( T2))))/(1 +
+             betaX*(1/(2.3*cHCO3of( pH2, pCO22, T2)) +
+                1/(2.3*pCO22*aCO2of( T2))));
+          dpHdTmean := (dpHdT1 + dpHdT2)/2;
+          result := pH1 + dpHdTmean*(T2 - T1);
+
+        end pH2of;
+
+        function CO2totalSI "Calculation of blood total CO2 concentration"
+          input Real pH "plasma pH at given temperature";
+          input Real pCO2 "pCO2 at given temperatura in Pa";
+          input Real T "temperature in ?C";
+          input Real ctHb "Hemoglobin concentration in mmol/l";
+          input Real sO2 "O2 hemoglobin saturation";
+          output Real ctCO2B "Total blood CO2 concetratoin in mmol/l";
+          output Real cHCO3 "plasma concentration of bicarbonate in mmol/l";
+          output Real dCO2 "dissolved CO2 concentration in plasma";
+        protected
+          Real dpHEdpHP = 0.77;
+          Real dpHEdsO2 = 0.035;
+          Real pHEx = 7.84;
+          Real sO2x = 0.06;
+          Real aCO2E0 = 0.195;
+          Real ctHbE = 21;
+          Real pHE0 = 7.19;
+          Real pKE0 = 6.125;
+          Real pHT0;
+          Real pCO2T0;
+          Real pKE;
+          Real pHE;
+          Real ctCO2E;
+          Real phiEB;
+          Real T0=37;
+          Real cAlbN = 0.66;
+          Real cAlb;
+          Real pH0 = 7.40;
+          Real aCO2;
+          Real tCO2p;
+
+        algorithm
+          // pCO2T0 := pCO22of (pCO2, T, T0, ctHb);
+          cAlb := cAlbN;
+          // albumin has minimal influence on total CO2 concentration
+          pCO2T0 := pCO22of(pCO2 / 1000, T - 273.15, T0, ctHb, cAlb, pH);
+          // pHT0 := pH2of (pH, T, T0, ctHb);
+          pHT0 := pH2of(pH, T - 273.15, T0, ctHb, cAlb, pCO2);
+          pHE :=   pHE0 + dpHEdpHP*(pHT0 - pH0) + dpHEdsO2*(1 - sO2);
+          //or : (pHE - 6.9) = alpha*(pHP - pH0), where alpha = 0.7 + f*(1 - sO2)
+          pKE := pKE0 - lg(1 + antilg(pHE - pHEx - sO2x * sO2));
+          ctCO2E :=  aCO2E0*pCO2T0*(1 + antilg( pHE - pKE));
+          phiEB :=  ctHb/ctHbE;
+          // !! !! it is hematokrit!!!!!!!
+          //tCO2p := pCO2T0 * aCO2of(T0)*(1 + antilg(pHT0-pKof(T0)));
+          aCO2 := aCO2of(T0);
+          cHCO3 := aCO2*pCO2T0 *antilg(pHT0-pKof(T0));
+          dCO2 := aCO2*pCO2T0;
+          ctCO2B := ctCO2E*phiEB + (dCO2+cHCO3)*(1 - phiEB);
+          //ctCO2B :=  ctCO2E*phiEB + ctCO2Pof( pHT0, pCO2T0, T0)*(1 - phiEB);
+          //ctCO2B :=  ctCO2E*phiEB + tCO2p*(1 - phiEB);
+        end CO2totalSI;
+
+        model ctO2content
+
+          Physiolibrary.Types.RealIO.pHInput pH
+                                          annotation (Placement(transformation(extent={{-120,70},
+                    {-80,110}}),          iconTransformation(extent={{-120,32},{
+                    -100,52}})));
+          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330)
+                                           annotation (Placement(transformation(extent={{-120,20},
+                    {-80,60}}),           iconTransformation(extent={{-120,-10},{
+                    -100,10}})));
+          Physiolibrary.Types.RealIO.TemperatureInput T(start=310.15)  annotation (Placement(transformation(extent={{-120,
+                    -20},{-80,20}}),      iconTransformation(extent={{-120,-50},{
+                    -100,-30}})));
+          Physiolibrary.Types.RealIO.PressureInput pO2 annotation (Placement(
+                transformation(extent={{-132,-54},{-92,-14}}),iconTransformation(extent={{-120,70},
+                    {-100,90}})));
+          Physiolibrary.Types.RealIO.FractionInput FCOHb
+                                           annotation (Placement(transformation(extent={{60,-100},
+                    {100,-60}}),          iconTransformation(extent={{-10,-10},{
+                    10,10}},
+                rotation=180,
+                origin={110,-80})));
+          Physiolibrary.Types.RealIO.FractionInput FHbF
+                                           annotation (Placement(transformation(extent={{60,-60},
+                    {100,-20}}),          iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=180,
+                origin={110,-40})));
+          Physiolibrary.Types.RealIO.FractionInput FMetHb
+                                           annotation (Placement(transformation(extent={{60,-20},
+                    {100,20}}),           iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=180,
+                origin={110,0})));
+          Physiolibrary.Types.RealIO.ConcentrationInput cDPG
+                                           annotation (Placement(transformation(extent={{60,20},
+                    {100,60}}),           iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=180,
+                origin={110,40})));
+          Physiolibrary.Types.RealIO.ConcentrationInput ctHb
+                                           annotation (Placement(transformation(extent={{60,60},
+                    {100,100}}),          iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=180,
+                origin={110,80})));
+
+          Physiolibrary.Types.RealIO.FractionOutput sO2
+                                              annotation (Placement(
+                transformation(extent={{-30,-112},{10,-72}}),
+                                                            iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=270,
+                origin={60,-110})));
+          Physiolibrary.Types.RealIO.ConcentrationOutput totalO2 annotation (Placement(
+                transformation(extent={{-80,-100},{-60,-80}}), iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=270,
+                origin={20,-110})));
+          Physiolibrary.Types.RealIO.ConcentrationOutput cdO2p
+            "dissolved O2 concentration in plasma" annotation (Placement(transformation(
+                  extent={{-80,-100},{-60,-80}}), iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=270,
+                origin={-20,-110})));
+          Physiolibrary.Types.RealIO.ConcentrationOutput ceHb
+            "effective concentration of hemoglobin" annotation (Placement(
+                transformation(extent={{-80,-100},{-60,-80}}), iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=270,
+                origin={-60,-110})));
+
+        algorithm
+          (totalO2,sO2, cdO2p,ceHb) :=O2totalSI(
+            ctHb,
+            pO2,
+            pH,
+            pCO2,
+            cDPG,
+            FCOHb,
+            FMetHb,
+            FHbF,
+            T);
+
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,
+                    -100},{100,100}}),
+                                 graphics={Rectangle(
+                  extent={{-100,100},{100,-100}},
+                  lineColor={28,108,200},
+                  fillColor={255,255,0},
+                  fillPattern=FillPattern.Solid), Text(
+                  extent={{-60,66},{64,-34}},
+                  lineColor={28,108,200},
+                  textString="O2 total")}),         Diagram(coordinateSystem(
+                  preserveAspectRatio=false, extent={{-100,-100},{100,100}})));
+        end ctO2content;
+
+        model ctCO2content
+
+          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) "pCO2 in Pa"
+                                           annotation (Placement(transformation(extent={{-120,20},
+                    {-80,60}}),           iconTransformation(extent={{-120,70},{
+                    -100,90}})));
+          Physiolibrary.Types.RealIO.pHInput pH
+                                          annotation (Placement(transformation(extent={{-120,70},
+                    {-80,110}}),          iconTransformation(extent={{-120,30},{
+                    -100,50}})));
+          Physiolibrary.Types.RealIO.TemperatureInput T(start=310.15)
+            "temperature (in Kelvins)"                                 annotation (Placement(transformation(extent={{-120,
+                    -20},{-80,20}}),      iconTransformation(extent={{-120,-10},{-100,10}})));
+          Physiolibrary.Types.RealIO.ConcentrationInput ctHb
+            "hemoglobin concentration (mmol/l)"
+                                           annotation (Placement(transformation(extent={{60,60},
+                    {100,100}}),          iconTransformation(
+                extent={{-10,-10},{10,10}},
+                rotation=0,
+                origin={-110,-40})));
+          Physiolibrary.Types.RealIO.FractionInput sO2 "O2 hemoglobin saturation "
+            annotation (Placement(transformation(extent={{-120,-98},{-80,-58}}),
+                iconTransformation(extent={{-120,-90},{-100,-70}})));
+          Physiolibrary.Types.RealIO.ConcentrationOutput ctCO2
+            "total blood CO2 concentration (in mmol/l)" annotation (Placement(
+                transformation(extent={{100,30},{120,50}}), iconTransformation(extent={{100,30},
+                    {120,50}})));
+          Physiolibrary.Types.RealIO.ConcentrationOutput cHCO3
+            "plasma HCO3 concentration (in mmol/l)" annotation (Placement(
+                transformation(extent={{100,60},{120,80}}), iconTransformation(extent={{100,-10},
+                    {120,10}})));
+          Physiolibrary.Types.RealIO.ConcentrationOutput cdCO2p
+            "plasma CO2 dissolved concentration (in mmol/l)" annotation (Placement(
+                transformation(extent={{100,60},{120,80}}), iconTransformation(extent={{100,-50},
+                    {120,-30}})));
+
+        algorithm
+          (ctCO2, cHCO3,cdCO2p) := CO2totalSI(
+           pH,
+           pCO2,
+           T,
+           ctHb,
+           sO2);
+
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,
+                    -100},{100,100}}),
+                                 graphics={Rectangle(
+                  extent={{-100,100},{100,-100}},
+                  lineColor={28,108,200},
+                  fillColor={255,255,0},
+                  fillPattern=FillPattern.Solid), Text(
+                  extent={{-66,46},{82,-26}},
+                  lineColor={28,108,200},
+                  fillColor={255,255,0},
+                  fillPattern=FillPattern.Solid,
+                  textString="CO2 total")}));
+        end ctCO2content;
+        annotation (Documentation(info="<html>
+<p>Modelica algorithm reiplmementation of Siggaard-Andersen Oxygen Status Algorithm, based on original published source codes.</p>
+<p><br>Sources:</p>
+<p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">SIGGAARD‐ANDERSEN, M. A. D. S., and Ole SIGGAARD‐ANDERSEN. &quot;Oxygen status algorithm, version 3, with some applications.&quot;&nbsp;<i>Acta Anaesthesiologica Scandinavica</i>&nbsp;39.s107 (1995): 13-20.</span></p>
+</html>"));
+      end OSA;
+    end Components;
+
+    model FullBlood
+      Physiolibrary.Chemical.Components.Substance totalO2(useNormalizedVolume=false,
+        solute_start=0.008253)
+        annotation (Placement(transformation(extent={{-82,60},{-62,80}})));
+      Physiolibrary.Chemical.Components.Substance totalCO2(useNormalizedVolume=false,
+          solute_start=0.021646)
+        annotation (Placement(transformation(extent={{-82,20},{-62,40}})));
+      Physiolibrary.Chemical.Components.Substance totalBE(useNormalizedVolume=false,
+          solute_start=0)
+        annotation (Placement(transformation(extent={{-82,-20},{-62,0}})));
+      Physiolibrary.Chemical.Interfaces.ChemicalPort_a port_O2
+        annotation (Placement(transformation(extent={{-100,60},{-80,80}})));
+      Physiolibrary.Chemical.Interfaces.ChemicalPort_a port_CO2
+        annotation (Placement(transformation(extent={{-100,20},{-80,40}})));
+      Physiolibrary.Chemical.Interfaces.ChemicalPort_a port_BE
+        annotation (Placement(transformation(extent={{-100,-20},{-80,0}})));
+      Components.OSA.ctO2content ctO2content
+        annotation (Placement(transformation(extent={{40,40},{80,80}})));
+      Components.OSA.ctCO2content ctCO2content
+        annotation (Placement(transformation(extent={{40,-20},{80,20}})));
+      Components.CombinedModel combinedModel
+        annotation (Placement(transformation(extent={{40,-80},{80,-40}})));
+
+      Physiolibrary.Chemical.Sensors.ConcentrationMeasure concentrationMeasure
+        annotation (Placement(transformation(extent={{-60,60},{-40,80}})));
+      Physiolibrary.Chemical.Sensors.ConcentrationMeasure concentrationMeasure1
+        annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+      Physiolibrary.Chemical.Sensors.ConcentrationMeasure concentrationMeasure2
+        annotation (Placement(transformation(extent={{-60,-20},{-40,0}})));
+      Modelica.Blocks.Math.InverseBlockConstraints inverseBlockConstraints
+        annotation (Placement(transformation(extent={{-26,54},{-2,70}})));
+      Modelica.Blocks.Math.InverseBlockConstraints inverseBlockConstraints1
+        annotation (Placement(transformation(extent={{-26,14},{-2,30}})));
+      Physiolibrary.Types.Constants.ConcentrationConst cDPG(k=5)
+        annotation (Placement(transformation(extent={{96,64},{87,70}})));
+      Physiolibrary.Types.Constants.FractionConst fMetHb(k=0.005)
+        annotation (Placement(transformation(extent={{96,56},{87,62}})));
+      Physiolibrary.Types.Constants.FractionConst fHbF(k=0.005)
+        annotation (Placement(transformation(extent={{96,48},{87,54}})));
+      Physiolibrary.Types.Constants.FractionConst fCOHb(k=0.005)
+        annotation (Placement(transformation(extent={{96,40},{87,46}})));
+
+
+      Physiolibrary.Types.RealIO.VolumeInput volume if UseVolInput "total compartment volume" annotation (
+          Placement(transformation(extent={{60,60},{100,100}}), iconTransformation(
+              extent={{60,60},{100,100}})));
+      Physiolibrary.Types.RealIO.TemperatureInput T if
+                                                UseTInput annotation (Placement(
+            transformation(extent={{-16,-14},{12,14}}), iconTransformation(extent={{
+                60,20},{100,60}})));
+      Physiolibrary.Types.RealIO.ConcentrationInput ctHb if
+                                                   UsectHctInput "Total concentraion of hemoglobin hem (i.e. 4 times the hemoglobin)" annotation (
+          Placement(transformation(extent={{-16,-40},{14,-10}}), iconTransformation(
+              extent={{60,-20},{100,20}})));
+      Physiolibrary.Types.RealIO.ConcentrationInput Alb if
+                                                  UseAlbInput annotation (Placement(
+            transformation(extent={{-16,-82},{14,-52}}), iconTransformation(extent={
+                {60,-60},{100,-20}})));
+      Physiolibrary.Types.RealIO.ConcentrationInput Pi if UsePiInput annotation (
+          Placement(transformation(extent={{-16,-98},{14,-68}}), iconTransformation(
+              extent={{60,-100},{100,-60}})));
+
+      parameter Physiolibrary.Types.Volume Vol0=0.001;
+      parameter Physiolibrary.Types.Temperature T0=310.15;
+      parameter Physiolibrary.Types.Concentration ctHb0=60;
+      parameter Physiolibrary.Types.Concentration Alb0=0.66;
+      parameter Physiolibrary.Types.Concentration Pi0=1.11;
+      parameter Boolean UseVolInput=true;
+      parameter Boolean UseTInput=true;
+      parameter Boolean UsectHctInput=true;
+      parameter Boolean UseAlbInput=true;
+      parameter Boolean UsePiInput=true;
+    equation
+      if not UseVolInput then
+        totalO2.solutionVolume = Vol0;
+        totalCO2.solutionVolume = Vol0;
+        totalBE.solutionVolume = Vol0;
+      end if;
+      if not UseTInput then
+        ctO2content.T = T0;
+        ctCO2content.T = T0;
+      end if;
+      if not UsectHctInput then
+        combinedModel.ctHb = ctHb0;
+        ctO2content.ctHb = ctHb0;
+        ctCO2content.ctHb = ctHb0;
+      end if;
+      if not UseAlbInput then
+        combinedModel.Alb = Alb0;
+      end if;
+      if not UsePiInput then
+        combinedModel.Pi = Pi0;
+      end if;
+
+      connect(port_O2, totalO2.q_out) annotation (Line(
+          points={{-90,70},{-72,70}},
+          color={107,45,134},
+          thickness=1));
+      connect(port_CO2, totalCO2.q_out) annotation (Line(
+          points={{-90,30},{-72,30}},
+          color={107,45,134},
+          thickness=1));
+      connect(port_BE, totalBE.q_out) annotation (Line(
+          points={{-90,-10},{-72,-10}},
+          color={107,45,134},
+          thickness=1));
+      connect(totalO2.solutionVolume, volume)
+        annotation (Line(points={{-76,74},{-76,80},{80,80}}, color={0,0,127}));
+      connect(totalCO2.solutionVolume, volume)
+        annotation (Line(points={{-76,34},{-76,80},{80,80}}, color={0,0,127}));
+      connect(totalBE.solutionVolume, volume)
+        annotation (Line(points={{-76,-6},{-76,80},{80,80}}, color={0,0,127}));
+      connect(combinedModel.pH, ctO2content.pH) annotation (Line(points={{78,-58},{100,
+              -58},{100,96},{20,96},{20,68.4},{38,68.4}}, color={0,0,127}));
+      connect(combinedModel.pH, ctCO2content.pH) annotation (Line(points={{78,-58},{
+              100,-58},{100,96},{20,96},{20,8},{38,8}}, color={0,0,127}));
+      connect(ctO2content.sO2, ctCO2content.sO2) annotation (Line(points={{72,38},{72,
+              28},{24,28},{24,-16},{38,-16}}, color={0,0,127}));
+      connect(T, ctCO2content.T) annotation (Line(points={{-2,1.77636e-015},{18,1.77636e-015},
+              {18,0},{38,0}}, color={0,0,127}));
+      connect(T, ctO2content.T) annotation (Line(points={{-2,1.77636e-015},{14,1.77636e-015},
+              {14,52},{38,52}}, color={0,0,127}));
+      connect(ctHb, combinedModel.ctHb)
+        annotation (Line(points={{-1,-25},{56,-25},{56,-42}}, color={0,0,127}));
+      connect(ctHb, ctCO2content.ctHb) annotation (Line(points={{-1,-25},{32,-25},{32,
+              -8},{38,-8}}, color={0,0,127}));
+      connect(ctO2content.ctHb, ctHb) annotation (Line(points={{82,76},{98,76},{98,-25},
+              {-1,-25}}, color={0,0,127}));
+      connect(totalO2.q_out, concentrationMeasure.q_in) annotation (Line(
+          points={{-72,70},{-50,70}},
+          color={107,45,134},
+          thickness=1));
+      connect(totalCO2.q_out, concentrationMeasure1.q_in) annotation (Line(
+          points={{-72,30},{-50,30}},
+          color={107,45,134},
+          thickness=1));
+      connect(totalBE.q_out, concentrationMeasure2.q_in) annotation (Line(
+          points={{-72,-10},{-50,-10}},
+          color={107,45,134},
+          thickness=1));
+      connect(concentrationMeasure2.concentration, combinedModel.BEox)
+        annotation (Line(points={{-50,-18},{-50,-58},{40,-58}}, color={0,0,127}));
+      connect(concentrationMeasure.concentration, inverseBlockConstraints.u1)
+        annotation (Line(points={{-50,62},{-27.2,62}}, color={0,0,127}));
+      connect(ctO2content.totalO2, inverseBlockConstraints.u2) annotation (Line(
+            points={{64,38},{64,32},{-23.6,32},{-23.6,62}}, color={0,0,127}));
+      connect(concentrationMeasure1.concentration, inverseBlockConstraints1.u1)
+        annotation (Line(points={{-50,22},{-27.2,22}}, color={0,0,127}));
+      connect(ctCO2content.ctCO2, inverseBlockConstraints1.u2) annotation (Line(
+            points={{82,8},{84,8},{84,24},{-23.6,24},{-23.6,22}}, color={0,0,127}));
+      connect(ctO2content.pCO2, inverseBlockConstraints1.y2) annotation (Line(
+            points={{38,60},{30,60},{30,22},{-3.8,22}}, color={0,0,127}));
+      connect(ctCO2content.pCO2, inverseBlockConstraints1.y2) annotation (Line(
+            points={{38,16},{30,16},{30,22},{-3.8,22}}, color={0,0,127}));
+      connect(combinedModel.pCO2, inverseBlockConstraints1.y2) annotation (Line(
+            points={{40,-50},{30,-50},{30,22},{-3.8,22}}, color={0,0,127}));
+      connect(ctO2content.cDPG, cDPG.y) annotation (Line(points={{82,68},{84,68},{84,
+              67},{85.875,67}}, color={0,0,127}));
+      connect(ctO2content.FMetHb, fMetHb.y) annotation (Line(points={{82,60},{84,60},
+              {84,59},{85.875,59}}, color={0,0,127}));
+      connect(ctO2content.FHbF, fHbF.y) annotation (Line(points={{82,52},{84,52},{84,
+              51},{85.875,51}}, color={0,0,127}));
+      connect(ctO2content.FCOHb, fCOHb.y) annotation (Line(points={{82,44},{84,44},{
+              84,43},{85.875,43}}, color={0,0,127}));
+      connect(Alb, combinedModel.Alb) annotation (Line(points={{-1,-67},{18.5,-67},{
+              18.5,-66},{40,-66}}, color={0,0,127}));
+      connect(Pi, combinedModel.Pi) annotation (Line(points={{-1,-83},{18.5,-83},{18.5,
+              -74},{40,-74}}, color={0,0,127}));
+    connect(ctO2content.pO2, inverseBlockConstraints.y1) annotation (Line(
+          points={{38,76},{4,76},{4,62},{-1.4,62}}, color={0,0,127}));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+            Rectangle(
+              extent={{-100,100},{100,-100}},
+              lineColor={238,46,47},
+              pattern=LinePattern.None,
+              fillColor={255,255,170},
+              fillPattern=FillPattern.Solid,
+              lineThickness=0.5),
+            Rectangle(
+              extent={{0,100},{100,-100}},
+              lineColor={28,108,200},
+              fillColor={215,215,215},
+              fillPattern=FillPattern.Solid),
+            Text(
+              extent={{0,70},{60,90}},
+              lineColor={28,108,200},
+              textString="Volume"),
+            Text(
+              extent={{0,30},{60,50}},
+              lineColor={28,108,200},
+              textString="T"),
+            Text(
+              extent={{0,-10},{60,10}},
+              lineColor={28,108,200},
+              textString="ctHb"),
+            Text(
+              extent={{0,-50},{60,-30}},
+              lineColor={28,108,200},
+              textString="Alb"),
+            Text(
+              extent={{0,-90},{60,-70}},
+              lineColor={28,108,200},
+              textString="Pi"),
+            Polygon(
+              points={{-34,40},{-54,-4},{-32,-22},{-12,-6},{-32,40},{-34,40}},
+              lineColor={0,0,0},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              smooth=Smooth.Bezier),
+            Ellipse(
+              extent={{-44,10},{-20,-14}},
+              fillColor={255,255,170},
+              fillPattern=FillPattern.Solid,
+              pattern=LinePattern.None,
+              lineColor={0,0,0}),
+            Ellipse(
+              extent={{-48,16},{-20,-12}},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              pattern=LinePattern.None),
+            Text(
+              extent={{64,88},{96,70}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{64,50},{96,32}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{62,10},{94,-8}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{62,-30},{94,-48}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{62,-70},{94,-88}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{-100,-100},{0,-22}},
+              lineColor={238,46,47},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="FULL
+BLOOD"),    Text(
+              extent={{-78,60},{-50,80}},
+              lineColor={102,44,145},
+              textString="O2"),
+            Text(
+              extent={{-78,20},{-50,40}},
+              lineColor={102,44,145},
+              textString="CO2"),
+            Text(
+              extent={{-78,-20},{-50,0}},
+              lineColor={102,44,145},
+              textString="BE")}),    Diagram(coordinateSystem(preserveAspectRatio=false)),
+        Documentation(info="<html>
+<p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Full-blood model subcomponent with interfaces for complex models. Supplement to the article.</span></p>
+</html>"));
+    end FullBlood;
+
+    model testCondMod
+      extends Modelica.Icons.Example;
+      FullBlood fullBlood(
+        UseVolInput=false,
+        UseTInput=false,
+        UsectHctInput=false,
+        UseAlbInput=false,
+        UsePiInput=false,
+        Vol0(displayUnit="l"),
+        ctHb0=8.4)
+        annotation (Placement(transformation(extent={{-20,-40},{60,40}})));
+      Physiolibrary.Chemical.Sources.UnlimitedSolutePump unlimitedSolutePump(
+          useSoluteFlowInput=false)
+        annotation (Placement(transformation(extent={{-60,18},{-40,38}})));
+      Physiolibrary.Chemical.Sources.UnlimitedSolutePump unlimitedSolutePump1(
+          useSoluteFlowInput=false)
+        annotation (Placement(transformation(extent={{-60,2},{-40,22}})));
+      Physiolibrary.Chemical.Sources.UnlimitedSolutePump unlimitedSolutePump2(
+          useSoluteFlowInput=false, SoluteFlow(displayUnit="mol/s") = 0)
+        annotation (Placement(transformation(extent={{-60,-14},{-40,6}})));
+    equation
+      connect(unlimitedSolutePump.q_out, fullBlood.port_O2) annotation (Line(
+          points={{-40,28},{-16,28}},
+          color={107,45,134},
+          thickness=1));
+      connect(fullBlood.port_CO2, unlimitedSolutePump1.q_out) annotation (Line(
+          points={{-16,12},{-40,12}},
+          color={107,45,134},
+          thickness=1));
+      connect(fullBlood.port_BE, unlimitedSolutePump2.q_out) annotation (Line(
+          points={{-16,-4},{-40,-4}},
+          color={107,45,134},
+          thickness=1));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)),
+        Documentation(info="<html>
+<p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Run this model and observe e.g. the pH (fullBlood.combinedModel.combinedModel.pH)</span></p>
+<p><br><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">This parametrization fits the normal arterial blood. You can run static characteritics by setting the flow into the pumps - either O2, CO2, or HCO3 (in the form of BE).</span></p>
+</html>"));
+    end testCondMod;
+  end FullBloodSubmodelComponent;
   annotation (uses(
       Physiomodel(version="0.2.29"),
       Physiolibrary(version="2.3.1"),
