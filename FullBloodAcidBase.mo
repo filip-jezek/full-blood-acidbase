@@ -1054,7 +1054,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
   end Tests;
 
   package FullBloodSubmodelComponent
-
+  extends Modelica.Icons.ExamplesPackage;
     package Components
       model CombinedModel
         constant Real mmHgToPa( unit="1/Pa") = 1/133;
@@ -1076,13 +1076,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         Physiolibrary.Types.RealIO.ConcentrationInput Pi
           annotation (Placement(transformation(extent={{-120,-90},{-80,-50}})));
         Physiolibrary.Types.RealIO.pHOutput pH = combinedModel.pH;
+        Physiolibrary.Types.RealIO.ConcentrationInput ctHb
+          annotation (Placement(transformation(extent={{-40,70},{0,110}})));
           annotation (Placement(transformation(extent={{80,0},{100,20}})),
             Documentation(info="<html>
 <p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Interface using the SI units, as the Combined model relies on units originally  used by the cited models.</span></p>
-</html>"));
-        Physiolibrary.Types.RealIO.ConcentrationInput ctHb
-          annotation (Placement(transformation(extent={{-40,70},{0,110}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+</html>"),          Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
               coordinateSystem(preserveAspectRatio=false)));
       end CombinedModel;
 
@@ -1962,7 +1961,7 @@ BLOOD"),    Text(
 </html>"));
     end FullBlood;
 
-    model testCondMod
+    model testFullBloodSubModel
       extends Modelica.Icons.Example;
       FullBlood fullBlood(
         UseVolInput=false,
@@ -2001,10 +2000,15 @@ BLOOD"),    Text(
 <p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Run this model and observe e.g. the pH (fullBlood.combinedModel.combinedModel.pH)</span></p>
 <p><br><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">This parametrization fits the normal arterial blood. You can run static characteritics by setting the flow into the pumps - either O2, CO2, or HCO3 (in the form of BE).</span></p>
 </html>"));
-    end testCondMod;
+    end testFullBloodSubModel;
   end FullBloodSubmodelComponent;
   annotation (uses(
       Physiomodel(version="0.2.29"),
       Physiolibrary(version="2.3.1"),
-      Modelica(version="3.2.2")));
+      Modelica(version="3.2.2")), Documentation(info="<html>
+<p>Full-blood acid-base model package contains implementation of Figge-Fencl model, various formalizations of Siggaard-Andersen&apos;s nomogram and our proposed combination of both. In the Figures package, one could simulate all figures from the article &quot;<b>Modern and traditional acid-base approaches combined: a full blood model</b>&quot; , which this model is supplementing.</p>
+<p>You can run all models with the green triangle. The rest are auxilliary subcomponents.</p>
+<p>Physiolibrary version 2.3.1 is required to run the FullBloodSubmodelTest model. You can find it at physiolibrary.org</p>
+<p>(C) Filip Ježek, Jiř&iacute; Kofr&aacute;nek under BSD 3-clause licence</p>
+</html>"));
 end FullBloodAcidBase;
