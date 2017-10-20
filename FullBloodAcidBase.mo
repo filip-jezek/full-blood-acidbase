@@ -1373,27 +1373,28 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
               GSH,
               im,
               Pi) "Contents of erythrocyte";
-          parameter Concentration Na=10;
-          parameter Concentration K=99;
+          parameter Concentration Na=13.69*wf0;
+          parameter Concentration K=136*wf0;
           parameter Concentration Cl0=53.8;
           Concentration Cl(start=Cl0);
           Real Cl_mass0(unit = "mol") = Cl0 / wf0 * water_volume0;
           Real Cl_mass(unit = "mol") = Cl / wf0 * water_volume;
 
           parameter Concentration Hb=5.3 "concentration of Hb tetramer";
-          parameter Concentration DPG=4.3*wf0 "the 4.3 value goes directly in";
-          parameter Concentration ATP=1.8;
+           Concentration DPG=4.3/few*wf0 "the 4.3 value goes directly in";
+          Concentration ATP=1.8/few*wf0;
 
-          parameter Concentration GSH=2.2;
+           Concentration GSH=2.23/few*wf0;
           parameter Concentration im=16.03*wf0 "original value in model";
         //   parameter Concentration im=21.64 "adjusted value";
           // Concentration im=20.2 "Original value in article [1]";
           //   Concentration im;//=20.2;
           parameter Concentration Pi=0.67 "mono- and di- valent";
-          parameter Fraction O2Sat = 0.75;
-          Real VolumeFraction = water_volume0/water_volume "TODO not water volume, but cell volume! Minor difference though";
-          Real HbGperLiterBlood = Hb*VolumeFraction*fH*64.5;
-          Real fH "TODO";
+          parameter Real O2Sat(unit="1") = 0.75;
+          Real Ve0ByVeFraction;
+          Real fH;
+          Real few;
+          Real HbGperLiterBlood = Hb*Ve0ByVeFraction*fH*64.5;
           Concentration volume_c[cont]={Na,K,Cl,Hb,DPG,ATP,GSH,im,Pi}
             "concentration in one liter";
           Concentration water_c[cont]=volume_c ./ wf0 .* water_volume0 ./ water_volume
@@ -1402,7 +1403,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         //     "total mass of contents";
 
           Real ZHb=15.6 - 23*(10^(pH - 6.69)/(1 + 10^(pH - 6.69))) - 4*(10^(pH - 7.89)/(
-              1 + 10^(pH - 7.89))) + (1-O2Sat)*HbGperLiterBlood
+              1 + 10^(pH - 7.89))) + (1-O2Sat)*HbGperLiterBlood*0.012
                                                                "in article is Zhb += 1.5*((1 - 0.75)/0.75) in venous blood";
           Real ZDPG=(-3) - 1*(10^(pH - 7.56)/(1 + 10^(pH - 7.56))) - 1*(10^(pH - 7.32)/(
               1 + 10^(pH - 7.32)));
@@ -1419,27 +1420,28 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real fiHb=1 + 0.115*water_c[cont.Hb] + 0.0256*water_c[cont.Hb]^2
             "Osmotic coefficient of Hemoglobin (eq from Raftos et al)";
           Real fi[cont]={0.93,0.93,0.93,fiHb,1,1,1,1,1} "Osmotic coefficients";
-          Real Osm=sum(water_c .* fi) + 0.93*(HCO3 + CO3) + Lactate "osmotic coefficient from Wolf model V3.49";
-          //   //electric charge
+          Real Osm=sum(water_c .* fi) + 0.93*(HCO3 + CO3) + Lactate + permeableParticles "osmotic coefficient from Wolf model V3.49";
+          Real OsmTest[:] =   water_c .* fi;
+        //   //electric charge
           Real Z[cont]={1,1,-1,ZHb,ZDPG,ZATP,ZGSH,0,ZPi}
             "equivalent charges per mole";
-          Real charge=(sum(water_c .* Z) - HCO3 - 2*CO3 - Lactate + Zim)*water_volume;
+          Real chargeTest[:] = water_c .* Z;
+          Real charge=(sum(water_c .* Z) - HCO3 - 2*CO3 - Lactate + Zim* water_volume0 / water_volume)*water_volume;
 
           // parameter Fraction Hct0 = 0.44;
           // parameter Volume totalBlodVolume;
-          parameter Volume water_volume0=0.44*0.73*1;
-          //Hct * wf0 * Vblood;
-          constant VolumeFraction wf0=0.73 "Fraction of water in the erythrocyte";
+          Real water_volume0;
+          constant Real wf0(unit="1")=0.73 "Fraction of water in the erythrocyte";
 
-          Concentration HCO3=0.026*pCO2mmHg*10^(pH - 6.103) "HCO3 should be 16,8 acc to the model";
+          Concentration HCO3=0.026*pCO2mmHg*10^(pH - 6.103)/few "HCO3 should be 16,8 acc to the model";
           Concentration CO3=HCO3*10^(pH - 10.2) "CO3 is 0,016";
           Real pH(start=7.22) = -log10(H);
 
-          Volume water_volume(start=water_volume0);
+          Real water_volume(start=water_volume0, unit="l");
           Real pCO2mmHg(unit="1");
           Real H(start=10^(-7.2));
           Concentration Lactate "LACew =LACpw/rCl";
-          Concentration permeableParticles "= 10.64";
+          parameter Concentration permeableParticles = 10.64 "glucose and urea concentration in PLasma water";
         end Erythrocyte;
 
         record Plasma
@@ -1447,7 +1449,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
                 coordinateSystem(preserveAspectRatio=false)));
 
-                type cont = enumeration(
+          type cont = enumeration(
               Na,
               K,
               Ca,
@@ -1455,53 +1457,165 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
               Cl,
               Pi,
               Alb,
-              im)
-                "Contents of erythrocyte";
+              im,
+              Lac) "Contents of erythrocyte";
 
-          parameter Concentration Na = 140;
-          parameter Concentration K = 4.1;
-          parameter Concentration Ca = 2.3;
-          parameter Concentration Mg = 0.8;
-          parameter Concentration Cl0 = 105;
-          Concentration Cl( start = Cl0);
-          Real Cl_mass0(unit = "mol") = Cl0 / wf0 * water_volume0;
-          Real Cl_mass(unit = "mol") = Cl / wf0 * water_volume;
-          parameter Concentration Pi = 1.2;
-          parameter Concentration Alb = 0.65;
+          Concentration Na;
+          Concentration K;
+          Concentration Cl;
+
+          Concentration Ca=2.4*wf0/fpw;
+          parameter Concentration Mg=0.8;
+          //parameter Concentration Cl0=105;
+        //  Real Cl_mass0(unit="mol") = Cl0/wf0*water_volume0;
+        //  Real Cl_mass(unit="mol") = Cl/wf0*water_volume;
+          parameter Concentration Pi=1.2;
+          Concentration Alb=0.647/Vp0ByVp;
           // parameter Concentration im = 0; // original
-          parameter Concentration im = 11.87; // adjusted
-
-          Concentration volume_c[cont] = {Na, K, Ca, Mg, Cl, Pi, Alb, im} "concentration in one liter";
-          Concentration water_c[cont]=volume_c / wf0 * water_volume0 / water_volume
+          parameter Concentration im=11.87;
+          // adjusted
+          parameter Concentration Lac=1.5;
+          Concentration SO4pw=0.33/fpw;
+          Concentration volume_c[cont]={Na,K,Ca,Mg,Cl,Pi,Alb,im,Lac}
+            "concentration in one liter";
+          Concentration water_c[cont]=volume_c/fpw*Vp0ByVp
             "Actual concentration recalculated to water fraction in one liter (initially 0.73)";
-        //   Real masses0[cont](each unit="mol") = volume_c ./ wf0 .* water_volume0
-        //     "total mass of contents";
-
+          //   Real masses0[cont](each unit="mol") = volume_c ./ wf0 .* water_volume0
+          //     "total mass of contents";
+          Real CaPPBound=(3.98 + Hh)/Hh*water_c[cont.Ca] "1.257";
+          Real MgPPBound=CaPPBound/2;
+          Real ZCaBindPerAlb=CaPPBound/water_c[cont.Alb];
+          Real ZClBindPerAlb=6.46/(6.46 + Hh)*6 + 4 "Anstey";
+          Real CaIon=water_c[cont.Ca] - CaPPBound "mEq/Lpw";
+          Real MgIon=water_c[cont.Mg] - MgPPBound "mEq/Lpw";
           //charge on inpermeable solutes
-          Real ZPi = (-1) - 10 ^ (pH - 6.87) / (1 + 10 ^ (pH - 6.87));
-          Real ZAlb = (-10.7) - 16 * (10 ^ (pH - 7.42) / (1 + 10 ^ (pH - 7.42)));
-        //   parameter Real Zim ;//= -5.3 "Charge of ALL impermeable solutes";//test
+          Real ZPi=(-1) - 10^(pH - 6.87)/(1 + 10^(pH - 6.87));
+          Real ZFigge=(-10.65) - 16*(10^(pH - 7.418)/(1 + 10^(pH - 7.418)));
+          Real ZAlb=ZFigge - ZClBindPerAlb + ZCaBindPerAlb + ZCaBindPerAlb/2;
+          Real Hh=H/fpw*1e8;
+
+          //   parameter Real Zim ;//= -5.3 "Charge of ALL impermeable solutes";//test
           // Real Zim = -5.3 "Charge of ALL impermeable solutes";//test
-         parameter Real Zim = -10.99 "ADJUSTED Charge of ALL impermeable solutes";//test
+          parameter Real Zim=-0.6349 "Charge of ALL impermeable solutes";
 
-          Real fi[cont]={0.93, 0.93, 1, 1, 0.93, 0.93, 1, 1}; // Alb has osmotic coefficient of 1???
-          Real Osm=sum(water_c .* fi) + 0.93*(HCO3 + CO3);
+          Real fi[cont]={0.93,0.93,1,1,0.93,0.93,1,1,-9999};
+          // Alb has osmotic coefficient of 1???
+          Real CaOsm=water_c[cont.Ca] - CaPPBound*0.5;
+          Real MgOsm=water_c[cont.Mg] - CaPPBound*0.5;
+          Real OsmPart=SO4pw + CaOsm + MgOsm + sum(water_c[{cont.Na,cont.K,cont.Cl,cont.Lac}])
+               + water_c[cont.Pi] + HCO3 + CO3;
+          Real Osm=OsmPart*0.93 + permeableParticles;
 
-          Real Z[cont]={1, 1, 2, 2, -1, ZPi, ZAlb, 0};
-          Real Chrgs[cont] = water_c .* Z;
-          Real charge=(sum(water_c .* Z) + Zim - HCO3 - 2*CO3);//*water_volume;
+          Real Z[cont]={1,1,2,2,-1,ZPi,ZAlb,0,1};
+          Real Chrgs[cont]=water_c .* Z;
 
-          parameter Volume water_volume0 = (1-0.44)*0.94*1;
+          Real SID=sum(water_c[{cont.Na,cont.K}]) - water_c[cont.Cl] + 2*sum(water_c[{cont.Ca,
+              cont.Mg}]) - CaPPBound - MgPPBound;
+          Real charge=Zim + SID + water_c[cont.Alb]*ZAlb + water_c[cont.Pi]*ZPi - HCO3 -
+              2*CO3 - SO4pw*2;
+          //*water_volume;
 
-          constant VolumeFraction wf0 = 0.94 "Fraction of water in the plasma";
-          Concentration HCO3 = 0.0306 * pCO2mmHg * 10 ^ (pH - 6.11);
+          parameter Volume water_volume0=(1 - 0.44)*0.94*1;
+
+          constant VolumeFraction wf0=0.94 "Fraction of water in the plasma";
+          Concentration HCO3=0.0306*pCO2mmHg*10^(pH - 6.103)/fpw;
           Concentration CO3=HCO3*10^(pH - 10.2);
           Real pH(start=7.37) = -log10(H);
 
-          Volume water_volume( start = water_volume0);
+          Real Vp0ByVp;
+          Real fpw "fraction plasma water - Vpw/Vp";
           Real pCO2mmHg(unit="1");
           Real H(start=10^(-7.37));
+          parameter Concentration permeableParticles=10.64
+            "glucose and urea concentration in PLasma water";
         end Plasma;
+
+        record Volumes
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+          type PatientCat = enumeration(
+              adultM,
+              adultF,
+              childM,
+              childF);
+          PatientCat pc=PatientCat.adultM;
+          Real Fcell=if pc == PatientCat.adultM or pc == PatientCat.adultF then 0.88
+               elseif pc == PatientCat.childM then 0.83 else 0.85;
+
+                 // the rest is only adult male
+           Real TBWm = 2.447 - 0.09156*age +0.3362* weight + 0.1074*height;
+           //Real TBWf
+           Real LBM = 0.407*weight + 0.267*height - 19.2;
+           // Real LBMm, LBMf;
+           parameter Real age = 21;
+           parameter Real weight = 70;
+           parameter Real height = 175;
+
+        Real Ve0 = 0.048*LBM -0.72;
+        Real Vp0 = 0.051*LBM + 0.27;
+        Real Vb0 = (Ve0 + Vp0);
+        Real fH0 = Ve0 / (Ve0 + Vp0);
+        Real fHa0 = fH0/Fcell;
+        Real Vis0 = 0.331*LBM - Vpw0;
+        Real TBW = 2.447-0.09156*age+0.3362*weight+0.1074*height "Woodrow 2003 for male, there also exists female variant";
+        Real Vc0 = TBW - Vis0 - Vpw0 - Vew0;
+
+
+        Real Vpw0= Vp0 - Vps;
+        Real Vps = 0.0603*Vp0;
+        Real Vew0 = Ve0*0.7317;
+        Real Ves = Ve0 - Vew0;
+        Real Ve = Ves + Vew;
+        Real Vb = Vpl + Ve;
+        Real fH = Ve / Vb;
+
+        Real Vw0 = Ve0 + Vp0 + Vis0 + Vc0;
+        Real V = Vw0 + Vadd;
+        parameter Real Vadd = 0;
+        // Volumes
+        Real Vpl = Vpw + Vps;
+        Real fpw = Vpw / Vpl;
+        Real few = Vew / Ve;
+        Real Vpw =  Vadd + Vpw0 + Vis0 + Vew0 + Vc0 - Vis - Vew- Vc " = 2.93";
+        Real Vp0ByVp = Vp0 / Vpl;
+         Real Vew "= 1.43";
+         Real Vis "= 15.59";
+         Real Vc "= 22.9";
+        // Real Vew = 1.43;
+        // Real Vis = 15.59;
+        // Real Vc = 22.9;
+
+        end Volumes;
+
+        record StrongIonMasses
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+
+          Real Ve0;
+          Real Vp0;
+          Real Vis0;
+          Real Vc0;
+          // any ion addition MUST be added here as well;
+          constant Real Napl0=140;
+          constant Real Nais0=141.5;
+          constant Real Nac0=12;
+          Real MNa = Napl0*Vp0 + Nais0*Vis0 + Nac0*Vc0;
+          Real MNa_IP;
+
+          constant Real Kpl0=4.7;
+          constant Real Kis0=4.75;
+          constant Real Kc0=139;
+          Real MK = Kpl0*Vp0 + Kis0*Vis0 + Kc0*Vc0;
+          Real MK_IP;
+
+          constant Real Cle0=53.5;
+          constant Real Clpl0=140;
+          constant Real Clis0=116.5;
+          constant Real Clc0=4;
+          Real MCl = Cle0*Ve0 + Clpl0*Vp0 + Clis0*Vis0 + Clc0*Vc0;
+
+
+        end StrongIonMasses;
       end Auxiliary;
 
       model PE "Plasma - erythrocyte model"
@@ -1539,52 +1653,96 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       end PE;
 
       package Tests
-        model P
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
-                  preserveAspectRatio=false)));
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma ery;
-
-        // total mass of Cl mobile ion
-        Real pCO2mmHg = 40;
-        equation
-          // volume conservation
-          ery.water_volume0 = ery.water_volume;
-
-          // same osmolarities
-          ery.Osm = 285;
-          ery.charge = 0;
-          ery.Cl = ery.Cl0;
-
-          // Donnan equilibrium
-          ery.pH = 7.37;
-          // pco2
-          ery.pCO2mmHg = pCO2mmHg;
-
-        end P;
-
         model E
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
                   preserveAspectRatio=false)));
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
-
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
         // total mass of Cl mobile ion
         Real pCO2mmHg = 40;
-        equation
-          // volume conservation
-          ery.water_volume0 = ery.water_volume;
+        // output: osmolarity and Cl
+        parameter Real Hct = 0.44;
+        parameter Real O2s = 0.75;
 
-          // same osmolarities
-            ery.Osm = 285;
-          ery.charge = 0;
-          ery.Cl = ery.Cl0;
+        equation
+          vols.Vew = 1.43;
+          vols.Vis = 15.59;
+          vols.Vc = 22.9;
+
+          vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+          ery.fH = vols.fH;
+          ery.few = vols.few;
+          ery.Lactate = 1.035;//LACew =LACpw/rCl;
+          ery.water_volume0 = vols.Vew0;
+          ery.water_volume = vols.Vew;
+          ery.water_c[ery.cont.Cl] / 110.9 = 4.119084e-8 / ery.H "Clpla , Hpl at standard V3.49";
+         // ery.water_c[ery.cont.Cl] = 71.77;
+        // ery.H = 6.362e-8;
+          // ery.
+        //   // same osmolarities
+           //ery.Osm = 286.99;
+           ery.charge = 0;
+        //   ery.Cl = ery.Cl0;
+           //ery.Cl = 71.77 * ery.wf0;
 
           // Donnan equilibrium
-          ery.pH = 7.22;
           // pco2
           ery.pCO2mmHg = pCO2mmHg;
 
         end E;
+
+        model P
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
+                  preserveAspectRatio=false)));
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
+        // total mass of Cl mobile ion
+        Real pCO2mmHg = 40;
+        Real Clis = 116.791;
+        Real rClpw_is = pla.volume_c[pla.cont.Cl]/Clis;
+        constant Real MNac = 276.96;
+        constant Real MKc = 3179.97;
+        equation
+          vols.Vew = 1.43;
+          vols.Vis = 15.59;
+          vols.Vc = 22.9;
+
+          sim.Ve0 = vols.Ve0;
+          sim.Vp0 = vols.Vp0;
+          sim.Vis0 = vols.Vis0;
+          sim.Vc0 = vols.Vc0;
+          sim.MNa_IP = sim.MNa - MNac;
+          sim.MK_IP = sim.MK - MKc;
+
+
+          pla.volume_c[pla.cont.Na] = sim.MNa / (vols.Vis * rClpw_is + vols.Vpw);
+          pla.volume_c[pla.cont.K] = sim.MK / (vols.Vis * rClpw_is + vols.Vpw);
+          pla.volume_c[pla.cont.Cl] = 110.86;
+
+          // same osmolarities
+        //   pla.Osm = 286.99;
+        //   pla.charge = 0;
+
+
+          pla.Vp0ByVp = vols.Vp0ByVp;
+
+          // Donnan equilibrium
+          pla.pH = 7.41225;
+          pla.fpw = vols.fpw;
+          // pco2
+          pla.pCO2mmHg = pCO2mmHg;
+
+        end P;
       end Tests;
+      annotation (Documentation(info="<html>
+<p>References:</p>
+<p><br>Raftos, J. E., Bulliman, B. T., &amp; Kuchel, P. W. (1990). Evaluation of an electrochemical model of erythrocyte pH buffering using 31P nuclear magnetic resonance data. The Journal of General Physiology, 95(6), 1183&ndash;1204.</p>
+<p>Wolf, M. B. (2013). Whole body acid-base and fluid-electrolyte balance: a mathematical model. American Journal of Physiology. Renal Physiology, 305(8), F1118&ndash;31.</p>
+<p>Wolf, M. B. (2015). Comprehensive diagnosis of whole-body acid-base and fluid-electrolyte disorders using a mathematical model and whole-body base excess. Journal of Clinical Monitoring and Computing, 29(4), 475&ndash;490.</p>
+<p>Wolf, M. B., &amp; DeLand, E. C. (2011). A comprehensive, computer-model-based approach for diagnosis and treatment of complex acid&ndash;base disorders in critically-ill patients. Journal of Clinical Monitoring and Computing, 25(6), 353&ndash;364.</p>
+<p>Wolf, M. B., &amp; Deland, E. C. (2011). A mathematical model of blood-interstitial acid-base balance: application to dilution acidosis and acid-base status. Journal of Applied Physiology, 110(4), 988&ndash;1002.</p>
+</html>"));
     end CurrentVersion;
   end Wolf;
   annotation (uses(
