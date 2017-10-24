@@ -337,6 +337,22 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
 <pre><font style=\"color: #006400; \">Filip Jezek, 2016</font></pre>
 </html>"));
   end SimplePlasma;
+
+    model FiggeFenclNSID_Simple
+      "Calculation of normal SID using plasma figge fencl"
+      parameter Real pH0(displayUnit = "mmHg") = 7.4;
+      input Real pCO20(displayUnit = "mmHg") = 40;
+      input Real Pi0( unit = "mmol/l");//= 1.15;
+      input Real alb0( unit="g/dl");//= 4.4;
+      Real SID;// = figgeFencl3.SID;
+
+      FiggeFencl.SimplePlasma figgeFencl3(
+        pH=pH0,
+        pCO2=pCO20,
+        Pi=Pi0,
+        alb=alb0,
+        SID=SID) annotation (Placement(transformation(extent={{-58,0},{-38,20}})));
+    end FiggeFenclNSID_Simple;
   end FiggeFencl;
 
   package SAnomogram_formalization
@@ -771,6 +787,53 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       HCO3P = 0.0306 * pCO2 * 10 ^ (pHP - 6.11);
       annotation(Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})), Diagram(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})));
     end Wolf_full_blood;
+
+    model CombinedModelSimple
+      "Test combined model of Figge-fencl plasma and SA full hemoatocrite"
+
+      replaceable FiggeFencl.SimplePlasma plasma(
+        SID=SID,
+        pCO2=pCO2,
+        Pi=Pi,
+        alb=alb)
+        annotation (Placement(transformation(extent={{-20,20},{0,40}})));
+
+      SAnomogram_formalization.SAoriginal fullErythrocyte(
+        Hct=1,
+        BEox=BEe,
+        pCO2=pCO2)
+        annotation (Placement(transformation(extent={{20,20},{40,40}})));
+      constant Real fullHb = 33.34;
+      input Real Hb = 15;
+      input Real Hct = Hb/fullHb;
+
+      Real BEp( unit = "meq/l") = BE - mHCO3/(1-Hct);
+      Real BEe( unit = "meq/l")= BE + mHCO3/Hct;
+
+      Real mHCO3;
+
+      Real SID;
+      input Real BE = 0;
+      input Real pCO2 = 40;
+      input Real Pi = 1.15;
+      input Real alb = 4.4;
+      output Real pH = fullErythrocyte.pH;
+
+    protected
+      FiggeFencl.FiggeFenclNSID_Simple normalPlasma(
+        pH0=7.4,
+        pCO20=40,
+        alb0=alb,
+        Pi0=Pi) "Computation of NSID"
+        annotation (Placement(transformation(extent={{-40,60},{-20,80}})));
+    equation
+      plasma.pH = fullErythrocyte.pH;
+      BEp = SID - normalPlasma.SID;
+      annotation (experiment(
+          StopTime=1,
+          __Dymola_NumberOfIntervals=500,
+          Tolerance=1e-003));
+    end CombinedModelSimple;
   end Full_Blood;
 
   package Figures
@@ -1442,6 +1505,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real H(start=10^(-7.2), min = 0, max = 1);
           Concentration Lactate "LACew =LACpw/rCl";
           parameter Concentration permeableParticles = 10.64 "glucose and urea concentration in PLasma water";
+
+          Concentration HCO3ClDiff = HCO3/ water_c[cont.Cl]*few;
         end Erythrocyte;
 
         record Plasma
@@ -1475,7 +1540,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           parameter Concentration im=11.87;
           // adjusted
           parameter Concentration Lac=1.5;
-          Concentration SO4pw=0.33/fpw;
+          Concentration SO4pw=0.33/fpw "mmol/Lpw";
           Concentration volume_c[cont]={Na,K,Ca,Mg,Cl,Pi,Alb,im,Lac}
             "concentration in one liter";
           Concentration water_c[cont]=volume_c/fpw*Vp0ByVp
@@ -1533,6 +1598,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         end Plasma;
 
         record Isf
+          "ISF is considered as water compartment, that is each substance concentration is meant as in water"
           import Modelica.SIunits.*;
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
                 coordinateSystem(preserveAspectRatio=false)));
@@ -1555,37 +1621,40 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           // TODO own computation of ALB
           Concentration CaIon "mEq/l";
           Concentration MgIon                     "mEq/l";
-          Concentration CaPPBnd                       "mEq/l";
-          Real ZAlbBnd              "mEq/l";
+          //Modelica.SIunits.Concentration CaPPBound "mEq/l";
           Concentration Cl;
           Real Vis;
           Real Vis0;
-          parameter Concentration im;
-          parameter Real Alb(unit="g/l");
-          Concentration SO4pw;
+          parameter Real Alb(unit="g/l")= 43;
+          Concentration SO4pw "mmol/Pw";
 
-          Concentration albiw = (43*0.33*Vis0)/(Vis - Vis0*0.25)/66.5;
+          Concentration albiw = (Alb*0.33*Vis0)/(Vis - Vis0*0.25)/66.5 "Alb conc is fixed as 1/3 of 43, no matter the conc in plasma";
+
+          Real CaPPBound= (3.98)/(3.98 + Hh)*plasma_water_c[cont.Ca] "= 1.290 Meq/Lis";
+          Real CaPPBoundErr = 0 "Error in VisSim diagram, should be CaPPBound instead";
+          Real ZCaBindPerAlb=CaPPBound/albiw;
+          Real ZClBindPerAlb=6.46/(6.46 + Hh)*6 + 4 "Anstey";
 
           Real transf[cont] = {rClpwis, rClpwis, 0, 0, 0,(1/rClpwis)^(-ZPi), 0, 0, 1/rClpwis} "Only Na, K, Pi and Lac";
 
-          Real SO4= (SO4pw*2)/rClpwis^2    "concentration in one liter mEq/lw";
+          Real SO4= (SO4pw*2)/(rClpwis^2)    "concentration in one liter mEq/lw";
           // Concentration water_c[cont]=transf .* plasma_water_c;
           Concentration water_c[cont]=transf .* plasma_water_c     "Actual concentration recalculated from plasma";
 
-          //charge on inpermeable solutes
           Real ZPi=(-1) - 10^(pH - 6.87)/(1 + 10^(pH - 6.87));
           Real ZFigge=(-10.65) - 16*(10^(pH - 7.418)/(1 + 10^(pH - 7.418)));
+          Real ZAlbBnd = - ZClBindPerAlb + ZCaBindPerAlb + ZCaBindPerAlb/2;
           Real ZAlb=ZFigge+ ZAlbBnd;
 
-          //   parameter Real Zim ;//= -5.3 "Charge of ALL impermeable solutes";//test
-          // Real Zim = -5.3 "Charge of ALL impermeable solutes";//test
           parameter Real Zim=3.057 "Charge of ALL impermeable solutes";
 
           Real OsmStep1=sum(water_c[{cont.Na,cont.K}]) + Cl;
-          Real OsmStep2 = SO4 + (CaIon - CaPPBnd + MgIon - CaPPBnd/2)/2 + sum(water_c[{cont.Pi, cont.Lac}]) + HCO3 + CO3 + SO4/2;
+          Real OsmStep2=OsmStep1 + (CaIon - CaPPBoundErr + MgIon - CaPPBoundErr/2)/2 + sum(water_c[
+              {cont.Pi,cont.Lac}]) + HCO3 + CO3 + SO4/2;
           Real Osm = OsmStep2*0.93 + permeableParticles;
 
-          Real SID=sum(water_c[{cont.Na,cont.K}]) - Cl + CaIon - CaPPBnd + (MgIon - 0.5*CaPPBnd)- water_c[cont.Lac];
+          Real SID=sum(water_c[{cont.Na,cont.K}]) - Cl + CaIon - CaPPBoundErr + (MgIon - 0.5
+              *CaPPBoundErr) - water_c[cont.Lac];
           Real charge=Zim + SID + albiw*ZAlb + water_c[cont.Pi]*ZPi - HCO3 -
               2*CO3 - SO4;
           //*water_volume;
@@ -1596,6 +1665,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
           Real pCO2mmHg(unit="1");
           Real H(start=10^(-7.408), min = 0, max = 1);
+          Real Hh=H*1e8;
+
           parameter Concentration permeableParticles=10.64
             "glucose and urea concentration in PLasma water";
         end Isf;
@@ -1697,7 +1768,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
         // total mass of Cl mobile ion
-        Real pCO2mmHg=40;
+        Real pCO2mmHg=20 + time*40;
         Real rClpw_is=pla.water_c[pla.cont.Cl]/Clis "0.949290";
         constant Real MNac=276.96;
         constant Real MKc=3179.97;
@@ -1864,8 +1935,25 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         end P;
 
         model I
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
-              Diagram(coordinateSystem(preserveAspectRatio=false)));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf  isf;
+
+          Real rClpwis = 0.94929;
+        equation
+
+          isf.plasma_water_c={149.031, 4.962, 2.55814, 0, 0, 1.279073, 0, 0, 1.598841};
+
+          isf.rClpwis = rClpwis;
+          // TODO own computation of ALB
+          isf.CaIon = 3.859*rClpwis^2;
+          isf.MgIon = 1.0768*rClpwis^2;
+          isf.Cl = 116.791;
+          isf.Vis = 15.591;
+          isf.Vis0 = 15.602;
+          isf.SO4pw = 0.702420/2; // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
+          isf.pCO2mmHg = 40;
+          isf.pH = 7.4078;
         end I;
       end Tests;
       annotation (Documentation(info="<html>
