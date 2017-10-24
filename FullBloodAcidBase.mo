@@ -1479,7 +1479,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Concentration volume_c[cont]={Na,K,Ca,Mg,Cl,Pi,Alb,im,Lac}
             "concentration in one liter";
           Concentration water_c[cont]=volume_c/fpw*Vp0ByVp
-            "Actual concentration recalculated to water fraction in one liter (initially 0.73)";
+            "Actual concentration recalculated to water fraction in one liter (initially 0.96)";
           //   Real masses0[cont](each unit="mol") = volume_c ./ wf0 .* water_volume0
           //     "total mass of contents";
           Real CaPPBound=(3.98)/(3.98 + Hh)*water_c[cont.Ca] "1.257";
@@ -1491,7 +1491,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           //charge on inpermeable solutes
           Real ZPi=(-1) - 10^(pH - 6.87)/(1 + 10^(pH - 6.87));
           Real ZFigge=(-10.65) - 16*(10^(pH - 7.418)/(1 + 10^(pH - 7.418)));
-          Real ZAlb=ZFigge - ZClBindPerAlb + ZCaBindPerAlb + ZCaBindPerAlb/2;
+          Real ZAlbBnd = - ZClBindPerAlb + ZCaBindPerAlb + ZCaBindPerAlb/2;
+          Real ZAlb=ZFigge + ZAlbBnd;
           Real Hh=H/fpw*1e8;
 
           //   parameter Real Zim ;//= -5.3 "Charge of ALL impermeable solutes";//test
@@ -1530,6 +1531,74 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           parameter Concentration permeableParticles=10.64
             "glucose and urea concentration in PLasma water";
         end Plasma;
+
+        record Isf
+          import Modelica.SIunits.*;
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+
+          type cont = enumeration(
+              Na,
+              K,
+              Ca,
+              Mg,
+              Cl,
+              Pi,
+              Alb,
+              im,
+              Lac) "Contents of erythrocyte";
+
+
+        Concentration plasma_water_c[cont];
+
+          Real rClpwis;
+          // TODO own computation of ALB
+          Concentration CaIon "mEq/l";
+          Concentration MgIon                     "mEq/l";
+          Concentration CaPPBnd                       "mEq/l";
+          Real ZAlbBnd              "mEq/l";
+          Concentration Cl;
+          Real Vis;
+          Real Vis0;
+          parameter Concentration im;
+          parameter Real Alb(unit="g/l");
+          Concentration SO4pw;
+
+          Concentration albiw = (43*0.33*Vis0)/(Vis - Vis0*0.25)/66.5;
+
+          Real transf[cont] = {rClpwis, rClpwis, 0, 0, 0,(1/rClpwis)^(-ZPi), 0, 0, 1/rClpwis} "Only Na, K, Pi and Lac";
+
+          Real SO4= (SO4pw*2)/rClpwis^2    "concentration in one liter mEq/lw";
+          // Concentration water_c[cont]=transf .* plasma_water_c;
+          Concentration water_c[cont]=transf .* plasma_water_c     "Actual concentration recalculated from plasma";
+
+          //charge on inpermeable solutes
+          Real ZPi=(-1) - 10^(pH - 6.87)/(1 + 10^(pH - 6.87));
+          Real ZFigge=(-10.65) - 16*(10^(pH - 7.418)/(1 + 10^(pH - 7.418)));
+          Real ZAlb=ZFigge+ ZAlbBnd;
+
+          //   parameter Real Zim ;//= -5.3 "Charge of ALL impermeable solutes";//test
+          // Real Zim = -5.3 "Charge of ALL impermeable solutes";//test
+          parameter Real Zim=3.057 "Charge of ALL impermeable solutes";
+
+          Real OsmStep1=sum(water_c[{cont.Na,cont.K}]) + Cl;
+          Real OsmStep2 = SO4 + (CaIon - CaPPBnd + MgIon - CaPPBnd/2)/2 + sum(water_c[{cont.Pi, cont.Lac}]) + HCO3 + CO3 + SO4/2;
+          Real Osm = OsmStep2*0.93 + permeableParticles;
+
+          Real SID=sum(water_c[{cont.Na,cont.K}]) - Cl + CaIon - CaPPBnd + (MgIon - 0.5*CaPPBnd)- water_c[cont.Lac];
+          Real charge=Zim + SID + albiw*ZAlb + water_c[cont.Pi]*ZPi - HCO3 -
+              2*CO3 - SO4;
+          //*water_volume;
+
+          Concentration HCO3=0.0326*pCO2mmHg*10^(pH - 6.103);
+          Concentration CO3=HCO3*10^(pH - 10.2);
+          Real pH(start=7.408) = -log10(H);
+
+          Real pCO2mmHg(unit="1");
+          Real H(start=10^(-7.408), min = 0, max = 1);
+          parameter Concentration permeableParticles=10.64
+            "glucose and urea concentration in PLasma water";
+        end Isf;
 
         record Volumes
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
@@ -1640,20 +1709,20 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
         parameter Real Hct=0.44;
         parameter Real O2s=0.75;
-        Real rCl = ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl];
-        Real rH = pla.Hw/ery.H;
+        Real rClep=ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl];
+        Real rHep=pla.Hw/ery.H;
         Real Clpla( start = 110.8687, min = 0, max = 1000) = pla.water_c[pla.cont.Cl];
         Real Clery( start = 71.7743, min = 0, max = 1000) = ery.water_c[ery.cont.Cl];
       equation
         // vols.Vew = 1.43;
         vols.Vis = 15.5919;
         vols.Vc = 22.9;
-        ery.Lactate = 1.035;
+        ery.Lactate = pla.water_c[pla.cont.Lac]*rClep;//1.035;
         //LACew =LACpw/rCl;
         //  ery.water_c[ery.cont.Cl] / 110.9 = 4.119084e-8 / ery.H "Clpla , Hpl at standard V3.49";
       //  ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl] = pla.H/ery.H    "Clpla , Hpl at standard V3.49";
 
-      rCl = rH;
+        rClep = rHep;
       pla.Osm = ery.Osm;
       //  pla.water_c[pla.cont.Cl] = 110.8687;
       //  ery.water_c[ery.cont.Cl] = 71.7743;
@@ -1793,6 +1862,11 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           pla.pCO2mmHg = pCO2mmHg;
 
         end P;
+
+        model I
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
+              Diagram(coordinateSystem(preserveAspectRatio=false)));
+        end I;
       end Tests;
       annotation (Documentation(info="<html>
 <p>References:</p>
