@@ -1535,7 +1535,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         //  Real Cl_mass0(unit="mol") = Cl0/wf0*water_volume0;
         //  Real Cl_mass(unit="mol") = Cl/wf0*water_volume;
           parameter Concentration Pi=1.2;
-          Concentration Alb=0.647/Vp0ByVp;
+          Concentration Alb=AlbPwGPerL/66.5 "mmol/Lpw";
+          Real AlbPwGPerL = 43 / Vp0ByVp "g/lpw";
           // parameter Concentration im = 0; // original
           parameter Concentration im=11.87;
           // adjusted
@@ -1625,10 +1626,11 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Concentration Cl;
           Real Vis;
           Real Vis0;
-          parameter Real Alb(unit="g/l")= 43;
+          parameter Real Alb(unit="g/l")= 43 "plasma alb conc g/l";
           Concentration SO4pw "mmol/Pw";
 
-          Concentration albiw = (Alb*0.33*Vis0)/(Vis - Vis0*0.25)/66.5 "Alb conc is fixed as 1/3 of 43, no matter the conc in plasma";
+          Concentration albis = (Alb*0.33*Vis0)/(Vis - Vis0*0.25) "g/iw";
+          Concentration albiw = albis/66.5 "mmol/liw Alb conc is fixed as 1/3 of 43, no matter the conc in plasma";
 
           Real CaPPBound= (3.98)/(3.98 + Hh)*plasma_water_c[cont.Ca] "= 1.290 Meq/Lis";
           Real CaPPBoundErr = 0 "Error in VisSim diagram, should be CaPPBound instead";
@@ -1669,6 +1671,22 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
           parameter Concentration permeableParticles=10.64
             "glucose and urea concentration in PLasma water";
+
+
+        // Transcapillary pressures
+        // wattenpaugh J trauma Inuj 1998
+          Real AlbPwGPerL;
+          Real ca= AlbPwGPerL*0.1 "Albumin concentration";
+          Real cp = AlbPwGPerL*0.1*1.637 "protein concentration";
+          Real COPPpl =  PIEalb + PIEglob;
+          Real PIEalb = ca / cp * ( cp*2.8+ 0.18*cp ^ 2 + 0.012*cp^3);
+          Real PIEglob = (1 - ca / cp)*(0.9*cp + 0.12*cp^2 + 0.004*cp^3);
+          Real cai = albis*0.1;
+          Real COPalbis = cai*2.8 + 0.18*cai^2 + 0.012*cai^3;
+          Real pd = (28.48 - 0.99*(COPPpl - COPalbis))/19.3;
+          Real OsmDiff = pd*2;
+
+
         end Isf;
 
         record Volumes
@@ -1954,6 +1972,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           isf.SO4pw = 0.702420/2; // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
           isf.pCO2mmHg = 40;
           isf.pH = 7.4078;
+          isf.AlbPwGPerL = 43.0654;
         end I;
       end Tests;
       annotation (Documentation(info="<html>
