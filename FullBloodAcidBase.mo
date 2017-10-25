@@ -1683,9 +1683,15 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real PIEglob = (1 - ca / cp)*(0.9*cp + 0.12*cp^2 + 0.004*cp^3);
           Real cai = albis*0.1;
           Real COPalbis = cai*2.8 + 0.18*cai^2 + 0.012*cai^3;
-          Real pd = (28.48 - 0.99*(COPPpl - COPalbis))/19.3;
+        //   Real pd = (28.48 - 0.99*(COPPpl - COPalbis))/19.3;
+          Real pd = (38.36 - 0.99*(COPPpl - COPalbis) + PVb)/19.3;
           Real OsmDiff = pd*2;
-
+          Real Vbr = (Vb - Vb0)/Vb0 "VbRatio";
+          Real PVb=if Vbr < -5 then -5*50 elseif Vbr > -5 and Vbr < 0 then Vbr*50
+               elseif Vbr > 0 and Vbr < 100 then Vbr*46.5 else 100*46.5
+            "In original -5..0 and 0..100";
+          Real Vb;
+          Real Vb0;
 
         end Isf;
 
@@ -1775,6 +1781,43 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
 
         end StrongIonMasses;
+
+        record Cell
+            import Modelica.SIunits.*;
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+
+          Real Kis;
+          Real Nais;
+          Real Clis;
+          Real Vc0;
+          Real Vc;
+          Real His;
+          Real pCO2mmHg(unit="1");
+
+
+          Real Clc;
+
+          Real rClisce = Clis/Clc;
+          Real Kc = Kis*rClisce;
+          Real Nac = Nais*rClisce*0.0029;
+
+          Concentration HCO3=0.029*pCO2mmHg*10^(pH - 6.103);
+          Real pH(start=7.408) = -log10(H);
+
+          Real H(start=10^(-6.938), min = 0, max = 1) = His*0.1*rClisce "Why His*0.1? Is it the water content?";
+
+          Real charge = -HCO3 + Kc - Clc +Nac + Zim*Im;
+          Real Zim = -1.1728*10^(pH - 5.5)/(1 + 10^(pH - 5.5));
+          Real Im = Vc0/Vc * 123.045;
+
+          Real OsmPart = HCO3 + Kc+ Nac + Clc;
+          Real Osm = Im + permeableParticles + 0.93*OsmPart;
+
+          parameter Concentration permeableParticles=10.64
+            "glucose and urea concentration in PLasma water";
+
+        end Cell;
       end Auxiliary;
 
       model PE "Plasma - erythrocyte model"
@@ -1973,7 +2016,29 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           isf.pCO2mmHg = 40;
           isf.pH = 7.4078;
           isf.AlbPwGPerL = 43.0654;
+          isf.Vb = 5.08026;
+          isf.Vb0 = 5.095485;
         end I;
+
+        model C
+          import Modelica.SIunits.*;
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+                FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Cell c;
+
+        equation
+          c.Kis = 4.7106;
+          c.Nais = 141.474;
+          c.Clis = 116.7911;
+          c.Vc0 = 22.87176;
+          c.Vc = 22.897789;
+          c.His = 3.91020e-8;
+          c.pCO2mmHg = 40;
+
+          c.Clc = 3.961488;
+
+
+        end C;
       end Tests;
       annotation (Documentation(info="<html>
 <p>References:</p>
