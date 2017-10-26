@@ -1763,12 +1763,14 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           constant Real Nais0=141.5;
           constant Real Nac0=12;
           Real MNa = Napl0*Vp0 + Nais0*Vis0 + Nac0*Vc0;
+          Real MNac = Nac0*Vc0;
           Real MNa_IP;
 
           constant Real Kpl0=4.7;
           constant Real Kis0=4.75;
           constant Real Kc0=139;
           Real MK = Kpl0*Vp0 + Kis0*Vis0 + Kc0*Vc0;
+          Real MKc = Kc0*Vc0;
           Real MK_IP;
 
           constant Real Cle0=53.5;
@@ -1776,6 +1778,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           constant Real Clis0=116.5;
           constant Real Clc0=4;
           Real MCl = Cle0*Ve0 + Clpl0*Vp0 + Clis0*Vis0 + Clc0*Vc0;
+          Real MClc = Clc0*Vc0;
 
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
                 coordinateSystem(preserveAspectRatio=false)));
@@ -1830,8 +1833,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
         // total mass of Cl mobile ion
-      //   Real pCO2mmHg=20 + time*40;
-        Real pCO2mmHg=40;
+      //    Real pCO2mmHg=20 + time*40;
+         Real pCO2mmHg=40;
         Real rClpw_is=pla.water_c[pla.cont.Cl]/Clis "0.949290";
         constant Real MNac=276.96;
         constant Real MKc=3179.97;
@@ -2029,15 +2032,18 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         Real pCO2mmHg=40;
         parameter Real Hct=0.44;
         parameter Real O2s=0.75;
-         constant Real MNac=276.96198;
-         constant Real MKc=3179.97;
-         constant Real MClc=90.70933;
+          constant Real MNac=276.96198;
+          constant Real MKc=3179.97;
+          constant Real MClc=90.70933;
       //  Real MNac(start = 276.96198, min = 0, max = 10000) = homotopy(c.MNac, 276.96198);
       //  Real MKc(start = 3179.97, min = 0, max = 10000) = homotopy(c.MKc, 3179.97);
       //  Real MClc(start = 90.70933, min = 0, max = 10000) = homotopy(c.MClc, 90.70933);
       //   Real MNac(start = 276.96198, min = 0, max = 10000) = c.MNac;
       //   Real MKc(start = 3179.97, min = 0, max = 10000) = c.MKc;
       //   Real MClc(start = 90.70933, min = 0, max = 10000) = c.MClc;
+      //   Real MNac(start = 276.96198, min = 0, max = 10000) = sim.MNac;
+      //   Real MKc(start = 3179.97, min = 0, max = 10000) = sim.MKc;
+      //   Real MClc(start = 90.70933, min = 0, max = 10000) = sim.MClc;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew;
         Real MCl_IP=sim.MCl - MClc - MCle;
         //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
@@ -2155,19 +2161,19 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         parameter Real O2s = 0.75;
 
         equation
-          vols.Vew = 1.43;
-          vols.Vis = 15.59;
-          vols.Vc = 22.9;
+          vols.Vew = 1.44400;
+          vols.Vis = 15.75516;
+          vols.Vc = 22.64963;
 
           vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
           ery.fH = vols.fH;
           ery.few = vols.few;
-          ery.Lactate = 1.035;//LACew =LACpw/rCl;
+          ery.Lactate = 1.0185;//LACpw/rCl;
           ery.Vew0 = vols.Vew0;
           ery.Vew = vols.Vew;
         //  ery.water_c[ery.cont.Cl] / 110.9 = 4.119084e-8 / ery.H "Clpla , Hpl at standard V3.49";
-          ery.water_c[ery.cont.Cl] = 71.77;
-         ery.H = 6.362e-8;
+          ery.water_c[ery.cont.Cl] = 71.0311;
+         ery.H = 6.37518e-8;
           // ery.
         //   // same osmolarities
            //ery.Osm = 286.99;
