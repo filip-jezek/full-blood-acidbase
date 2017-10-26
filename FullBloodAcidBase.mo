@@ -1200,8 +1200,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       package Auxiliary
         record Erythrocyte
           import Modelica.SIunits.*;
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
 
           type cont = enumeration(
               Na,
@@ -1272,12 +1270,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Volume water_volume(start=water_volume0);
           Real pCO2mmHg(unit="1");
           Real H(start=10^(-7.2));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end Erythrocyte;
 
         record Plasma
           import Modelica.SIunits.*;
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
 
                 type cont = enumeration(
               Na,
@@ -1333,12 +1331,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Volume water_volume( start = water_volume0);
           Real pCO2mmHg(unit="1");
           Real H(start=10^(-7.37));
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end Plasma;
       end Auxiliary;
 
       model PE "Plasma - erythrocyte model"
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
 
         FullBloodAcidBase.Wolf.OriginalValues.Auxiliary.Erythrocyte ery;
         FullBloodAcidBase.Wolf.OriginalValues.Auxiliary.Plasma pla;
@@ -1368,12 +1366,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         ery.pCO2mmHg = pCO2mmHg;
         pla.pCO2mmHg = pCO2mmHg;
 
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end PE;
 
       package Tests
         model P
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
-                  preserveAspectRatio=false)));
           FullBloodAcidBase.Wolf.OriginalValues.Auxiliary.Plasma ery;
 
         // total mass of Cl mobile ion
@@ -1392,11 +1390,11 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           // pco2
           ery.pCO2mmHg = pCO2mmHg;
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
+                  preserveAspectRatio=false)));
         end P;
 
         model E
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
-                  preserveAspectRatio=false)));
           FullBloodAcidBase.Wolf.OriginalValues.Auxiliary.Erythrocyte ery;
 
         // total mass of Cl mobile ion
@@ -1415,6 +1413,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           // pco2
           ery.pCO2mmHg = pCO2mmHg;
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
+                  preserveAspectRatio=false)));
         end E;
       end Tests;
     end OriginalValues;
@@ -1423,8 +1423,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       package Auxiliary
         record Erythrocyte
           import Modelica.SIunits.*;
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
 
           type cont = enumeration(
               Na,
@@ -1507,12 +1505,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           parameter Concentration permeableParticles = 10.64 "glucose and urea concentration in PLasma water";
 
           Concentration HCO3ClDiff = HCO3/ water_c[cont.Cl]*few;
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end Erythrocyte;
 
         record Plasma
           import Modelica.SIunits.*;
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
 
           type cont = enumeration(
               Na,
@@ -1596,13 +1594,13 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real Hw = H/fpw;
           parameter Concentration permeableParticles=10.64
             "glucose and urea concentration in PLasma water";
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end Plasma;
 
         record Isf
           "ISF is considered as water compartment, that is each substance concentration is meant as in water"
           import Modelica.SIunits.*;
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
 
           type cont = enumeration(
               Na,
@@ -1693,11 +1691,11 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real Vb;
           Real Vb0;
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end Isf;
 
         record Volumes
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
           type PatientCat = enumeration(
               adultM,
               adultF,
@@ -1743,18 +1741,18 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         Real few = Vew / Ve;
         Real Vpw =  Vadd + Vpw0 + Vis0 + Vew0 + Vc0 - Vis - Vew- Vc " = 2.93";
         Real Vp0ByVp = Vp0 / Vpl;
-         Real Vew(start=Vew0, min = 0) "= 1.43";
-         Real Vis(start=Vis0, min = 0) "= 15.59";
-         Real Vc(start=Vis, min = 0) "= 22.9";
+         Real Vew(start=Vew0, min = 1e-3) "= 1.43";
+         Real Vis(start=Vis0, min = 1e-3) "= 15.59";
+         Real Vc(start=Vis, min = 1e-3) "= 22.9";
         // Real Vew = 1.43;
         // Real Vis = 15.59;
         // Real Vc = 22.9;
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end Volumes;
 
         record StrongIonMasses
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
 
           Real Ve0;
           Real Vp0;
@@ -1779,13 +1777,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           constant Real Clc0=4;
           Real MCl = Cle0*Ve0 + Clpl0*Vp0 + Clis0*Vis0 + Clc0*Vc0;
 
-
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end StrongIonMasses;
 
         record Cell
             import Modelica.SIunits.*;
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
 
           Real Kis;
           Real Nais;
@@ -1821,12 +1818,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           parameter Concentration permeableParticles=10.64
             "glucose and urea concentration in PLasma water";
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end Cell;
       end Auxiliary;
 
       model PE "Plasma - erythrocyte model"
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
 
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
@@ -1906,14 +1903,11 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
         // Donnan equilibrium
 
-
-
-
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end PE;
 
       model IPE "Plasma - erythrocyte model"
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
 
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
@@ -2013,12 +2007,17 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
         // Donnan equilibrium
 
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end IPE;
 
       model CIPE "Cell - Interstitium - Plasma - erythrocyte model"
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-
+        Real SMCl0 = sim.MCl;
+        Real SMCl = MCl_IP + isf.Cl + MClc;
+        Real pHe = ery.pH;
+        Real pHp = pla.pH;
+        Real pHi = isf.pH;
+        Real pHc = c.pH;
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
         FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
@@ -2030,12 +2029,15 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         Real pCO2mmHg=40;
         parameter Real Hct=0.44;
         parameter Real O2s=0.75;
-        constant Real MNac=276.96198;
-        constant Real MKc=3179.97;
-        constant Real MClc=90.70933;
-        Real MNac1(start = 276.96198, min = 0, max = 10000) = c.MNac;
-        Real MClc1(start = 3179.97, min = 0, max = 10000) = c.MClc;
-        Real MKc1(start = 90.70933, min = 0, max = 10000) = c.MKc;
+         constant Real MNac=276.96198;
+         constant Real MKc=3179.97;
+         constant Real MClc=90.70933;
+      //  Real MNac(start = 276.96198, min = 0, max = 10000) = homotopy(c.MNac, 276.96198);
+      //  Real MKc(start = 3179.97, min = 0, max = 10000) = homotopy(c.MKc, 3179.97);
+      //  Real MClc(start = 90.70933, min = 0, max = 10000) = homotopy(c.MClc, 90.70933);
+      //   Real MNac(start = 276.96198, min = 0, max = 10000) = c.MNac;
+      //   Real MKc(start = 3179.97, min = 0, max = 10000) = c.MKc;
+      //   Real MClc(start = 90.70933, min = 0, max = 10000) = c.MClc;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew;
         Real MCl_IP=sim.MCl - MClc - MCle;
         //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
@@ -2138,12 +2140,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
         // Donnan equilibrium
 
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end CIPE;
 
       package Tests
         model E
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
-                  preserveAspectRatio=false)));
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
         // total mass of Cl mobile ion
@@ -2177,11 +2179,11 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           // pco2
           ery.pCO2mmHg = pCO2mmHg;
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
+                  preserveAspectRatio=false)));
         end E;
 
         model P
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
-                  preserveAspectRatio=false)));
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
@@ -2227,11 +2229,11 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           // pco2
           pla.pCO2mmHg = pCO2mmHg;
 
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(
+                  preserveAspectRatio=false)));
         end P;
 
         model I
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf  isf;
 
           Real rClpwis = 0.94929;
@@ -2252,12 +2254,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           isf.AlbPwGPerL = 43.0654;
           isf.Vb = 5.08026;
           isf.Vb0 = 5.095485;
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end I;
 
         model C
           import Modelica.SIunits.*;
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-                coordinateSystem(preserveAspectRatio=false)));
                 FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Cell c;
 
         equation
@@ -2271,7 +2273,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
           c.Clc = 3.961488;
 
-
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
         end C;
       end Tests;
       annotation (Documentation(info="<html>
