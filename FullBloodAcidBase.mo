@@ -1743,9 +1743,9 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         Real few = Vew / Ve;
         Real Vpw =  Vadd + Vpw0 + Vis0 + Vew0 + Vc0 - Vis - Vew- Vc " = 2.93";
         Real Vp0ByVp = Vp0 / Vpl;
-         Real Vew(start=Vew0) "= 1.43";
-         Real Vis(start=Vis0) "= 15.59";
-         Real Vc(start=Vis) "= 22.9";
+         Real Vew(start=Vew0, min = 0) "= 1.43";
+         Real Vis(start=Vis0, min = 0) "= 15.59";
+         Real Vc(start=Vis, min = 0) "= 22.9";
         // Real Vew = 1.43;
         // Real Vis = 15.59;
         // Real Vc = 22.9;
@@ -1813,6 +1813,10 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
           Real OsmPart = HCO3 + Kc+ Nac + Clc;
           Real Osm = Im + permeableParticles + 0.93*OsmPart;
+
+          Real MNac = Nac*Vc;
+          Real MClc = Clc*Vc;
+          Real MKc = Kc*Vc;
 
           parameter Concentration permeableParticles=10.64
             "glucose and urea concentration in PLasma water";
@@ -2029,6 +2033,9 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         constant Real MNac=276.96198;
         constant Real MKc=3179.97;
         constant Real MClc=90.70933;
+        Real MNac1(start = 276.96198, min = 0, max = 10000) = c.MNac;
+        Real MClc1(start = 3179.97, min = 0, max = 10000) = c.MClc;
+        Real MKc1(start = 90.70933, min = 0, max = 10000) = c.MKc;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew;
         Real MCl_IP=sim.MCl - MClc - MCle;
         //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
@@ -2040,7 +2047,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         Real rHpwis = isf.H/pla.Hw "=rCLpwis";
         Real Clc(start = 3.961488, min = 0, max = 1000) = c.Clc;
         Real rClisce=c.rClisce;
-        Real rHisce = isf.H/c.H "=rCLisce";
+      //  Real rHisce = isf.H/c.H "=rCLisce";
 
       equation
 
@@ -2053,7 +2060,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         c.Vc = vols.Vc;
 
         // c.His = 3.91020e-8;
-        // c.Clc = 3.961488;
+        c.His = isf.H;
+      //  c.Clc = 3.961488;
 
         // isf.plasma_water_c={149.031, 4.962, 2.55814, 0, 0, 1.279073, 0, 0, 1.598841};
         isf.plasma_water_c=pla.water_c;
@@ -2084,20 +2092,18 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
         rClep = rHep;
         rClpwis = rHpwis;
-        rClisce = rHisce;
+      //  rClisce = rHisce;
 
         pla.Osm = ery.Osm;
         pla.Osm = isf.Osm + isf.OsmDiff;
         isf.Osm = c.Osm;
-      //  pla.water_c[pla.cont.Cl] = 110.8687;
-      //  ery.water_c[ery.cont.Cl] = 71.7743;
+
+
 
          ery.charge = 0;
          pla.charge = 0;
          isf.charge = 0;
          c.charge = 0;
-      //   pla.pH = 7.41225;
-      //   ery.pH = 7.196;
 
         sim.Ve0 = vols.Ve0;
         sim.Vp0 = vols.Vp0;
