@@ -1527,20 +1527,20 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Concentration K;
           Concentration Cl;
 
-          Concentration Ca=2.4*wf0/fpw;
+          Concentration Ca=2.4;
           parameter Concentration Mg=0.8;
           //parameter Concentration Cl0=105;
         //  Real Cl_mass0(unit="mol") = Cl0/wf0*water_volume0;
         //  Real Cl_mass(unit="mol") = Cl/wf0*water_volume;
           parameter Concentration Pi=1.2;
           Concentration Alb=AlbPwGPerL/66.5 "mmol/Lpw";
-          Real AlbPwGPerL = 43 / Vp0ByVp "g/lpw";
+          Real AlbPwGPerL = 43 * Vp0ByVp "g/lpw";
           // parameter Concentration im = 0; // original
           parameter Concentration im=11.87;
           // adjusted
           parameter Concentration Lac=1.5;
           Concentration SO4pw=0.33/fpw "mmol/Lpw";
-          Concentration volume_c[cont]={Na,K,Ca,Mg,Cl,Pi,Alb,im,Lac}
+          Concentration volume_c[cont]={Na,K,Ca,Mg,Cl,Pi,Alb/Vp0ByVp,im,Lac}
             "concentration in one liter";
           Concentration water_c[cont]=volume_c/fpw*Vp0ByVp
             "Actual concentration recalculated to water fraction in one liter (initially 0.96)";
@@ -1566,7 +1566,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real fi[cont]={0.93,0.93,1,1,0.93,0.93,1,1,-9999};
           // Alb has osmotic coefficient of 1???
           Real CaOsm=water_c[cont.Ca] - CaPPBound*0.5;
-          Real MgOsm=water_c[cont.Mg] - CaPPBound*0.5;
+          Real MgOsm=water_c[cont.Mg] - MgPPBound*0.5;
           Real OsmPart=SO4pw + CaOsm + MgOsm + sum(water_c[{cont.Na,cont.K,cont.Cl,cont.Lac}])
                + water_c[cont.Pi] + HCO3 + CO3;
           Real Osm=OsmPart*0.93 + permeableParticles;
@@ -1701,12 +1701,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
               adultF,
               childM,
               childF);
-          PatientCat pc=PatientCat.adultM;
-          Real Fcell=if pc == PatientCat.adultM or pc == PatientCat.adultF then 0.88
+          parameter PatientCat pc=PatientCat.adultM;
+          parameter Real Fcell=if pc == PatientCat.adultM or pc == PatientCat.adultF then 0.88
                elseif pc == PatientCat.childM then 0.83 else 0.85;
 
                  // the rest is only adult male
-           Real TBWm = 2.447 - 0.09156*age +0.3362* weight + 0.1074*height;
+           parameter Real TBWm = 2.447 - 0.09156*age +0.3362* weight + 0.1074*height;
            //Real TBWf
            parameter Real LBM = 0.407*weight + 0.267*height - 19.2;
            // Real LBMm, LBMf;
@@ -1716,12 +1716,12 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
         parameter Real Ve0 = 0.048*LBM -0.72;
         parameter Real Vp0 = 0.051*LBM + 0.27;
-        Real Vb0 = (Ve0 + Vp0);
-        Real fH0 = Ve0 / (Ve0 + Vp0);
-        Real fHa0 = fH0/Fcell;
+        parameter Real Vb0 = (Ve0 + Vp0);
+        parameter Real fH0 = Ve0 / (Ve0 + Vp0);
+        parameter Real fHa0 = fH0/Fcell;
         parameter Real Vis0 = 0.331*LBM - Vpw0;
-        Real TBW = 2.447-0.09156*age+0.3362*weight+0.1074*height "Woodrow 2003 for male, there also exists female variant";
-        Real Vc0 = TBW - Vis0 - Vpw0 - Vew0;
+        parameter Real TBW = 2.447-0.09156*age+0.3362*weight+0.1074*height "Woodrow 2003 for male, there also exists female variant";
+        parameter Real Vc0 = TBW - Vis0 - Vpw0 - Vew0;
 
 
         parameter Real Vpw0= Vp0 - Vps;
@@ -1732,8 +1732,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         Real Vb = Vpl + Ve;
         Real fH = Ve / Vb;
 
-        Real Vw0 = Ve0 + Vp0 + Vis0 + Vc0;
-        Real V = Vw0 + Vadd;
+        parameter Real Vw0 = Ve0 + Vp0 + Vis0 + Vc0;
+        parameter Real V = Vw0 + Vadd;
         parameter Real Vadd = 0;
         // Volumes
         Real Vpl = Vpw + Vps;
@@ -1743,7 +1743,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         Real Vp0ByVp = Vp0 / Vpl;
          Real Vew(start=Vew0, min = 1e-3) "= 1.43";
          Real Vis(start=Vis0, min = 1e-3) "= 15.59";
-         Real Vc(start=Vis, min = 1e-3) "= 22.9";
+         Real Vc(start=Vc0, min = 1e-3) "= 22.9";
         // Real Vew = 1.43;
         // Real Vis = 15.59;
         // Real Vc = 22.9;
@@ -2160,8 +2160,13 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         parameter Real Hct = 0.44;
         parameter Real O2s = 0.75;
 
+        parameter Real Hpw = 4.128159e-8;
+        parameter Real Clpw = 109.694599;
+        parameter Real EryOsm = 284.084;
+        Real Cle = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+        Real Vew = vols.Vew "= 1.44400";
         equation
-          vols.Vew = 1.44400;
+        //  vols.Vew = 1.44400;
           vols.Vis = 15.75516;
           vols.Vc = 22.64963;
 
@@ -2171,13 +2176,15 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           ery.Lactate = 1.0185;//LACpw/rCl;
           ery.Vew0 = vols.Vew0;
           ery.Vew = vols.Vew;
-        //  ery.water_c[ery.cont.Cl] / 110.9 = 4.119084e-8 / ery.H "Clpla , Hpl at standard V3.49";
-          ery.water_c[ery.cont.Cl] = 71.0311;
-         ery.H = 6.37518e-8;
+          Cle / Clpw = Hpw / ery.H "Clpla , Hpl at standard V3.49";
+
+
+         // ery.water_c[ery.cont.Cl] = 71.0311;
+        // ery.H = 6.37518e-8;
           // ery.
         //   // same osmolarities
-           //ery.Osm = 286.99;
-         //  ery.charge = 0;
+           ery.Osm = EryOsm;
+           ery.charge = 0;
         //   ery.Cl = ery.Cl0;
            //ery.Cl = 71.77 * ery.wf0;
 
@@ -2190,24 +2197,30 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         end E;
 
         model P
+          Real Clpw(start = 112, min = 10, max = 200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+        Real Vis = vols.Vis "=15.75516";
+
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
           FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
         // total mass of Cl mobile ion
         Real pCO2mmHg = 40;
         // Real rClpw_is = pla.volume_c[pla.cont.Cl]/Clis;
-        Real rClpw_is = 0.949290;
-        constant Real MNac = 276.96;
-        constant Real MKc = 3179.97;
-        constant Real MClc = 90.709;
-        constant Real MCle = 102.640;
-        constant Real Clis = 116.79118;
+          Real rClpwis=Clpw / Clis;
+
+        constant Real Clis = 115.461419;
+        constant Real MNac = 272.17930;
+        constant Real MKc = 3178.3177;
+        constant Real MClc = 88.33349;
+        constant Real MCle = 102.5695;
+
+        parameter Real EryOsm = 284.084;
         Real MCl_IP = sim.MCl - MClc - MCle;
         //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
         equation
-          vols.Vew = 1.43;
-          vols.Vis = 15.5919;
-          vols.Vc = 22.9;
+          vols.Vew = 1.44400;
+        //  vols.Vis = 15.75516;
+          vols.Vc = 22.64963;
 
           sim.Ve0 = vols.Ve0;
           sim.Vp0 = vols.Vp0;
@@ -2217,20 +2230,20 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           sim.MK_IP = sim.MK - MKc;
 
 
-          pla.water_c[pla.cont.Na] = sim.MNa_IP / (vols.Vis * rClpw_is + vols.Vpw);
-          pla.water_c[pla.cont.K] = sim.MK_IP / (vols.Vis * rClpw_is + vols.Vpw);
+          pla.water_c[pla.cont.Na] =sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+          pla.water_c[pla.cont.K] =sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
           Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/ vols.Vis;
-         // pla.volume_c[pla.cont.Cl] = 110.86;
+        //  pla.water_c[pla.cont.Cl] = 109.694599;
 
           // same osmolarities
-        //   pla.Osm = 286.99;
-        //   pla.charge = 0;
+           pla.Osm = EryOsm;
+           pla.charge = 0;
 
 
           pla.Vp0ByVp = vols.Vp0ByVp;
 
           // Donnan equilibrium
-          pla.pH = 7.41225;
+        //  pla.pH = 7.410676;
           pla.fpw = vols.fpw;
           // pco2
           pla.pCO2mmHg = pCO2mmHg;
