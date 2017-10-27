@@ -1439,7 +1439,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           parameter Concentration Cl0=53.8;
           Concentration Cl(start=Cl0);
           Real Cl_mass0(unit="mol") = Cl0/wf0*Vew0;
-          Real Cl_mass(unit="mol") = Cl/wf0*Vew;
+        //  Real Cl_mass = Cl/wf0*Vew;
 
           parameter Concentration Hb=5.3 "concentration of Hb tetramer";
            Concentration DPG=4.3/few*wf0 "the 4.3 value goes directly in";
@@ -1481,7 +1481,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real fiHb=1 + 0.115*water_c[cont.Hb] + 0.0256*water_c[cont.Hb]^2
             "Osmotic coefficient of Hemoglobin (eq from Raftos et al)";
           Real fi[cont]={0.93,0.93,0.93,fiHb,1,1,1,1,1} "Osmotic coefficients";
-          Real Osm=sum(water_c .* fi) + 0.93*(HCO3 + CO3) + Lactate + permeableParticles "osmotic coefficient from Wolf model V3.49";
+          Real Osm=sum(water_c .* fi) + 0.93*(HCO3 + CO3) + Lactate + permeableParticles " = 284.084 osmotic coefficient from Wolf model V3.49";
           Real OsmTest[:] =   water_c .* fi;
         //   //electric charge
           Real Z[cont]={1,1,-1,ZHb,ZDPG,ZATP,ZGSH,0,ZPi}
@@ -1569,7 +1569,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real MgOsm=water_c[cont.Mg] - MgPPBound*0.5;
           Real OsmPart=SO4pw + CaOsm + MgOsm + sum(water_c[{cont.Na,cont.K,cont.Cl,cont.Lac}])
                + water_c[cont.Pi] + HCO3 + CO3;
-          Real Osm=OsmPart*0.93 + permeableParticles;
+          Real Osm=OsmPart*0.93 + permeableParticles " = 284.084";
 
           Real Z[cont]={1,1,2,2,-1,ZPi,ZAlb,0,1};
           Real Chrgs[cont]=water_c .* Z;
@@ -1592,7 +1592,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real pCO2mmHg(unit="1");
           Real H(start=10^(-7.37), min = 0, max = 1);
           Real Hw = H/fpw;
-          parameter Concentration permeableParticles=10.64
+          Concentration permeableParticles=(5+5)/fpw
             "glucose and urea concentration in PLasma water";
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
                 coordinateSystem(preserveAspectRatio=false)));
@@ -1649,7 +1649,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           parameter Real Zim=3.057 "Charge of ALL impermeable solutes";
 
           Real OsmStep1=sum(water_c[{cont.Na,cont.K}]) + Cl;
-          Real OsmStep2=OsmStep1 + (CaIon - CaPPBoundErr + MgIon - CaPPBoundErr/2)/2 + sum(water_c[
+          Real CaMgIonOsm = (CaIon - CaPPBoundErr + MgIon - CaPPBoundErr/2)/2;
+          Real OsmStep2=OsmStep1 + CaMgIonOsm + sum(water_c[
               {cont.Pi,cont.Lac}]) + HCO3 + CO3 + SO4/2;
           Real Osm = OsmStep2*0.93 + permeableParticles;
 
@@ -1681,8 +1682,10 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real PIEglob = (1 - ca / cp)*(0.9*cp + 0.12*cp^2 + 0.004*cp^3);
           Real cai = albis*0.1;
           Real COPalbis = cai*2.8 + 0.18*cai^2 + 0.012*cai^3;
+          Real BloodyHell = (Vis-Vis0)/Vis0;
+          Real Bh1 = if BloodyHell < 0 then BloodyHell*125 else BloodyHell*243 "Simplified bloody hell";
         //   Real pd = (28.48 - 0.99*(COPPpl - COPalbis))/19.3;
-          Real pd = (38.36 - 0.99*(COPPpl - COPalbis) + PVb)/19.3;
+          Real pd = (38.36 - 0.99*(COPPpl - COPalbis) + PVb - Bh1)/19.3;
           Real OsmDiff = pd*2;
           Real Vbr = (Vb - Vb0)/Vb0 "VbRatio";
           Real PVb=if Vbr < -5 then -5*50 elseif Vbr > -5 and Vbr < 0 then Vbr*50
@@ -1805,7 +1808,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Concentration HCO3=0.029*pCO2mmHg*10^(pH - 6.103);
           Real pH(start=7.408) = -log10(H);
 
-          Real H(start=10^(-6.938), min = 0, max = 1) = His*0.1*rClisce "Why His*0.1? Is it the water content?";
+          Real H(start=10^(-6.935), min = 0, max = 1) = His*0.1*rClisce "Why His*0.1? Is it the water content?";
 
           Real charge = -HCO3 + Kc - Clc +Nac + Zim*Im;
           Real Zim = -1.1728*10^(pH - 5.5)/(1 + 10^(pH - 5.5));
@@ -1818,8 +1821,9 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real MClc = Clc*Vc;
           Real MKc = Kc*Vc;
 
-          parameter Concentration permeableParticles=10.64
+          parameter Concentration permeableParticles=5.313 + UreaError
             "glucose and urea concentration in PLasma water";
+          constant Real UreaError = 0 "Concentration of Urea in plasma water. Should be 5.31, is zero";
 
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
                 coordinateSystem(preserveAspectRatio=false)));
@@ -1836,20 +1840,20 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       //    Real pCO2mmHg=20 + time*40;
          Real pCO2mmHg=40;
         Real rClpw_is=pla.water_c[pla.cont.Cl]/Clis "0.949290";
-        constant Real MNac=276.96;
-        constant Real MKc=3179.97;
-        constant Real MClc=90.709;
-        //constant Real MCle = 102.640;
-        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew;
-        constant Real Clis=116.79118;
+
+      constant Real Clis = 115.461419;
+      constant Real MNac = 272.17930;
+      constant Real MKc = 3178.3177;
+      constant Real MClc = 88.33349;
+      Real MCle = ery.water_c[ery.cont.Cl]*vols.Vew;
         Real MCl_IP=sim.MCl - MClc - MCle;
-        //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
         parameter Real Hct=0.44;
         parameter Real O2s=0.75;
-        Real rClep=ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl];
-        Real rHep=pla.Hw/ery.H;
         Real Clpla( start = 110.8687, min = 0, max = 1000) = pla.water_c[pla.cont.Cl];
         Real Clery( start = 71.7743, min = 0, max = 1000) = ery.water_c[ery.cont.Cl];
+        Real rClep=ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl];
+        Real rHep=pla.Hw/ery.H;
+
       equation
         // vols.Vew = 1.43;
         vols.Vis = 15.5919;
@@ -2233,10 +2237,10 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           pla.water_c[pla.cont.Na] =sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
           pla.water_c[pla.cont.K] =sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
           Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/ vols.Vis;
-        //  pla.water_c[pla.cont.Cl] = 109.694599;
+          pla.water_c[pla.cont.Cl] = 109.694599;
 
           // same osmolarities
-           pla.Osm = EryOsm;
+         //  pla.Osm = EryOsm;
            pla.charge = 0;
 
 
@@ -2253,26 +2257,48 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         end P;
 
         model I
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf  isf;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf  isf( permeableParticles = 10.62755);
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
+          Real rClpwis = Clpw/isf.Cl " = 0.9500";
+          parameter Real Hpw = 4.128159e-8;
+          parameter Real Clpw = 109.694599;
+          parameter Real Alb = 43;
+          constant Real EryOsm = 284.084;
+          constant Real MCl_IP = 2148.68379;
 
-          Real rClpwis = 0.94929;
+          // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
+          Real Clis( start = 115) " = 115.4614";
+          Real Vis = vols.Vis "= 15.75516";
+          Real oo = isf.Osm + isf.pd*2;
         equation
+          vols.Vew = 1.44400;
+        //  vols.Vis = 15.75516;
+          vols.Vc = 22.64963;
 
-          isf.plasma_water_c={149.031, 4.962, 2.55814, 0, 0, 1.279073, 0, 0, 1.598841};
+          isf.plasma_water_c={147.3244, 4.9890, 2.4977, 0, 0, 1.2488, 0, 0, 1.56017};
 
           isf.rClpwis = rClpwis;
-          // TODO own computation of ALB
-          isf.CaIon = 3.859*rClpwis^2;
-          isf.MgIon = 1.0768*rClpwis^2;
-          isf.Cl = 116.791;
-          isf.Vis = 15.591;
-          isf.Vis0 = 15.602;
+
+          isf.CaIon = 3.76940*rClpwis^2;
+          isf.MgIon = 1.05212*rClpwis^2;
+          isf.Vis = vols.Vis;
+          isf.Vis0 = vols.Vis0;
           isf.SO4pw = 0.702420/2; // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
           isf.pCO2mmHg = 40;
-          isf.pH = 7.4078;
-          isf.AlbPwGPerL = 43.0654;
-          isf.Vb = 5.08026;
-          isf.Vb0 = 5.095485;
+          isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
+          isf.Vb = vols.Vb;
+          isf.Vb0 = vols.Vb0;
+          isf.Cl = Clis;
+
+          //  isf.permeableParticles = 10.62755 "5+5 / fpw";
+
+        //  isf.Cl = 115.4614;
+        //  isf.pH = 7.40649;
+
+
+           isf.H = Hpw *rClpwis;
+           isf.charge = 0;
+           isf.Osm + isf.OsmDiff = EryOsm;
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
                 coordinateSystem(preserveAspectRatio=false)));
         end I;
@@ -2280,21 +2306,297 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         model C
           import Modelica.SIunits.*;
                 FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Cell c;
-
+                Real Clc(start = 3.9, min = 1, max = 100) = c.Clc;
         equation
-          c.Kis = 4.7106;
-          c.Nais = 141.474;
-          c.Clis = 116.7911;
+          c.Kis = 4.73983;//4.73106;
+          c.Nais = 139.9662;//141.474;
+          c.Clis = 115.461419;//116.7911;
           c.Vc0 = 22.87176;
-          c.Vc = 22.897789;
-          c.His = 3.91020e-8;
+        //  c.Vc = 22.64963;//22.897789;
+          c.His = 3.92197e-8;//3.91020e-8;
           c.pCO2mmHg = 40;
 
-          c.Clc = 3.961488;
+        //  c.rClisce = 29.6055;
+          //  c.Clc = 3.961488;
+          c.charge = 0;
+          c.Osm = 282.20;
 
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
                 coordinateSystem(preserveAspectRatio=false)));
         end C;
+
+        model EP
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+
+          Real Clpw(start = 112, min = 10, max = 200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+          Real Cle(start = 71, min = 1, max = 200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+          Real Vew = vols.Vew "= 1.44400";
+          Real Vis = vols.Vis "=15.75516";
+
+          Real pHe = ery.pH;
+          Real pHp = pla.pH;
+
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
+        // total mass of Cl mobile ion
+        Real pCO2mmHg = 40;
+        // output: osmolarity and Cl
+        parameter Real Hct = 0.44;
+        parameter Real O2s = 0.75;
+
+        Real rClpwis=Clpw / Clis;
+
+        constant Real Clis = 115.461419;
+        constant Real MNac = 272.17930;
+        constant Real MKc = 3178.3177;
+        constant Real MClc = 88.33349;
+        Real MCle = ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+        Real MCl_IP = sim.MCl - MClc - MCle;
+
+        equation
+        //  vols.Vew = 1.44400;
+        //  vols.Vis = 15.75516;
+          vols.Vc = 22.64963;
+
+          vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+          ery.fH = vols.fH;
+          ery.few = vols.few;
+          ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;//LACpw/rCl;
+          ery.Vew0 = vols.Vew0;
+          ery.Vew = vols.Vew;
+
+          Cle / Clpw = pla.Hw / ery.H "Clpla , Hpl at standard V3.49";
+          ery.Osm = pla.Osm;
+          ery.charge = 0;
+          ery.pCO2mmHg = pCO2mmHg;
+
+          sim.Ve0 = vols.Ve0;
+          sim.Vp0 = vols.Vp0;
+          sim.Vis0 = vols.Vis0;
+          sim.Vc0 = vols.Vc0;
+          sim.MNa_IP = sim.MNa - MNac;
+          sim.MK_IP = sim.MK - MKc;
+
+
+          pla.water_c[pla.cont.Na] =sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+          pla.water_c[pla.cont.K] =sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
+          Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/ vols.Vis;
+          pla.water_c[pla.cont.Cl] = 109.694599;
+
+          pla.charge = 0;
+          pla.Vp0ByVp = vols.Vp0ByVp;
+          pla.fpw = vols.fpw;
+          pla.pCO2mmHg = pCO2mmHg;
+
+        end EP;
+
+        model EPI
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+
+          Real Clis( start = 115, min = 10, max = 200) = isf.Cl " = 115.4614";
+          Real Clpw(start = 112, min = 10, max = 200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+          Real Cle(start = 71, min = 1, max = 200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+
+          Real Vew = vols.Vew "= 1.44400";
+          Real Vis = vols.Vis "=15.75516";
+
+          Real pHe = ery.pH;
+          Real pHp = pla.pH;
+          Real pHi = isf.pH;
+
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf  isf( permeableParticles = 10.62755);
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
+        // total mass of Cl mobile ion
+        Real pCO2mmHg = 40;
+        // output: osmolarity and Cl
+        parameter Real Hct = 0.44;
+        parameter Real O2s = 0.75;
+
+        constant Real MNac = 272.17930;
+        constant Real MKc = 3178.3177;
+        constant Real MClc = 88.33349;
+        Real MCle = ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+        Real MCl_IP = sim.MCl - MClc - MCle;
+        Real rH = isf.H/pla.Hw;
+
+          Real rClpwis = Clpw/Clis " = 0.9500";
+          parameter Real Alb = 43;
+
+          // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
+        equation
+        //  vols.Vew = 1.44400;
+        //  vols.Vis = 15.75516;
+          vols.Vc = 22.64963;
+
+          vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+          ery.fH = vols.fH;
+          ery.few = vols.few;
+          ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;//LACpw/rCl;
+          ery.Vew0 = vols.Vew0;
+          ery.Vew = vols.Vew;
+
+          Cle / Clpw = pla.Hw / ery.H "Clpla , Hpl at standard V3.49";
+          ery.Osm = pla.Osm;
+          ery.charge = 0;
+          ery.pCO2mmHg = pCO2mmHg;
+
+          sim.Ve0 = vols.Ve0;
+          sim.Vp0 = vols.Vp0;
+          sim.Vis0 = vols.Vis0;
+          sim.Vc0 = vols.Vc0;
+          sim.MNa_IP = sim.MNa - MNac;
+          sim.MK_IP = sim.MK - MKc;
+
+          pla.water_c[pla.cont.Na] =sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+          pla.water_c[pla.cont.K] =sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
+          Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/ vols.Vis;
+          //pla.water_c[pla.cont.Cl] = 109.694599;
+
+          pla.charge = 0;
+          pla.Vp0ByVp = vols.Vp0ByVp;
+          pla.fpw = vols.fpw;
+          pla.pCO2mmHg = pCO2mmHg;
+
+          isf.plasma_water_c={147.3244, 4.9890, 2.4977, 0, 0, 1.2488, 0, 0, 1.56017};
+          isf.rClpwis = rClpwis;
+          isf.CaIon = 3.76940*rClpwis^2;
+          isf.MgIon = 1.05212*rClpwis^2;
+          isf.Vis = vols.Vis;
+          isf.Vis0 = vols.Vis0;
+          isf.SO4pw = pla.SO4pw; // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
+          isf.pCO2mmHg = 40;
+          isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
+          isf.Vb = vols.Vb;
+          isf.Vb0 = vols.Vb0;
+
+           isf.H = pla.Hw *rClpwis;
+           isf.charge = 0;
+           isf.Osm + isf.OsmDiff = pla.Osm;
+        end EPI;
+
+        model EPIC
+          annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+                coordinateSystem(preserveAspectRatio=false)));
+          Real Clc(start = 3.9, min = 1, max = 100) = c.Clc;
+          Real Clis( start = 115, min = 10, max = 200) = isf.Cl " = 115.4614";
+          Real Clpw(start = 112, min = 10, max = 200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+          Real Cle(start = 71, min = 1, max = 200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+
+          Real Vew = vols.Vew "= 1.44400";
+          Real Vis = vols.Vis "=15.75516";
+
+          Real pHe = ery.pH;
+          Real pHp = pla.pH;
+          Real pHi = isf.pH;
+          Real pHc = c.pH;
+
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf  isf( permeableParticles = 10.62755);
+          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
+                FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Cell c;
+        // total mass of Cl mobile ion
+        Real pCO2mmHg = 40;
+        // output: osmolarity and Cl
+        parameter Real Hct = 0.44;
+        parameter Real O2s = 0.75;
+
+        constant Real MNac = 272.17930;
+        constant Real MKc = 3178.3177;
+        constant Real MClc = 88.33349;
+        Real MCle = ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+        Real MCl_IP = sim.MCl - MClc - MCle;
+        Real rH = isf.H/pla.Hw;
+
+          Real rClpwis = Clpw/Clis " = 0.9500";
+          parameter Real Alb = 43;
+
+          // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
+        equation
+        //  vols.Vew = 1.44400;
+        //  vols.Vis = 15.75516;
+        //  vols.Vc = 22.64963;
+
+          vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+          ery.fH = vols.fH;
+          ery.few = vols.few;
+          ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;//LACpw/rCl;
+          ery.Vew0 = vols.Vew0;
+          ery.Vew = vols.Vew;
+
+          Cle / Clpw = pla.Hw / ery.H "Clpla , Hpl at standard V3.49";
+          ery.Osm = pla.Osm;
+          ery.charge = 0;
+          ery.pCO2mmHg = pCO2mmHg;
+
+          sim.Ve0 = vols.Ve0;
+          sim.Vp0 = vols.Vp0;
+          sim.Vis0 = vols.Vis0;
+          sim.Vc0 = vols.Vc0;
+          sim.MNa_IP = sim.MNa - MNac;
+          sim.MK_IP = sim.MK - MKc;
+
+          pla.water_c[pla.cont.Na] =sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+          pla.water_c[pla.cont.K] =sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
+          Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/ vols.Vis;
+          //pla.water_c[pla.cont.Cl] = 109.694599;
+
+          pla.charge = 0;
+          pla.Vp0ByVp = vols.Vp0ByVp;
+          pla.fpw = vols.fpw;
+          pla.pCO2mmHg = pCO2mmHg;
+
+          isf.plasma_water_c={147.3244, 4.9890, 2.4977, 0, 0, 1.2488, 0, 0, 1.56017};
+          isf.rClpwis = rClpwis;
+          isf.CaIon = 3.76940*rClpwis^2;
+          isf.MgIon = 1.05212*rClpwis^2;
+          isf.Vis = vols.Vis;
+          isf.Vis0 = vols.Vis0;
+          isf.SO4pw = pla.SO4pw; // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
+          isf.pCO2mmHg = 40;
+          isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
+          isf.Vb = vols.Vb;
+          isf.Vb0 = vols.Vb0;
+
+           isf.H = pla.Hw *rClpwis;
+           isf.charge = 0;
+           isf.Osm + isf.OsmDiff = pla.Osm;
+
+
+        //    c.Kis = 4.73983;//4.73106;
+        //    c.Nais = 139.9662;//141.474;
+        //    c.Clis = 115.461419;//116.7911;
+        //   c.Vc0 = 22.87176;
+        //  c.Vc = 22.64963;//22.897789;
+        //   c.His = 3.92197e-8;//3.91020e-8;
+        //   c.pCO2mmHg = 40;
+
+        //   c.Vc = vols.Vc;
+        //  c.rClisce = 29.6055;
+          //  c.Clc = 3.961488;
+        //   c.charge = 0;
+        //   c.Osm = 282.20;
+        //
+
+           c.Kis = isf.water_c[isf.cont.K];//4.73983;//4.73106;
+           c.Nais = isf.water_c[isf.cont.Na];//139.9662;//141.474;
+           c.Clis = isf.water_c[isf.cont.Cl];//115.461419;//116.7911;
+           c.Vc0 = vols.Vc0;
+            c.Vc = vols.Vc;
+           c.His = isf.H;//3.92197e-8;//3.91020e-8;
+           c.pCO2mmHg = 40;
+
+           c.charge = 0;
+           c.Osm = isf.Osm;
+        end EPIC;
       end Tests;
       annotation (Documentation(info="<html>
 <p>References:</p>
