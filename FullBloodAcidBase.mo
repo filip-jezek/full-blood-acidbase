@@ -323,7 +323,8 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       Real CO3(displayUnit="eq/l") = Kc2*HCO3/H;
 
       Real ZPi=(-1) - 10^(pH - 6.87)/(1 + 10^(pH - 6.87));
-      Real ZAlb=(-10.7) - 16*(10^(pH - 7.42)/(1 + 10^(pH - 7.42)));
+      Real ZAlb=(-10.7) - 16*(10^(pH - 7.42)/(1 + 10^(pH - 7.42)))
+        "Wolf, JCMC 2011";
 
     public
       Real P(displayUnit="meq/l") = Pi*ZPi;
@@ -556,7 +557,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
         alb=alb)
         annotation (Placement(transformation(extent={{-20,20},{0,40}})));
 
-      SAnomogram_formalization.SAoriginal fullErythrocyte(
+      replaceable SAnomogram_formalization.SAoriginal fullErythrocyte(
         Hct=1,
         BEox=BEe,
         pCO2=pCO2)
@@ -577,8 +578,8 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       input Real alb=4.4;
       output Real pH=fullErythrocyte.pH;
 
-    protected
-      FiggeFencl.FiggeFenclNSID normalPlasma(
+
+      replaceable FiggeFencl.FiggeFenclNSID normalPlasma(
         pH0=7.4,
         pCO20=40,
         alb0=alb,
@@ -904,7 +905,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
         alb=alb)
         annotation (Placement(transformation(extent={{-20,20},{0,40}})));
 
-      SAnomogram_formalization.SAoriginal fullErythrocyte(
+      SAnomogram_formalization.Zander1995 fullErythrocyte(
         Hct=1,
         BEox=BEe,
         pCO2=pCO2)
@@ -940,6 +941,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           __Dymola_NumberOfIntervals=500,
           Tolerance=1e-003));
     end CombinedModelSimple;
+
   end Full_Blood;
 
   package Figures
@@ -1569,7 +1571,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       end Tests;
     end OriginalValues;
 
-    package CurrentVersion
+    package v349
       package Auxiliary
         record Erythrocyte
           import Modelica.SIunits.*;
@@ -1782,7 +1784,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
               im,
               Lac) "Contents of erythrocyte";
 
-
           Concentration plasma_water_c[cont];
 
           Real rClpwis;
@@ -1848,7 +1849,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           parameter Concentration permeableParticles=10.64
             "glucose and urea concentration in PLasma water";
 
-
           // Transcapillary pressures
           // wattenpaugh J trauma Inuj 1998
           Real AlbPwGPerL;
@@ -1905,7 +1905,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           parameter Real TBW=2.447 - 0.09156*age + 0.3362*weight + 0.1074*
               height "Woodrow 2003 for male, there also exists female variant";
           parameter Real Vc0=TBW - Vis0 - Vpw0 - Vew0;
-
 
           parameter Real Vpw0=Vp0 - Vps;
           parameter Real Vps=0.0603*Vp0;
@@ -1978,7 +1977,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Real His;
           Real pCO2mmHg(unit="1");
 
-
           Real Clc(
             start=3.9,
             min=1,
@@ -2017,364 +2015,10 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         end Cell;
       end Auxiliary;
 
-      model PE "Plasma - erythrocyte model"
-
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
-        // total mass of Cl mobile ion
-        //    Real pCO2mmHg=20 + time*40;
-        Real pCO2mmHg=40;
-        Real rClpw_is=pla.water_c[pla.cont.Cl]/Clis "0.949290";
-
-        constant Real Clis=115.461419;
-        constant Real MNac=272.17930;
-        constant Real MKc=3178.3177;
-        constant Real MClc=88.33349;
-        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew;
-        Real MCl_IP=sim.MCl - MClc - MCle;
-        parameter Real Hct=0.44;
-        parameter Real O2s=0.75;
-        Real Clpla(
-          start=110.8687,
-          min=0,
-          max=1000) = pla.water_c[pla.cont.Cl];
-        Real Clery(
-          start=71.7743,
-          min=0,
-          max=1000) = ery.water_c[ery.cont.Cl];
-        Real rClep=ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl];
-        Real rHep=pla.Hw/ery.H;
-
-      equation
-        // vols.Vew = 1.43;
-        vols.Vis = 15.5919;
-        vols.Vc = 22.9;
-        ery.Lactate = pla.water_c[pla.cont.Lac]*rClep;
-        //1.035;
-        //LACew =LACpw/rCl;
-        //  ery.water_c[ery.cont.Cl] / 110.9 = 4.119084e-8 / ery.H "Clpla , Hpl at standard V3.49";
-        //  ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl] = pla.H/ery.H    "Clpla , Hpl at standard V3.49";
-
-        rClep = rHep;
-        pla.Osm = ery.Osm;
-        //  pla.water_c[pla.cont.Cl] = 110.8687;
-        //  ery.water_c[ery.cont.Cl] = 71.7743;
-
-
-
-        ery.charge = 0;
-        pla.charge = 0;
-        //   pla.pH = 7.41225;
-        //   ery.pH = 7.196;
-
-        sim.Ve0 = vols.Ve0;
-        sim.Vp0 = vols.Vp0;
-        sim.Vis0 = vols.Vis0;
-        sim.Vc0 = vols.Vc0;
-        sim.MNa_IP = sim.MNa - MNac;
-        sim.MK_IP = sim.MK - MKc;
-
-        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
-        ery.fH = vols.fH;
-        ery.few = vols.few;
-
-        ery.Vew0 = vols.Vew0;
-        ery.Vew = vols.Vew;
-        pla.Vp0ByVp = vols.Vp0ByVp;
-        pla.fpw = vols.fpw;
-
-
-        // pco2
-        pla.pCO2mmHg = pCO2mmHg;
-        ery.pCO2mmHg = pCO2mmHg;
-
-
-        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpw_is + vols.Vpw);
-        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpw_is + vols.Vpw);
-        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-        // pla.volume_c[pla.cont.Cl] = 110.86;
-
-        // same osmolarities
-        //   pla.Osm = 286.99;
-        //   pla.charge = 0;
-
-
-
-        // Donnan equilibrium
-
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end PE;
-
-      model IPE "Plasma - erythrocyte model"
-
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf isf;
-        // total mass of Cl mobile ion
-        //   Real pCO2mmHg=20 + time*40;
-        Real pCO2mmHg=40;
-        parameter Real Hct=0.44;
-        parameter Real O2s=0.75;
-        constant Real MNac=276.96198;
-        constant Real MKc=3179.97;
-        constant Real MClc=90.70933;
-        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew;
-        Real MCl_IP=sim.MCl - MClc - MCle;
-        //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
-        Real Clery(
-          start=71.7743,
-          min=0,
-          max=1000) = ery.water_c[ery.cont.Cl];
-        Real rClep=ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl];
-        Real rHep=pla.Hw/ery.H;
-        Real Clpla(
-          start=110.8687,
-          min=0,
-          max=1000) = pla.water_c[pla.cont.Cl];
-        Real rClpwis=pla.water_c[pla.cont.Cl]/isf.Cl "0.949290";
-        Real rHpwis=isf.H/pla.Hw "=rCLpwis";
-        Real Clis(
-          start=116.791,
-          min=0,
-          max=1000) = isf.Cl;
-      equation
-
-        // isf.plasma_water_c={149.031, 4.962, 2.55814, 0, 0, 1.279073, 0, 0, 1.598841};
-        isf.plasma_water_c = pla.water_c;
-
-        isf.rClpwis = rClpwis;
-
-        isf.CaIon = pla.CaIon*rClpwis^2;
-        isf.MgIon = pla.MgIon*rClpwis^2;
-
-        isf.Vis = vols.Vis;
-        isf.Vis0 = vols.Vis0;
-        isf.SO4pw = pla.SO4pw;
-        // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
-
-        isf.AlbPwGPerL = pla.AlbPwGPerL;
-        isf.Vb = vols.Vb;
-        isf.Vb0 = vols.Vb0;
-
-        //   isf.Cl = 116.791;
-        //   isf.pH = 7.4078;
-
-        // vols.Vew = 1.43;
-        //  vols.Vis = 15.5919;
-        vols.Vc = 22.8977;
-        ery.Lactate = pla.water_c[pla.cont.Lac]*rClep;
-        //1.035;
-        //LACew =LACpw/rCl;
-        //  ery.water_c[ery.cont.Cl] / 110.9 = 4.119084e-8 / ery.H "Clpla , Hpl at standard V3.49";
-        //  ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl] = pla.H/ery.H    "Clpla , Hpl at standard V3.49";
-
-        rClep = rHep;
-        rClpwis = rHpwis;
-
-        pla.Osm = ery.Osm;
-        pla.Osm = isf.Osm + isf.OsmDiff;
-        //  pla.water_c[pla.cont.Cl] = 110.8687;
-        //  ery.water_c[ery.cont.Cl] = 71.7743;
-
-        ery.charge = 0;
-        pla.charge = 0;
-        isf.charge = 0;
-        //   pla.pH = 7.41225;
-        //   ery.pH = 7.196;
-
-        sim.Ve0 = vols.Ve0;
-        sim.Vp0 = vols.Vp0;
-        sim.Vis0 = vols.Vis0;
-        sim.Vc0 = vols.Vc0;
-        sim.MNa_IP = sim.MNa - MNac;
-        sim.MK_IP = sim.MK - MKc;
-
-        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
-        ery.fH = vols.fH;
-        ery.few = vols.few;
-
-        ery.Vew0 = vols.Vew0;
-        ery.Vew = vols.Vew;
-        pla.Vp0ByVp = vols.Vp0ByVp;
-        pla.fpw = vols.fpw;
-
-        // pco2
-        pla.pCO2mmHg = pCO2mmHg;
-        ery.pCO2mmHg = pCO2mmHg;
-        isf.pCO2mmHg = pCO2mmHg;
-
-        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
-        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
-        isf.Cl = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-        // pla.volume_c[pla.cont.Cl] = 110.86;
-
-        // same osmolarities
-        //   pla.Osm = 286.99;
-        //   pla.charge = 0;
-
-        // Donnan equilibrium
-
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end IPE;
-
-      model CIPE "Cell - Interstitium - Plasma - erythrocyte model"
-        Real SMCl0=sim.MCl;
-        Real SMCl=MCl_IP + isf.Cl + MClc;
-        Real pHe=ery.pH;
-        Real pHp=pla.pH;
-        Real pHi=isf.pH;
-        Real pHc=c.pH;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf isf;
-        FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Cell c;
-        // total mass of Cl mobile ion
-        //   Real pCO2mmHg=20 + time*40;
-        Real pCO2mmHg=40;
-        parameter Real Hct=0.44;
-        parameter Real O2s=0.75;
-        constant Real MNac=276.96198;
-        constant Real MKc=3179.97;
-        constant Real MClc=90.70933;
-        //  Real MNac(start = 276.96198, min = 0, max = 10000) = homotopy(c.MNac, 276.96198);
-        //  Real MKc(start = 3179.97, min = 0, max = 10000) = homotopy(c.MKc, 3179.97);
-        //  Real MClc(start = 90.70933, min = 0, max = 10000) = homotopy(c.MClc, 90.70933);
-        //   Real MNac(start = 276.96198, min = 0, max = 10000) = c.MNac;
-        //   Real MKc(start = 3179.97, min = 0, max = 10000) = c.MKc;
-        //   Real MClc(start = 90.70933, min = 0, max = 10000) = c.MClc;
-        //   Real MNac(start = 276.96198, min = 0, max = 10000) = sim.MNac;
-        //   Real MKc(start = 3179.97, min = 0, max = 10000) = sim.MKc;
-        //   Real MClc(start = 90.70933, min = 0, max = 10000) = sim.MClc;
-        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew;
-        Real MCl_IP=sim.MCl - MClc - MCle;
-        //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
-        Real Clery(
-          start=71.7743,
-          min=0,
-          max=1000) = ery.water_c[ery.cont.Cl];
-        Real rClep=ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl];
-        Real rHep=pla.Hw/ery.H;
-        Real Clpla(
-          start=110.8687,
-          min=0,
-          max=1000) = pla.water_c[pla.cont.Cl];
-        Real rClpwis=pla.water_c[pla.cont.Cl]/isf.Cl "0.949290";
-        Real rHpwis=isf.H/pla.Hw "=rCLpwis";
-        Real Clc(
-          start=3.961488,
-          min=0,
-          max=1000) = c.Clc;
-        Real rClisce=c.rClisce;
-        //  Real rHisce = isf.H/c.H "=rCLisce";
-
-      equation
-
-
-        c.Kis = isf.water_c[isf.cont.K];
-        c.Nais = isf.water_c[isf.cont.Na];
-        c.Clis = isf.Cl;
-        // isf IS water
-
-        c.Vc0 = vols.Vc0;
-        c.Vc = vols.Vc;
-
-        // c.His = 3.91020e-8;
-        c.His = isf.H;
-        //  c.Clc = 3.961488;
-
-        // isf.plasma_water_c={149.031, 4.962, 2.55814, 0, 0, 1.279073, 0, 0, 1.598841};
-        isf.plasma_water_c = pla.water_c;
-
-        isf.rClpwis = rClpwis;
-
-        isf.CaIon = pla.CaIon*rClpwis^2;
-        isf.MgIon = pla.MgIon*rClpwis^2;
-
-        isf.Vis = vols.Vis;
-        isf.Vis0 = vols.Vis0;
-        isf.SO4pw = pla.SO4pw;
-        // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
-
-        isf.AlbPwGPerL = pla.AlbPwGPerL;
-        isf.Vb = vols.Vb;
-        isf.Vb0 = vols.Vb0;
-
-        //   isf.Cl = 116.791;
-        //   isf.pH = 7.4078;
-
-        // vols.Vew = 1.43;
-        //  vols.Vis = 15.5919;
-        //  vols.Vc = 22.8977;
-        ery.Lactate = pla.water_c[pla.cont.Lac]*rClep;
-        //1.035;
-        //LACew =LACpw/rCl;
-        //  ery.water_c[ery.cont.Cl] / 110.9 = 4.119084e-8 / ery.H "Clpla , Hpl at standard V3.49";
-        //  ery.water_c[ery.cont.Cl]/pla.water_c[pla.cont.Cl] = pla.H/ery.H    "Clpla , Hpl at standard V3.49";
-
-        rClep = rHep;
-        rClpwis = rHpwis;
-        //  rClisce = rHisce;
-
-        pla.Osm = ery.Osm;
-        pla.Osm = isf.Osm + isf.OsmDiff;
-        isf.Osm = c.Osm;
-
-
-
-        ery.charge = 0;
-        pla.charge = 0;
-        isf.charge = 0;
-        c.charge = 0;
-
-        sim.Ve0 = vols.Ve0;
-        sim.Vp0 = vols.Vp0;
-        sim.Vis0 = vols.Vis0;
-        sim.Vc0 = vols.Vc0;
-        sim.MNa_IP = sim.MNa - MNac;
-        sim.MK_IP = sim.MK - MKc;
-
-        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
-        ery.fH = vols.fH;
-        ery.few = vols.few;
-
-        ery.Vew0 = vols.Vew0;
-        ery.Vew = vols.Vew;
-        pla.Vp0ByVp = vols.Vp0ByVp;
-        pla.fpw = vols.fpw;
-
-        // pco2
-        pla.pCO2mmHg = pCO2mmHg;
-        ery.pCO2mmHg = pCO2mmHg;
-        isf.pCO2mmHg = pCO2mmHg;
-        c.pCO2mmHg = pCO2mmHg;
-
-        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
-        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
-        isf.Cl = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-        // pla.volume_c[pla.cont.Cl] = 110.86;
-
-        // same osmolarities
-        //   pla.Osm = 286.99;
-        //   pla.charge = 0;
-
-        // Donnan equilibrium
-
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end CIPE;
-
       package Tests
         model E
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
+          FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery;
+          FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
           // total mass of Cl mobile ion
           Real pCO2mmHg=40;
           // output: osmolarity and Cl
@@ -2400,7 +2044,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           ery.Vew = vols.Vew;
           Cle/Clpw = Hpw/ery.H "Clpla , Hpl at standard V3.49";
 
-
           // ery.water_c[ery.cont.Cl] = 71.0311;
           // ery.H = 6.37518e-8;
           // ery.
@@ -2425,9 +2068,9 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
             max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
           Real Vis=vols.Vis "=15.75516";
 
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
+          FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla;
+          FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
+          FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
           // total mass of Cl mobile ion
           Real pCO2mmHg=40;
           // Real rClpw_is = pla.volume_c[pla.cont.Cl]/Clis;
@@ -2454,7 +2097,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           sim.MNa_IP = sim.MNa - MNac;
           sim.MK_IP = sim.MK - MKc;
 
-
           pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
           pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
           Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
@@ -2463,7 +2105,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           // same osmolarities
           //  pla.Osm = EryOsm;
           pla.charge = 0;
-
 
           pla.Vp0ByVp = vols.Vp0ByVp;
 
@@ -2478,9 +2119,9 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
         end P;
 
         model I
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf isf(
-              permeableParticles=10.62755);
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
+          FullBloodAcidBase.Wolf.v349.Auxiliary.Isf isf(permeableParticles=
+                10.62755);
+          FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
           Real rClpwis=Clpw/isf.Cl " = 0.9500";
           parameter Real Hpw=4.128159e-8;
           parameter Real Clpw=109.694599;
@@ -2518,7 +2159,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           //  isf.Cl = 115.4614;
           //  isf.pH = 7.40649;
 
-
           isf.H = Hpw*rClpwis;
           isf.charge = 0;
           isf.Osm + isf.OsmDiff = EryOsm;
@@ -2528,7 +2168,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 
         model C
           import Modelica.SIunits.*;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Cell c;
+          FullBloodAcidBase.Wolf.v349.Auxiliary.Cell c;
           Real Clc(
             start=3.9,
             min=1,
@@ -2554,324 +2194,323 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
               Diagram(coordinateSystem(preserveAspectRatio=false)));
         end C;
-
-        model EP
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
-              Diagram(coordinateSystem(preserveAspectRatio=false)));
-
-          Real Clpw(
-            start=112,
-            min=10,
-            max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
-          Real Cle(
-            start=71,
-            min=1,
-            max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
-          Real Vew=vols.Vew "= 1.44400";
-          Real Vis=vols.Vis "=15.75516";
-
-          Real pHe=ery.pH;
-          Real pHp=pla.pH;
-
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
-          // total mass of Cl mobile ion
-          Real pCO2mmHg=40;
-          // output: osmolarity and Cl
-          parameter Real Hct=0.44;
-          parameter Real O2s=0.75;
-
-          Real rClpwis=Clpw/Clis;
-
-          constant Real Clis=115.461419;
-          constant Real MNac=272.17930;
-          constant Real MKc=3178.3177;
-          constant Real MClc=88.33349;
-          Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
-          Real MCl_IP=sim.MCl - MClc - MCle;
-
-        equation
-          //  vols.Vew = 1.44400;
-          //  vols.Vis = 15.75516;
-          vols.Vc = 22.64963;
-
-          vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
-          ery.fH = vols.fH;
-          ery.few = vols.few;
-          ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
-          //LACpw/rCl;
-          ery.Vew0 = vols.Vew0;
-          ery.Vew = vols.Vew;
-
-          Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
-          ery.Osm = pla.Osm;
-          ery.charge = 0;
-          ery.pCO2mmHg = pCO2mmHg;
-
-          sim.Ve0 = vols.Ve0;
-          sim.Vp0 = vols.Vp0;
-          sim.Vis0 = vols.Vis0;
-          sim.Vc0 = vols.Vc0;
-          sim.MNa_IP = sim.MNa - MNac;
-          sim.MK_IP = sim.MK - MKc;
-
-
-          pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
-          pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
-          Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-          pla.water_c[pla.cont.Cl] = 109.694599;
-
-          pla.charge = 0;
-          pla.Vp0ByVp = vols.Vp0ByVp;
-          pla.fpw = vols.fpw;
-          pla.pCO2mmHg = pCO2mmHg;
-
-        end EP;
-
-        model EPI
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
-              Diagram(coordinateSystem(preserveAspectRatio=false)));
-
-          Real Clis(
-            start=115,
-            min=10,
-            max=200) = isf.Cl " = 115.4614";
-          Real Clpw(
-            start=112,
-            min=10,
-            max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
-          Real Cle(
-            start=71,
-            min=1,
-            max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
-
-          Real Vew=vols.Vew "= 1.44400";
-          Real Vis=vols.Vis "=15.75516";
-
-          Real pHe=ery.pH;
-          Real pHp=pla.pH;
-          Real pHi=isf.pH;
-
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf isf(
-              permeableParticles=10.62755);
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
-          // total mass of Cl mobile ion
-          Real pCO2mmHg=40;
-          // output: osmolarity and Cl
-          parameter Real Hct=0.44;
-          parameter Real O2s=0.75;
-
-          constant Real MNac=272.17930;
-          constant Real MKc=3178.3177;
-          constant Real MClc=88.33349;
-          Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
-          Real MCl_IP=sim.MCl - MClc - MCle;
-          Real rH=isf.H/pla.Hw;
-
-          Real rClpwis=Clpw/Clis " = 0.9500";
-          parameter Real Alb=43;
-
-          // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
-        equation
-          //  vols.Vew = 1.44400;
-          //  vols.Vis = 15.75516;
-          vols.Vc = 22.64963;
-
-          vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
-          ery.fH = vols.fH;
-          ery.few = vols.few;
-          ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
-          //LACpw/rCl;
-          ery.Vew0 = vols.Vew0;
-          ery.Vew = vols.Vew;
-
-          Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
-          ery.Osm = pla.Osm;
-          ery.charge = 0;
-          ery.pCO2mmHg = pCO2mmHg;
-
-          sim.Ve0 = vols.Ve0;
-          sim.Vp0 = vols.Vp0;
-          sim.Vis0 = vols.Vis0;
-          sim.Vc0 = vols.Vc0;
-          sim.MNa_IP = sim.MNa - MNac;
-          sim.MK_IP = sim.MK - MKc;
-
-          pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
-          pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
-          Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-          //pla.water_c[pla.cont.Cl] = 109.694599;
-
-          pla.charge = 0;
-          pla.Vp0ByVp = vols.Vp0ByVp;
-          pla.fpw = vols.fpw;
-          pla.pCO2mmHg = pCO2mmHg;
-
-          isf.plasma_water_c = {147.3244,4.9890,2.4977,0,0,1.2488,0,0,1.56017};
-          isf.rClpwis = rClpwis;
-          isf.CaIon = 3.76940*rClpwis^2;
-          isf.MgIon = 1.05212*rClpwis^2;
-          isf.Vis = vols.Vis;
-          isf.Vis0 = vols.Vis0;
-          isf.SO4pw = pla.SO4pw;
-          // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
-          isf.pCO2mmHg = 40;
-          isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
-          isf.Vb = vols.Vb;
-          isf.Vb0 = vols.Vb0;
-
-          isf.H = pla.Hw*rClpwis;
-          isf.charge = 0;
-          isf.Osm + isf.OsmDiff = pla.Osm;
-        end EPI;
-
-        model EPIC
-          annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
-              Diagram(coordinateSystem(preserveAspectRatio=false)));
-          Real Clc(
-            start=3.9,
-            min=1,
-            max=100) = c.Clc;
-          Real Clis(
-            start=115,
-            min=10,
-            max=200) = isf.Cl " = 115.4614";
-          Real Clpw(
-            start=112,
-            min=10,
-            max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
-          Real Cle(
-            start=71,
-            min=1,
-            max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
-
-          Real Vew=vols.Vew "= 1.44400";
-          Real Vis=vols.Vis "=15.75516";
-
-          Real pHe=ery.pH;
-          Real pHp=pla.pH;
-          Real pHi=isf.pH;
-          Real pHc=c.pH;
-
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Plasma pla;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.StrongIonMasses sim;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Erythrocyte ery;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Isf isf(
-              permeableParticles=10.62755);
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Volumes vols;
-          FullBloodAcidBase.Wolf.CurrentVersion.Auxiliary.Cell c;
-          // total mass of Cl mobile ion
-          Real pCO2mmHg=40;
-          // output: osmolarity and Cl
-          parameter Real Hct=0.44;
-          parameter Real O2s=0.75;
-
-          //   constant Real MNac=272.17930;
-          //   constant Real MKc=3178.3177;
-          //   constant Real MClc=88.33349;
-          //   Real MNac=272.17930;
-          //   Real MKc=3178.3177;
-          //   Real MClc=88.33349;
-          Real MNac=c.Nac*vols.Vc;
-          Real MKc=c.Kc*vols.Vc;
-          Real MClc=c.Clc*vols.Vc;
-          Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
-          Real MCl_IP=sim.MCl - MClc - MCle;
-          Real rH=isf.H/pla.Hw;
-
-          Real rClpwis=Clpw/Clis " = 0.9500";
-          parameter Real Alb=43;
-
-          // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
-        equation
-          //  vols.Vew = 1.44400;
-          //  vols.Vis = 15.75516;
-          //  vols.Vc = 22.64963;
-
-          vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
-          ery.fH = vols.fH;
-          ery.few = vols.few;
-          ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
-          //LACpw/rCl;
-          ery.Vew0 = vols.Vew0;
-          ery.Vew = vols.Vew;
-
-          Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
-          ery.Osm = pla.Osm;
-          ery.charge = 0;
-          ery.pCO2mmHg = pCO2mmHg;
-
-          sim.Ve0 = vols.Ve0;
-          sim.Vp0 = vols.Vp0;
-          sim.Vis0 = vols.Vis0;
-          sim.Vc0 = vols.Vc0;
-          sim.MNa_IP = sim.MNa - MNac;
-          sim.MK_IP = sim.MK - MKc;
-
-          pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
-          pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
-          Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-          //pla.water_c[pla.cont.Cl] = 109.694599;
-
-          pla.charge = 0;
-          pla.Vp0ByVp = vols.Vp0ByVp;
-          pla.fpw = vols.fpw;
-          pla.pCO2mmHg = pCO2mmHg;
-
-          isf.plasma_water_c = {147.3244,4.9890,2.4977,0,0,1.2488,0,0,1.56017};
-          isf.rClpwis = rClpwis;
-          isf.CaIon = 3.76940*rClpwis^2;
-          isf.MgIon = 1.05212*rClpwis^2;
-          isf.Vis = vols.Vis;
-          isf.Vis0 = vols.Vis0;
-          isf.SO4pw = pla.SO4pw;
-          // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
-          isf.pCO2mmHg = 40;
-          isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
-          isf.Vb = vols.Vb;
-          isf.Vb0 = vols.Vb0;
-
-          isf.H = pla.Hw*rClpwis;
-          isf.charge = 0;
-          isf.Osm + isf.OsmDiff = pla.Osm;
-
-
-          //    c.Kis = 4.73983;//4.73106;
-          //    c.Nais = 139.9662;//141.474;
-          //    c.Clis = 115.461419;//116.7911;
-          //   c.Vc0 = 22.87176;
-          //  c.Vc = 22.64963;//22.897789;
-          //   c.His = 3.92197e-8;//3.91020e-8;
-          //   c.pCO2mmHg = 40;
-
-          //   c.Vc = vols.Vc;
-          //  c.rClisce = 29.6055;
-          //  c.Clc = 3.961488;
-          //   c.charge = 0;
-          //   c.Osm = 282.20;
-          //
-
-          c.Kis = isf.water_c[isf.cont.K];
-          //4.73983;//4.73106;
-          c.Nais = isf.water_c[isf.cont.Na];
-          //139.9662;//141.474;
-          c.Clis = isf.Cl;
-          //115.461419;//116.7911;
-          c.Vc0 = vols.Vc0;
-          c.Vc = vols.Vc;
-          c.His = isf.H;
-          //3.92197e-8;//3.91020e-8;
-          c.pCO2mmHg = 40;
-
-          c.charge = 0;
-          c.Osm = isf.Osm;
-        end EPIC;
       end Tests;
+
+      model EP
+
+        Real Clpw(
+          start=112,
+          min=10,
+          max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+        Real Cle(
+          start=71,
+          min=1,
+          max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+        Real Vew=vols.Vew "= 1.44400";
+        Real Vis=vols.Vis "=15.75516";
+
+        Real pHe=ery.pH;
+        Real pHp=pla.pH;
+
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
+        // total mass of Cl mobile ion
+        Real pCO2mmHg=40;
+        // output: osmolarity and Cl
+        parameter Real Hct=0.44;
+        parameter Real O2s=0.75;
+
+        Real rClpwis=Clpw/Clis;
+
+        constant Real Clis=115.461419;
+        constant Real MNac=272.17930;
+        constant Real MKc=3178.3177;
+        constant Real MClc=88.33349;
+        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+        Real MCl_IP=sim.MCl - MClc - MCle;
+
+      equation
+        //  vols.Vew = 1.44400;
+        //  vols.Vis = 15.75516;
+        vols.Vc = 22.64963;
+
+        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.fH = vols.fH;
+        ery.few = vols.few;
+        ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
+        //LACpw/rCl;
+        ery.Vew0 = vols.Vew0;
+        ery.Vew = vols.Vew;
+
+        Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
+        ery.Osm = pla.Osm;
+        ery.charge = 0;
+        ery.pCO2mmHg = pCO2mmHg;
+
+        sim.Ve0 = vols.Ve0;
+        sim.Vp0 = vols.Vp0;
+        sim.Vis0 = vols.Vis0;
+        sim.Vc0 = vols.Vc0;
+        sim.MNa_IP = sim.MNa - MNac;
+        sim.MK_IP = sim.MK - MKc;
+
+        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
+        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
+        pla.water_c[pla.cont.Cl] = 109.694599;
+
+        pla.charge = 0;
+        pla.Vp0ByVp = vols.Vp0ByVp;
+        pla.fpw = vols.fpw;
+        pla.pCO2mmHg = pCO2mmHg;
+
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end EP;
+
+      model EPI
+
+        Real Clis(
+          start=115,
+          min=10,
+          max=200) = isf.Cl " = 115.4614";
+        Real Clpw(
+          start=112,
+          min=10,
+          max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+        Real Cle(
+          start=71,
+          min=1,
+          max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+
+        Real Vew=vols.Vew "= 1.44400";
+        Real Vis=vols.Vis "=15.75516";
+
+        Real pHe=ery.pH;
+        Real pHp=pla.pH;
+        Real pHi=isf.pH;
+
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Isf isf(permeableParticles=
+              10.62755);
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
+        // total mass of Cl mobile ion
+        Real pCO2mmHg=40;
+        // output: osmolarity and Cl
+        parameter Real Hct=0.44;
+        parameter Real O2s=0.75;
+
+        constant Real MNac=272.17930;
+        constant Real MKc=3178.3177;
+        constant Real MClc=88.33349;
+        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+        Real MCl_IP=sim.MCl - MClc - MCle;
+        Real rH=isf.H/pla.Hw;
+
+        Real rClpwis=Clpw/Clis " = 0.9500";
+        parameter Real Alb=43;
+
+        // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
+      equation
+        //  vols.Vew = 1.44400;
+        //  vols.Vis = 15.75516;
+        vols.Vc = 22.64963;
+
+        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.fH = vols.fH;
+        ery.few = vols.few;
+        ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
+        //LACpw/rCl;
+        ery.Vew0 = vols.Vew0;
+        ery.Vew = vols.Vew;
+
+        Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
+        ery.Osm = pla.Osm;
+        ery.charge = 0;
+        ery.pCO2mmHg = pCO2mmHg;
+
+        sim.Ve0 = vols.Ve0;
+        sim.Vp0 = vols.Vp0;
+        sim.Vis0 = vols.Vis0;
+        sim.Vc0 = vols.Vc0;
+        sim.MNa_IP = sim.MNa - MNac;
+        sim.MK_IP = sim.MK - MKc;
+
+        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
+        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
+        //pla.water_c[pla.cont.Cl] = 109.694599;
+
+        pla.charge = 0;
+        pla.Vp0ByVp = vols.Vp0ByVp;
+        pla.fpw = vols.fpw;
+        pla.pCO2mmHg = pCO2mmHg;
+
+        isf.plasma_water_c = {147.3244,4.9890,2.4977,0,0,1.2488,0,0,1.56017};
+        isf.rClpwis = rClpwis;
+        isf.CaIon = 3.76940*rClpwis^2;
+        isf.MgIon = 1.05212*rClpwis^2;
+        isf.Vis = vols.Vis;
+        isf.Vis0 = vols.Vis0;
+        isf.SO4pw = pla.SO4pw;
+        // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
+        isf.pCO2mmHg = 40;
+        isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
+        isf.Vb = vols.Vb;
+        isf.Vb0 = vols.Vb0;
+
+        isf.H = pla.Hw*rClpwis;
+        isf.charge = 0;
+        isf.Osm + isf.OsmDiff = pla.Osm;
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end EPI;
+
+      model EPIC
+        Real Clc(
+          start=3.9,
+          min=1,
+          max=100) = c.Clc;
+        Real Clis(
+          start=115,
+          min=10,
+          max=200) = isf.Cl " = 115.4614";
+        Real Clpw(
+          start=112,
+          min=10,
+          max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+        Real Cle(
+          start=71,
+          min=1,
+          max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+
+        Real Vew=vols.Vew "= 1.44400";
+        Real Vis=vols.Vis "=15.75516";
+
+        Real pHe=ery.pH;
+        Real pHp=pla.pH;
+        Real pHi=isf.pH;
+        Real pHc=c.pH;
+
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Isf isf(permeableParticles=
+              10.62755);
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Cell c;
+        // total mass of Cl mobile ion
+        Real pCO2mmHg=40;
+        // output: osmolarity and Cl
+        parameter Real Hct=0.44;
+        parameter Real O2s=0.75;
+
+        //   constant Real MNac=272.17930;
+        //   constant Real MKc=3178.3177;
+        //   constant Real MClc=88.33349;
+        //   Real MNac=272.17930;
+        //   Real MKc=3178.3177;
+        //   Real MClc=88.33349;
+        Real MNac=c.Nac*vols.Vc;
+        Real MKc=c.Kc*vols.Vc;
+        Real MClc=c.Clc*vols.Vc;
+        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+        Real MCl_IP=sim.MCl - MClc - MCle;
+        Real rH=isf.H/pla.Hw;
+
+        Real rClpwis=Clpw/Clis " = 0.9500";
+        parameter Real Alb=43;
+
+        // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
+      equation
+        //  vols.Vew = 1.44400;
+        //  vols.Vis = 15.75516;
+        //  vols.Vc = 22.64963;
+
+        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.fH = vols.fH;
+        ery.few = vols.few;
+        ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
+        //LACpw/rCl;
+        ery.Vew0 = vols.Vew0;
+        ery.Vew = vols.Vew;
+
+        Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
+        ery.Osm = pla.Osm;
+        ery.charge = 0;
+        ery.pCO2mmHg = pCO2mmHg;
+
+        sim.Ve0 = vols.Ve0;
+        sim.Vp0 = vols.Vp0;
+        sim.Vis0 = vols.Vis0;
+        sim.Vc0 = vols.Vc0;
+        sim.MNa_IP = sim.MNa - MNac;
+        sim.MK_IP = sim.MK - MKc;
+
+        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
+        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
+        //pla.water_c[pla.cont.Cl] = 109.694599;
+
+        pla.charge = 0;
+        pla.Vp0ByVp = vols.Vp0ByVp;
+        pla.fpw = vols.fpw;
+        pla.pCO2mmHg = pCO2mmHg;
+
+        isf.plasma_water_c = {147.3244,4.9890,2.4977,0,0,1.2488,0,0,1.56017};
+        isf.rClpwis = rClpwis;
+        isf.CaIon = 3.76940*rClpwis^2;
+        isf.MgIon = 1.05212*rClpwis^2;
+        isf.Vis = vols.Vis;
+        isf.Vis0 = vols.Vis0;
+        isf.SO4pw = pla.SO4pw;
+        // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
+        isf.pCO2mmHg = 40;
+        isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
+        isf.Vb = vols.Vb;
+        isf.Vb0 = vols.Vb0;
+
+        isf.H = pla.Hw*rClpwis;
+        isf.charge = 0;
+        isf.Osm + isf.OsmDiff = pla.Osm;
+
+        //    c.Kis = 4.73983;//4.73106;
+        //    c.Nais = 139.9662;//141.474;
+        //    c.Clis = 115.461419;//116.7911;
+        //   c.Vc0 = 22.87176;
+        //  c.Vc = 22.64963;//22.897789;
+        //   c.His = 3.92197e-8;//3.91020e-8;
+        //   c.pCO2mmHg = 40;
+
+        //   c.Vc = vols.Vc;
+        //  c.rClisce = 29.6055;
+        //  c.Clc = 3.961488;
+        //   c.charge = 0;
+        //   c.Osm = 282.20;
+        //
+
+        c.Kis = isf.water_c[isf.cont.K];
+        //4.73983;//4.73106;
+        c.Nais = isf.water_c[isf.cont.Na];
+        //139.9662;//141.474;
+        c.Clis = isf.Cl;
+        //115.461419;//116.7911;
+        c.Vc0 = vols.Vc0;
+        c.Vc = vols.Vc;
+        c.His = isf.H;
+        //3.92197e-8;//3.91020e-8;
+        c.pCO2mmHg = 40;
+
+        c.charge = 0;
+        c.Osm = isf.Osm;
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end EPIC;
+
       annotation (Documentation(info="<html>
 <p>References:</p>
 <p><br>Raftos, J. E., Bulliman, B. T., &amp; Kuchel, P. W. (1990). Evaluation of an electrochemical model of erythrocyte pH buffering using 31P nuclear magnetic resonance data. The Journal of General Physiology, 95(6), 1183&ndash;1204.</p>
@@ -2880,7 +2519,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 <p>Wolf, M. B., &amp; DeLand, E. C. (2011). A comprehensive, computer-model-based approach for diagnosis and treatment of complex acid&ndash;base disorders in critically-ill patients. Journal of Clinical Monitoring and Computing, 25(6), 353&ndash;364.</p>
 <p>Wolf, M. B., &amp; Deland, E. C. (2011). A mathematical model of blood-interstitial acid-base balance: application to dilution acidosis and acid-base status. Journal of Applied Physiology, 110(4), 988&ndash;1002.</p>
 </html>"));
-    end CurrentVersion;
+    end v349;
   end Wolf;
   annotation (uses(
       Physiomodel(version="0.2.29"),
