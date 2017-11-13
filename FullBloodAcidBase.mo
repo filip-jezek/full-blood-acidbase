@@ -279,20 +279,8 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
 */
         // only constants here
       protected
-        constant Real kw=0.000000000000044;
-
         constant Real Kc1=0.0000000000244
           "Kc1 is derived from the parameters in the Henderson-Hasselbalch equation. pK = 6.1; a = 0.230 mM / kPa; 1 Torr = 0.13332236842105 kPa. The value of Kc1 is 2.44E-11 (Eq / L)^2 / Torr.";
-        constant Real Kc2=0.00000000011
-          "Kc2 is calculated from Harned and Scholes (1941) for 37 degrees C and ionic strength 0.15 M. The value of Kc2 is 5.5E-11 mol / L x 2 = 1.1E-10 Eq / L.";
-
-        constant Real K1=0.0122
-          "K1, K2, and K3 for the phosphoric acid - phosphate system are from Sendroy and Rem: Hastings (1927). pK1 = 1.915; pK2 = 6.66; pK3 = 11.78.";
-        constant Real K2=0.000000219
-          "K1, K2, and K3 for the phosphoric acid - phosphate system are from Sendroy and Hastings (1927). pK1 = 1.915; pK2 = 6.66; pK3 = 11.78.";
-        constant Real K3=0.00000000000166
-          "K1, K2, and K3 for the phosphoric acid - phosphate system are from Sendroy and Hastings (1927). pK1 = 1.915; pK2 = 6.66; pK3 = 11.78.";
-
         // Real H(displayUnit="eq/l") = 10^(-pH);
       public
         Real HCO3(displayUnit="mmol/l") = 1000*Kc1*pCO2/10^(-pH);
@@ -1274,8 +1262,82 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
         annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
               coordinateSystem(preserveAspectRatio=false)));
       end CompareCombinations;
+
+      model SimplestCombination
+        import FullBloodAcidBase;
+        FullBloodAcidBase.FullBloodCombined.comparisson.Auxiliary.CombinedModelBase
+          combinedModelBase(
+          Hb=15,
+          BE=BE,
+          pCO2=pCO2,
+          Pi=1.15,
+          alb=4.4,
+          redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
+
+          redeclare FullBloodAcidBase.FullBloodEmpirical.Zander1995
+            fullErythrocyte)
+          annotation (Placement(transformation(extent={{-60,60},{-40,80}})));
+
+        Real BE=-20 + time*40;
+        parameter Real pCO2=40;
+      equation
+
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end SimplestCombination;
     end comparisson;
 
+    model SimplestCombinedListing
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+
+      // INPUT PARAMETERS
+      Real BEox(displayUnit="meq/l") = 0;
+      // Real BEox(displayUnit="meq/l") = time "set the start and end time of simulation to desired range";
+      Real Pi(unit="mmol/l") = 1.15 "Total phosphate. Normal value 1.15";
+      Real alb(unit="g/dl") = 4.4 "Albumin concentration. Normal value 4.4";
+      Real Hb(unit="g/dl") = 15;
+      Real sO2(unit="1") = 1;
+      Real pCO2(displayUnit="mmHg") = 40
+        "CO2 partial pressure. Normal value 40";
+
+      Real BE=BEox + 0.2*(1 - sO2)*Hb
+        "BE in full blood - correction for oxygen saturation";
+      Real Hct(unit="1") = Hb/33.34 "estimation of hematocrit";
+
+      // These two are unknown
+      Real X "Cl for HCO exchange, meq/l";
+      Real pH(start=10, unit="1") "pH of whole blood";
+
+      // ERYTHROCYTE PROPERTIES (Zander, 1995)
+      Real BEe(unit="meq/l") = (1 - 0.0143*Hb)*((0.0304*pCO2*(10^(pH - 6.1)) -
+        24.26) + (9.5 + 1.63*Hb)*(pH - 7.4)) "Zander equation for BE";
+
+      // PLASMA PROPERTIES
+      Real BEp(unit="meq/l") = SID - NSID "BE in plasma is obtained from NSID";
+      Real SID(displayUnit="meq/l") = -(P + atch - HCO3)
+        "Strong ion difference given by electroneutrality of plasma compartment. Normal value 39";
+      Real HCO3(displayUnit="mmol/l") = 24.4e-9*pCO2/10^(-pH)
+        "Total HCO3 (Figge)";
+      Real P(displayUnit="meq/l") = -Pi*(0.309*pH - 0.469)
+        "Total charge of phosphates (Fencl)";
+      Real atch=-(alb*10)*(0.123*pH - 0.631) "albumin total charge (Fencl)";
+
+      // NORMAL SID
+      Real NSID=-(NP_P + NP_atch - NP_HCO3)
+        "SID as would be in pH 7.4 and pCO2 40 torr";
+      Real NP_HCO3(displayUnit="mmol/l") = 24.4e-9*40/10^(-7.4)
+        "Total HCO3 in normal plasma (Figge)";
+      Real NP_P(displayUnit="meq/l") = -Pi*(0.309*7.4 - 0.469)
+        "Total charge of phosphates in normal plasma (Fencl)";
+      Real NP_atch=-(alb*10)*(0.123*7.4 - 0.631)
+        "albumin total charge in normal plasma(Fencl)";
+    equation
+
+      BEp = BE - X/(1 - Hct);
+      BEe = BE + X/Hct;
+
+    end SimplestCombinedListing;
   end FullBloodCombined;
 
   package Figures
@@ -3912,33 +3974,32 @@ BLOOD"),
               GSH,
               im,
               Pi) "Contents of erythrocyte";
-          parameter Concentration Na=13.69*wf0;
-          parameter Concentration K=130*wf0;
+          parameter Concentration Na=13.69;
+          parameter Concentration K=130;
           parameter Concentration Cl0=53.8;
           Concentration Cl(start=Cl0);
           //Real Cl_mass0(unit="mol") = Cl0/wf0*Vew0;
           //  Real Cl_mass = Cl/wf0*Vew;
 
-          Concentration Hb=5.3/(1/wf0*Vew0/Vew)/few
-            "concentration of Hb tetramer";
-          Concentration DPG=4.3/few*wf0 "the 4.3 value goes directly in";
-          Concentration ATP=1.8/few*wf0;
+          Concentration Hb=5.3 "concentration of Hb tetramer";
+          Concentration DPG=4.3 "the 4.3 value goes directly in";
+          Concentration ATP=1.8;
 
-          Concentration GSH=2.23/few*wf0;
-          parameter Concentration im=0;
+          Concentration GSH=2.23;
+          parameter Concentration im=18.2;
           //16.03*wf0 "original value in model";
           //   parameter Concentration im=21.64 "adjusted value";
           // Concentration im=20.2 "Original value in article [1]";
           //   Concentration im;//=20.2;
           parameter Concentration Pi=0.67 "mono- and di- valent";
-          parameter Real O2Sat(unit="1") = 0.75;
-          Real Ve0ByVeFraction;
+          parameter Real O2Sat(unit="1") = 0.7;
+          Real rVew "Vew0/ Vew";
+          Real rVe "Ve0/Ve";
           Real fH;
           Real few;
-          Real HbGperLiterBlood=Hb*Ve0ByVeFraction*fH*64.5;
-          Concentration volume_c[cont]={Na,K,Cl,Hb,DPG,ATP,GSH,im,Pi}
-            "concentration in one liter";
-          Concentration water_c[cont]=volume_c ./ wf0 .* Vew0 ./ Vew
+          Real HbGperLiterBlood=Hb*fH*64.5;
+          Concentration water_c[cont]={Na*rVew,K*rVew,Cl,Hb/few,DPG/rVe/few,ATP
+              *rVe/few,GSH*rVe/few,im,Pi*rVe/few}
             "Actual concentration recalculated to water fraction (initially 0.73) per one liter of volume";
           //   Real masses0[cont](each unit="mol") = volume_c ./ wf0 .* water_volume0
           //     "total mass of contents";
@@ -3963,7 +4024,7 @@ BLOOD"),
           Real fiHb=1 + 0.115*water_c[cont.Hb] + 0.0256*water_c[cont.Hb]^2
             "Osmotic coefficient of Hemoglobin (eq from Raftos et al)";
           Real fi[cont]={0.93,0.93,0.93,fiHb,1,1,1,1,1} "Osmotic coefficients";
-          Real Osm=sum(water_c .* fi) + 0.93*(HCO3 + CO3) + Lactate +
+          Real Osm=sum(water_c .* fi) + 0.93*(HCO3 + CO3 + Lactate) +
               permeableParticles
             " = 284.084 osmotic coefficient from Wolf model V3.49";
           Real OsmTest[:]=water_c .* fi;
@@ -3973,8 +4034,7 @@ BLOOD"),
           Real chargeTest[:]=water_c .* Z;
           Real EryConsIonCharge=sum(chargeTest[{cont.Hb,cont.DPG,cont.ATP,cont.GSH,
               cont.Pi}]);
-          Real charge=(sum(water_c .* Z) - HCO3 - 2*CO3 - Lactate + Zim*Vew0/
-              Vew)*Vew;
+          Real charge=(sum(water_c .* Z) - HCO3 - 2*CO3 - Lactate)*Vew;
 
           // parameter Fraction Hct0 = 0.44;
           // parameter Volume totalBlodVolume;
@@ -4365,7 +4425,8 @@ BLOOD"),
           vols.Vis = 15.603374;
           vols.Vc = 22.784381;
 
-          vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+          ery.rVew = vols.Vew0/vols.Vew;
+          ery.rVe = vols.Ve0/vols.Ve;
           ery.fH = vols.fH;
           ery.few = vols.few;
           ery.Lactate = 1.083;
@@ -4374,7 +4435,7 @@ BLOOD"),
           ery.Vew = vols.Vew;
           Cle/Clpw = Hpw/ery.H "Clpla , Hpl at standard V3.49";
 
-          ery.water_c[ery.cont.Cl] = 75.1214;
+          ery.water_c[ery.cont.Cl] = 75.12143;
           //1.0311;
           // ery.H = 6.37518e-8;
 
@@ -4404,23 +4465,24 @@ BLOOD"),
           FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
           FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim;
           // total mass of Cl mobile ion
-          Real pCO2mmHg=40;
+          Real pCO2mmHg=45.1;
           // Real rClpw_is = pla.volume_c[pla.cont.Cl]/Clis;
           Real rClpwis=Clpw/Clis;
 
-          constant Real Clis=115.461419;
-          constant Real MNac=272.17930;
-          constant Real MKc=3178.3177;
-          constant Real MClc=88.33349;
-          constant Real MCle=102.5695;
+
+          constant Real Clis=116.513794;
+          constant Real MNac=274.051633;
+          constant Real MKc=3141.2286;
+          constant Real MClc=91.4811;
+          constant Real MCle=108.194619;
 
           parameter Real EryOsm=284.084;
           Real MCl_IP=sim.MCl - MClc - MCle;
           //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
         equation
-          vols.Vew = 1.44400;
-          //  vols.Vis = 15.75516;
-          vols.Vc = 22.64963;
+          vols.Vew = 1.44026;
+          vols.Vis = 15.603374;
+          vols.Vc = 22.784381;
 
           sim.Ve0 = vols.Ve0;
           sim.Vp0 = vols.Vp0;
@@ -4432,11 +4494,11 @@ BLOOD"),
           pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
           pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
           Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-          pla.water_c[pla.cont.Cl] = 109.694599;
+          pla.water_c[pla.cont.Cl] = 110.673357;
 
           // same osmolarities
           //  pla.Osm = EryOsm;
-          pla.charge = 0;
+          //pla.charge = 0;
 
           pla.Vp0ByVp = vols.Vp0ByVp;
 
