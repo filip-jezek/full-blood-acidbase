@@ -832,6 +832,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
   end FullBloodEmpirical;
 
   package FullBloodCombined
+    extends Modelica.Icons.ExamplesPackage;
 
     model CombinedModel
       "Test combined model of Figge-fencl plasma and SA full hemoatocrite"
@@ -934,11 +935,33 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
             pCO2=pCO2) "SA original for comparison only"
             annotation (Placement(transformation(extent={{60,20},{80,40}})));
 
+
         end ResultSetAtBE;
 
         model SetAtAlb
 
-          CombinedModel full_blood_combo(
+          FullBloodAcidBase.FullBloodCombined.comparisson.Auxiliary.CombinedModelBase
+            full_blood_combo_simple(
+            Hb=Hb,
+            BE=BE,
+            pCO2=pCO2,
+            Pi=Pi,
+            alb=alb,
+            redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
+            redeclare FullBloodAcidBase.FullBloodEmpirical.Zander1995 fullErythrocyte) "Fencl PLasma, Zander Ery"
+            annotation (Placement(transformation(extent={{-60,60},{-40,80}})));
+          FullBloodAcidBase.FullBloodCombined.comparisson.Auxiliary.CombinedModelBase
+            full_blood_combo(
+            Hb=Hb,
+            BE=BE,
+            pCO2=pCO2,
+            Pi=Pi,
+            alb=alb,
+            redeclare PlasmaElectrochemical.PlasmaFencl                   plasma,
+            redeclare FullBloodEmpirical.SAoriginal                   fullErythrocyte) "Fencl Plasma, Poly ery"
+            annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+
+          CombinedModel full_blood_combo_original(
             BE=BE,
             pCO2=pCO2,
             alb=alb,
@@ -969,6 +992,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
             pCO2=pCO2,
             BE=BE,
             AlbP=alb/AlbMW*1000*10/0.94);
+
           input Real BE, pCO2;
           input Real alb, Pi;
           input Real Hb;
@@ -980,6 +1004,12 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           //     alb0=alb,
           //     Pi0=Pi) annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
 
+        public
+          Wolf.v349.EP_BE eP_comparison(
+            addBE=BE,
+            alb=alb,
+            pCO2mmHg=pCO2)
+            annotation (Placement(transformation(extent={{-60,-20},{-40,0}})));
         end SetAtAlb;
 
         model CombinedModelBase
@@ -1031,7 +1061,8 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       end Auxiliary;
 
       model Wolf_full_blood
-        "Implementation of the Wolf acidbase model, reduced to Plasma and Erythrocyte"
+        "Implementation of the Wolf acidbase model, reduced to Plasma and Erythrocyte, 
+  from the original article"
         //default parameters
         //concentration in erythroctytes
         parameter Real NaE(unit="mmol/l") = 10/0.73;
@@ -1057,7 +1088,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
         parameter Real ZimP=-5.3;
         //volumes and CO2 preassure
         parameter Real Vblood(unit="l") = 5;
-        input Real pCO2(unit="torr") = 20 + 40*time;
+        input Real pCO2(unit="torr") = 20 + 60*time;
         //
         //derived parameters
         //water volumes in compartments
@@ -1273,7 +1304,6 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           Pi=1.15,
           alb=4.4,
           redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
-
           redeclare FullBloodAcidBase.FullBloodEmpirical.Zander1995
             fullErythrocyte)
           annotation (Placement(transformation(extent={{-60,60},{-40,80}})));
@@ -1288,8 +1318,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
     end comparisson;
 
     model SimplestCombinedListing
-      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-            coordinateSystem(preserveAspectRatio=false)));
+      extends Modelica.Icons.Example;
 
       // INPUT PARAMETERS
       Real BEox(displayUnit="meq/l") = 0;
@@ -1337,7 +1366,86 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       BEp = BE - X/(1 - Hct);
       BEe = BE + X/Hct;
 
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
     end SimplestCombinedListing;
+
+    model PolynomialCombinedListing
+      extends Modelica.Icons.Example;
+
+      // INPUT PARAMETERS
+      Real BEox(displayUnit="meq/l") = 0;
+      // Real BEox(displayUnit="meq/l") = time "set the start and end time of simulation to desired range";
+      Real Pi(unit="mmol/l") = 1.15 "Total phosphate. Normal value 1.15";
+      Real alb(unit="g/dl") = 4.4 "Albumin concentration. Normal value 4.4";
+      Real Hb(unit="g/dl") = 15;
+      Real sO2(unit="1") = 1;
+      Real pCO2(displayUnit="mmHg") = 40
+        "CO2 partial pressure. Normal value 40";
+
+      Real BE=BEox + 0.2*(1 - sO2)*Hb
+        "BE in full blood - correction for oxygen saturation";
+      Real Hct(unit="1") = Hb/33.34 "estimation of hematocrit";
+
+      // These two are unknown
+      Real X "Cl for HCO exchange, meq/l";
+      Real pH(start=10, unit="1") "pH of whole blood";
+
+      // ERYTHROCYTE PROPERTIES - polynomial approximation
+
+    protected
+      constant Real pco2BBCoef[:]={2.1125e-009,-640.9926e-009,72.7649e-006,-3.2862e-003,
+          -38.1749e-003,8.2352e+000,-97.0551e+000};
+      constant Real pco2BECoef[:]={8.3975e-009,-513.9503e-009,3.8105e-006,
+          231.6888e-006,-46.5581e-003,353.7105e-003,39.9871e+000};
+      constant Real pHBBCoef[:]={40.8936e-012,-13.0063e-009,1.6780e-006,-111.7919e-006,
+          4.0776e-003,-67.8274e-003,7.2888e+000};
+      constant Real pHBECoef[:]={131.3315e-009,2.5027e-006,175.6144e-006,
+          11.9273e-003,7.4001e+000};
+    public
+      Real pCO2BB(start=96) = pco2BBCoef[1]*BB^6 + pco2BBCoef[2]*BB^5 +
+        pco2BBCoef[3]*BB^4 + pco2BBCoef[4]*BB^3 + pco2BBCoef[5]*BB^2 +
+        pco2BBCoef[6]*BB + pco2BBCoef[7];
+      Real pCO2BE(start=40) = pco2BECoef[1]*BEe^6 + pco2BECoef[2]*BEe^5 +
+        pco2BECoef[3]*BEe^4 + pco2BECoef[4]*BEe^3 + pco2BECoef[5]*BEe^2 +
+        pco2BECoef[6]*BEe + pco2BECoef[7];
+      Real pHBB(start=7) = pHBBCoef[1]*BB^6 + pHBBCoef[2]*BB^5 + pHBBCoef[3]*BB
+        ^4 + pHBBCoef[4]*BB^3 + pHBBCoef[5]*BB^2 + pHBBCoef[6]*BB + pHBBCoef[7];
+      Real pHBE(start=7) = pHBECoef[1]*BEe^4 + pHBECoef[2]*BEe^3 + pHBECoef[3]*BEe
+        ^2 + pHBECoef[4]*BEe + pHBECoef[5];
+
+      Real BB=BEe + 0.42*Hb + 41.7;
+      Real BEe;
+
+      // PLASMA PROPERTIES
+      Real BEp(unit="meq/l") = SID - NSID "BE in plasma is obtained from NSID";
+      Real SID(displayUnit="meq/l") = -(P + atch - HCO3)
+        "Strong ion difference given by electroneutrality of plasma compartment. Normal value 39";
+      Real HCO3(displayUnit="mmol/l") = 24.4e-9*pCO2/10^(-pH)
+        "Total HCO3 (Figge)";
+      Real P(displayUnit="meq/l") = -Pi*(0.309*pH - 0.469)
+        "Total charge of phosphates (Fencl)";
+      Real atch=-(alb*10)*(0.123*pH - 0.631) "albumin total charge (Fencl)";
+
+      // NORMAL SID
+      Real NSID=-(NP_P + NP_atch - NP_HCO3)
+        "SID as would be in pH 7.4 and pCO2 40 torr";
+      Real NP_HCO3(displayUnit="mmol/l") = 24.4e-9*40/10^(-7.4)
+        "Total HCO3 in normal plasma (Figge)";
+      Real NP_P(displayUnit="meq/l") = -Pi*(0.309*7.4 - 0.469)
+        "Total charge of phosphates in normal plasma (Fencl)";
+      Real NP_atch=-(alb*10)*(0.123*7.4 - 0.631)
+        "albumin total charge in normal plasma(Fencl)";
+    equation
+       pH = (log10(pCO2) - log10(pCO2BB))*(pHBB - pHBE)/(log10(pCO2BB) - log10(
+        pCO2BE)) + pHBB;
+
+      BEp = BE - X/(1 - Hct);
+      BEe = BE + X/Hct;
+
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+    end PolynomialCombinedListing;
   end FullBloodCombined;
 
   package Figures
@@ -1759,8 +1867,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Placement(transformation(extent={{80,0},{100,20}})),
           Documentation(info="<html>
 <p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Interface using the SI units, as the Combined model relies on units originally  used by the cited models.</span></p>
-</html>"),
-          Icon(coordinateSystem(preserveAspectRatio=false)),
+</html>"),Icon(coordinateSystem(preserveAspectRatio=false)),
           Diagram(coordinateSystem(preserveAspectRatio=false)));
       end CombinedModel;
 
@@ -2303,8 +2410,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Physiolibrary.Types.RealIO.pHInput pH annotation (Placement(
                 transformation(extent={{-120,70},{-80,110}}),
                 iconTransformation(extent={{-120,32},{-100,52}})));
-          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) annotation
-            (Placement(transformation(extent={{-120,20},{-80,60}}),
+          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) annotation (
+             Placement(transformation(extent={{-120,20},{-80,60}}),
                 iconTransformation(extent={{-120,-10},{-100,10}})));
           Physiolibrary.Types.RealIO.TemperatureInput T(start=310.15)
             annotation (Placement(transformation(extent={{-120,-20},{-80,20}}),
@@ -2712,8 +2819,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
               fillColor={238,46,47},
               fillPattern=FillPattern.Solid,
               textString="FULL
-BLOOD"),
-            Text(
+BLOOD"),    Text(
               extent={{-78,60},{-50,80}},
               lineColor={102,44,145},
               textString="O2"),
@@ -3137,14 +3243,15 @@ BLOOD"),
           //parameter Concentration Cl0=105;
           //  Real Cl_mass0(unit="mol") = Cl0/wf0*water_volume0;
           //  Real Cl_mass(unit="mol") = Cl/wf0*water_volume;
+          input Concentration alb_Gdl = 4.3;
           parameter Concentration Pi=1.2;
           Concentration Alb=AlbPwGPerL/66.5 "mmol/Lpw";
-          Real AlbPwGPerL=43*Vp0ByVp "g/lpw";
+          Real AlbPwGPerL=alb_Gdl*10*Vp0ByVp "g/lpw";
           // parameter Concentration im = 0; // original
           parameter Concentration im=11.87;
           // adjusted
           parameter Concentration Lac=1.5;
-          Concentration SO4pw=0.33/fpw "mmol/Lpw";
+          Concentration SO4pw=(0.33)/fpw "mmol/Lpw";
           Concentration volume_c[cont]={Na,K,Ca,Mg,Cl,Pi,Alb/Vp0ByVp,im,Lac}
             "concentration in one liter";
           Concentration water_c[cont]=volume_c/fpw*Vp0ByVp
@@ -3655,7 +3762,7 @@ BLOOD"),
         FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery;
         FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
         // total mass of Cl mobile ion
-        Real pCO2mmHg=40;
+        input Real pCO2mmHg=40;
         // output: osmolarity and Cl
         parameter Real Hct=0.44;
         parameter Real O2s=0.75;
@@ -3949,6 +4056,106 @@ BLOOD"),
               coordinateSystem(preserveAspectRatio=false)));
       end EPIC;
 
+      model EP_BE
+
+        Real Clpw(
+          start=112,
+          min=10,
+          max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+        Real Cle(
+          start=71,
+          min=1,
+          max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+        Real Vew=vols.Vew "= 1.44400";
+        Real Vis=vols.Vis "=15.75516";
+
+        Real pHe=ery.pH;
+        Real pHp=pla.pH;
+
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla(Pi = 1.15, alb_Gdl = alb);
+        FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery(O2Sat = O2s);
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
+        // total mass of Cl mobile ion
+        input Real pCO2mmHg=20 + 60*time;
+        // output: osmolarity and Cl
+        parameter Real O2s=1;
+        input Real addBE = 0;
+        input Real alb = 4.4;
+        Real rClpwis=Clpw/Clis;
+
+        constant Real Clis=115.461419;
+        constant Real MNac=272.17930;
+        constant Real MKc=3178.3177;
+        constant Real MClc=88.33349;
+        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+        Real MCl_IP=sim.MCl - MClc - MCle - addBE;
+
+      equation
+        //vols.Vew = 1.44400;
+        vols.Vis = 15.75516;
+        vols.Vc = 22.64963;
+
+        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.fH = vols.fH;
+        ery.few = vols.few;
+        ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
+        //LACpw/rCl;
+        ery.Vew0 = vols.Vew0;
+        ery.Vew = vols.Vew;
+
+        Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
+        ery.Osm = pla.Osm;
+        ery.charge = 0;
+        ery.pCO2mmHg = pCO2mmHg;
+
+        sim.Ve0 = vols.Ve0;
+        sim.Vp0 = vols.Vp0;
+        sim.Vis0 = vols.Vis0;
+        sim.Vc0 = vols.Vc0;
+        sim.MNa_IP = sim.MNa - MNac;
+        sim.MK_IP = sim.MK - MKc;
+
+        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
+        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
+        //pla.water_c[pla.cont.Cl] = 109.694599;
+
+        pla.charge = 0;
+        pla.Vp0ByVp = vols.Vp0ByVp;
+        pla.fpw = vols.fpw;
+        pla.pCO2mmHg = pCO2mmHg;
+
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end EP_BE;
+
+      model Test_EP
+
+        EP_BE eP_comparison(
+          addBE=BE*k,
+          alb=alb,
+          pCO2mmHg=pCO2);
+
+            FullBloodEmpirical.SAoriginal normalBloodSA(
+          Hb=15,
+          BEox=BE,
+          pCO2=pCO2) "SA original for comparison only"
+          annotation (Placement(transformation(extent={{60,20},{80,40}})));
+
+          Real pCO2;
+          Real BE;
+          parameter Real alb = 4.4;
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+              parameter Real a = 20, b = 40;
+              parameter Real k = 2.4;
+      equation
+        BE = if time < a then time else a;
+
+        pCO2 = if time > a then b + time - a else b;
+
+      end Test_EP;
       annotation (Documentation(info="<html>
 <p>References:</p>
 <p><br>Raftos, J. E., Bulliman, B. T., &amp; Kuchel, P. W. (1990). Evaluation of an electrochemical model of erythrocyte pH buffering using 31P nuclear magnetic resonance data. The Journal of General Physiology, 95(6), 1183&ndash;1204.</p>
