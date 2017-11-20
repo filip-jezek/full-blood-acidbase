@@ -3310,6 +3310,8 @@ BLOOD"),    Text(
           Real Hw=H/fpw;
           Concentration permeableParticles=(5 + 5)/fpw
             "glucose and urea concentration in PLasma water";
+
+           Real BEp = (1 - 0.023*9)*(HCO3 - 24.4 + (2.3*9 + 7.7)*(pH - 7.4)) "Test from Machepe";
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
               Diagram(coordinateSystem(preserveAspectRatio=false)));
         end Plasma;
@@ -4080,7 +4082,7 @@ BLOOD"),    Text(
         input Real pCO2mmHg=20 + 60*time;
         // output: osmolarity and Cl
         parameter Real O2s=1;
-        input Real addBE = 0;
+        input Real addCl = 0;
         input Real alb = 4.4;
         Real rClpwis=Clpw/Clis;
 
@@ -4089,7 +4091,7 @@ BLOOD"),    Text(
         constant Real MKc=3178.3177;
         constant Real MClc=88.33349;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
-        Real MCl_IP=sim.MCl - MClc - MCle - addBE;
+        Real MCl_IP=sim.MCl - MClc - MCle + addCl;
 
       equation
         //vols.Vew = 1.44400;
@@ -4133,7 +4135,7 @@ BLOOD"),    Text(
       model Test_EP
 
         EP_BE eP_comparison(
-          addBE=BE*k,
+          addCl=-BE*k,
           alb=alb,
           pCO2mmHg=pCO2);
 
@@ -4149,7 +4151,7 @@ BLOOD"),    Text(
         annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
               coordinateSystem(preserveAspectRatio=false)));
               parameter Real a = 20, b = 40;
-              parameter Real k = 2.4;
+              parameter Real k = 1;
       equation
         BE = if time < a then time else a;
 
