@@ -947,8 +947,10 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
             pCO2=pCO2,
             Pi=Pi,
             alb=alb,
-            redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
-            redeclare FullBloodAcidBase.FullBloodEmpirical.Zander1995 fullErythrocyte) "Fencl PLasma, Zander Ery"
+            redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl
+              plasma,
+            redeclare FullBloodAcidBase.FullBloodEmpirical.Zander1995
+              fullErythrocyte) "Fencl PLasma, Zander Ery"
             annotation (Placement(transformation(extent={{-60,60},{-40,80}})));
           FullBloodAcidBase.FullBloodCombined.comparisson.Auxiliary.CombinedModelBase
             full_blood_combo(
@@ -957,8 +959,9 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
             pCO2=pCO2,
             Pi=Pi,
             alb=alb,
-            redeclare PlasmaElectrochemical.PlasmaFencl                   plasma,
-            redeclare FullBloodEmpirical.SAoriginal                   fullErythrocyte) "Fencl Plasma, Poly ery"
+            redeclare PlasmaElectrochemical.PlasmaFencl plasma,
+            redeclare FullBloodEmpirical.SAoriginal fullErythrocyte)
+            "Fencl Plasma, Poly ery"
             annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
 
           CombinedModel full_blood_combo_original(
@@ -1060,8 +1063,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
         end CombinedModelBase;
       end Auxiliary;
 
-      model Wolf_full_blood
-        "Implementation of the Wolf acidbase model, reduced to Plasma and Erythrocyte, 
+      model Wolf_full_blood "Implementation of the Wolf acidbase model, reduced to Plasma and Erythrocyte, 
   from the original article"
         //default parameters
         //concentration in erythroctytes
@@ -1304,6 +1306,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           Pi=1.15,
           alb=4.4,
           redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
+
           redeclare FullBloodAcidBase.FullBloodEmpirical.Zander1995
             fullErythrocyte)
           annotation (Placement(transformation(extent={{-60,60},{-40,80}})));
@@ -1411,8 +1414,8 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
         pco2BECoef[6]*BEe + pco2BECoef[7];
       Real pHBB(start=7) = pHBBCoef[1]*BB^6 + pHBBCoef[2]*BB^5 + pHBBCoef[3]*BB
         ^4 + pHBBCoef[4]*BB^3 + pHBBCoef[5]*BB^2 + pHBBCoef[6]*BB + pHBBCoef[7];
-      Real pHBE(start=7) = pHBECoef[1]*BEe^4 + pHBECoef[2]*BEe^3 + pHBECoef[3]*BEe
-        ^2 + pHBECoef[4]*BEe + pHBECoef[5];
+      Real pHBE(start=7) = pHBECoef[1]*BEe^4 + pHBECoef[2]*BEe^3 + pHBECoef[3]*
+        BEe^2 + pHBECoef[4]*BEe + pHBECoef[5];
 
       Real BB=BEe + 0.42*Hb + 41.7;
       Real BEe;
@@ -1437,7 +1440,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       Real NP_atch=-(alb*10)*(0.123*7.4 - 0.631)
         "albumin total charge in normal plasma(Fencl)";
     equation
-       pH = (log10(pCO2) - log10(pCO2BB))*(pHBB - pHBE)/(log10(pCO2BB) - log10(
+      pH = (log10(pCO2) - log10(pCO2BB))*(pHBB - pHBE)/(log10(pCO2BB) - log10(
         pCO2BE)) + pHBB;
 
       BEp = BE - X/(1 - Hct);
@@ -1867,7 +1870,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Placement(transformation(extent={{80,0},{100,20}})),
           Documentation(info="<html>
 <p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Interface using the SI units, as the Combined model relies on units originally  used by the cited models.</span></p>
-</html>"),Icon(coordinateSystem(preserveAspectRatio=false)),
+</html>"),
+          Icon(coordinateSystem(preserveAspectRatio=false)),
           Diagram(coordinateSystem(preserveAspectRatio=false)));
       end CombinedModel;
 
@@ -2410,8 +2414,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Physiolibrary.Types.RealIO.pHInput pH annotation (Placement(
                 transformation(extent={{-120,70},{-80,110}}),
                 iconTransformation(extent={{-120,32},{-100,52}})));
-          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) annotation (
-             Placement(transformation(extent={{-120,20},{-80,60}}),
+          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) annotation
+            (Placement(transformation(extent={{-120,20},{-80,60}}),
                 iconTransformation(extent={{-120,-10},{-100,10}})));
           Physiolibrary.Types.RealIO.TemperatureInput T(start=310.15)
             annotation (Placement(transformation(extent={{-120,-20},{-80,20}}),
@@ -2733,104 +2737,85 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       connect(ctO2content.pO2, inverseBlockConstraints.y1) annotation (Line(
             points={{38,76},{4,76},{4,62},{-1.4,62}}, color={0,0,127}));
       annotation (
-        Icon(coordinateSystem(preserveAspectRatio=false), graphics={
-            Rectangle(
-              extent={{-100,100},{100,-100}},
-              lineColor={238,46,47},
-              pattern=LinePattern.None,
-              fillColor={255,255,170},
-              fillPattern=FillPattern.Solid,
-              lineThickness=0.5),
-            Rectangle(
-              extent={{0,100},{100,-100}},
-              lineColor={28,108,200},
-              fillColor={215,215,215},
-              fillPattern=FillPattern.Solid),
-            Text(
-              extent={{0,70},{60,90}},
-              lineColor={28,108,200},
-              textString="Volume"),
-            Text(
-              extent={{0,30},{60,50}},
-              lineColor={28,108,200},
-              textString="T"),
-            Text(
-              extent={{0,-10},{60,10}},
-              lineColor={28,108,200},
-              textString="ctHb"),
-            Text(
-              extent={{0,-50},{60,-30}},
-              lineColor={28,108,200},
-              textString="Alb"),
-            Text(
-              extent={{0,-90},{60,-70}},
-              lineColor={28,108,200},
-              textString="Pi"),
-            Polygon(
-              points={{-34,40},{-54,-4},{-32,-22},{-12,-6},{-32,40},{-34,40}},
-              lineColor={0,0,0},
-              fillColor={238,46,47},
-              fillPattern=FillPattern.Solid,
-              smooth=Smooth.Bezier),
-            Ellipse(
-              extent={{-44,10},{-20,-14}},
-              fillColor={255,255,170},
-              fillPattern=FillPattern.Solid,
-              pattern=LinePattern.None,
-              lineColor={0,0,0}),
-            Ellipse(
-              extent={{-48,16},{-20,-12}},
-              fillColor={238,46,47},
-              fillPattern=FillPattern.Solid,
-              pattern=LinePattern.None),
-            Text(
-              extent={{64,88},{96,70}},
-              lineColor={28,108,200},
-              fillColor={238,46,47},
-              fillPattern=FillPattern.Solid,
-              textString="=X0"),
-            Text(
-              extent={{64,50},{96,32}},
-              lineColor={28,108,200},
-              fillColor={238,46,47},
-              fillPattern=FillPattern.Solid,
-              textString="=X0"),
-            Text(
-              extent={{62,10},{94,-8}},
-              lineColor={28,108,200},
-              fillColor={238,46,47},
-              fillPattern=FillPattern.Solid,
-              textString="=X0"),
-            Text(
-              extent={{62,-30},{94,-48}},
-              lineColor={28,108,200},
-              fillColor={238,46,47},
-              fillPattern=FillPattern.Solid,
-              textString="=X0"),
-            Text(
-              extent={{62,-70},{94,-88}},
-              lineColor={28,108,200},
-              fillColor={238,46,47},
-              fillPattern=FillPattern.Solid,
-              textString="=X0"),
-            Text(
-              extent={{-100,-100},{0,-22}},
-              lineColor={238,46,47},
-              fillColor={238,46,47},
-              fillPattern=FillPattern.Solid,
-              textString="FULL
-BLOOD"),    Text(
-              extent={{-78,60},{-50,80}},
-              lineColor={102,44,145},
-              textString="O2"),
-            Text(
-              extent={{-78,20},{-50,40}},
-              lineColor={102,44,145},
-              textString="CO2"),
-            Text(
-              extent={{-78,-20},{-50,0}},
-              lineColor={102,44,145},
-              textString="BE")}),
+        Icon(coordinateSystem(preserveAspectRatio=false), graphics={Rectangle(
+                  extent={{-100,100},{100,-100}},
+                  lineColor={238,46,47},
+                  pattern=LinePattern.None,
+                  fillColor={255,255,170},
+                  fillPattern=FillPattern.Solid,
+                  lineThickness=0.5),Rectangle(
+                  extent={{0,100},{100,-100}},
+                  lineColor={28,108,200},
+                  fillColor={215,215,215},
+                  fillPattern=FillPattern.Solid),Text(
+                  extent={{0,70},{60,90}},
+                  lineColor={28,108,200},
+                  textString="Volume"),Text(
+                  extent={{0,30},{60,50}},
+                  lineColor={28,108,200},
+                  textString="T"),Text(
+                  extent={{0,-10},{60,10}},
+                  lineColor={28,108,200},
+                  textString="ctHb"),Text(
+                  extent={{0,-50},{60,-30}},
+                  lineColor={28,108,200},
+                  textString="Alb"),Text(
+                  extent={{0,-90},{60,-70}},
+                  lineColor={28,108,200},
+                  textString="Pi"),Polygon(
+                  points={{-34,40},{-54,-4},{-32,-22},{-12,-6},{-32,40},{-34,40}},
+                  lineColor={0,0,0},
+                  fillColor={238,46,47},
+                  fillPattern=FillPattern.Solid,
+                  smooth=Smooth.Bezier),Ellipse(
+                  extent={{-44,10},{-20,-14}},
+                  fillColor={255,255,170},
+                  fillPattern=FillPattern.Solid,
+                  pattern=LinePattern.None,
+                  lineColor={0,0,0}),Ellipse(
+                  extent={{-48,16},{-20,-12}},
+                  fillColor={238,46,47},
+                  fillPattern=FillPattern.Solid,
+                  pattern=LinePattern.None),Text(
+                  extent={{64,88},{96,70}},
+                  lineColor={28,108,200},
+                  fillColor={238,46,47},
+                  fillPattern=FillPattern.Solid,
+                  textString="=X0"),Text(
+                  extent={{64,50},{96,32}},
+                  lineColor={28,108,200},
+                  fillColor={238,46,47},
+                  fillPattern=FillPattern.Solid,
+                  textString="=X0"),Text(
+                  extent={{62,10},{94,-8}},
+                  lineColor={28,108,200},
+                  fillColor={238,46,47},
+                  fillPattern=FillPattern.Solid,
+                  textString="=X0"),Text(
+                  extent={{62,-30},{94,-48}},
+                  lineColor={28,108,200},
+                  fillColor={238,46,47},
+                  fillPattern=FillPattern.Solid,
+                  textString="=X0"),Text(
+                  extent={{62,-70},{94,-88}},
+                  lineColor={28,108,200},
+                  fillColor={238,46,47},
+                  fillPattern=FillPattern.Solid,
+                  textString="=X0"),Text(
+                  extent={{-100,-100},{0,-22}},
+                  lineColor={238,46,47},
+                  fillColor={238,46,47},
+                  fillPattern=FillPattern.Solid,
+                  textString="FULL
+BLOOD"),Text(     extent={{-78,60},{-50,80}},
+                  lineColor={102,44,145},
+                  textString="O2"),Text(
+                  extent={{-78,20},{-50,40}},
+                  lineColor={102,44,145},
+                  textString="CO2"),Text(
+                  extent={{-78,-20},{-50,0}},
+                  lineColor={102,44,145},
+                  textString="BE")}),
         Diagram(coordinateSystem(preserveAspectRatio=false)),
         Documentation(info="<html>
 <p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Full-blood model subcomponent with interfaces for complex models. Supplement to the article.</span></p>
@@ -3243,7 +3228,7 @@ BLOOD"),    Text(
           //parameter Concentration Cl0=105;
           //  Real Cl_mass0(unit="mol") = Cl0/wf0*water_volume0;
           //  Real Cl_mass(unit="mol") = Cl/wf0*water_volume;
-          input Concentration alb_Gdl = 4.3;
+          input Concentration alb_Gdl=4.3;
           parameter Concentration Pi=1.2;
           Concentration Alb=AlbPwGPerL/66.5 "mmol/Lpw";
           Real AlbPwGPerL=alb_Gdl*10*Vp0ByVp "g/lpw";
@@ -3311,7 +3296,8 @@ BLOOD"),    Text(
           Concentration permeableParticles=(5 + 5)/fpw
             "glucose and urea concentration in PLasma water";
 
-           Real BEp = (1 - 0.023*9)*(HCO3 - 24.4 + (2.3*9 + 7.7)*(pH - 7.4)) "Test from Machepe";
+          Real BEp=(1 - 0.023*9)*(HCO3 - 24.4 + (2.3*9 + 7.7)*(pH - 7.4))
+            "Test from Machepe";
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
               Diagram(coordinateSystem(preserveAspectRatio=false)));
         end Plasma;
@@ -4074,17 +4060,18 @@ BLOOD"),    Text(
         Real pHe=ery.pH;
         Real pHp=pla.pH;
 
-        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla(Pi = 1.15, alb_Gdl = alb);
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla(Pi=1.15, alb_Gdl=alb);
         FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
-        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery(O2Sat = O2s);
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery(O2Sat=O2s);
         FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
         // total mass of Cl mobile ion
         input Real pCO2mmHg=20 + 60*time;
         // output: osmolarity and Cl
         parameter Real O2s=1;
-        input Real addCl = 0;
-        input Real alb = 4.4;
-        Real rClpwis=Clpw/Clis;
+        input Real addCl=0;
+        input Real alb=4.4;
+        Real rClpwis=0.9504;
+        //Clpw/Clis;
 
         constant Real Clis=115.461419;
         constant Real MNac=272.17930;
@@ -4108,6 +4095,7 @@ BLOOD"),    Text(
 
         Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
         ery.Osm = pla.Osm;
+
         ery.charge = 0;
         ery.pCO2mmHg = pCO2mmHg;
 
@@ -4135,29 +4123,115 @@ BLOOD"),    Text(
       model Test_EP
 
         EP_BE eP_comparison(
-          addCl=-BE*k,
+          addCl=-BE*eP_comparison.vols.Vb,
           alb=alb,
           pCO2mmHg=pCO2);
 
-            FullBloodEmpirical.SAoriginal normalBloodSA(
-          Hb=15,
+        P_BE P_comparison(
+          addCl=-BE*P_comparison.vols.Vpw,
+          alb=alb,
+          pCO2mmHg=pCO2);
+
+        FullBloodEmpirical.SAoriginal normalBloodSA(
+          Hb=Hb,
           BEox=BE,
           pCO2=pCO2) "SA original for comparison only"
           annotation (Placement(transformation(extent={{60,20},{80,40}})));
 
-          Real pCO2;
-          Real BE;
-          parameter Real alb = 4.4;
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-              parameter Real a = 20, b = 40;
-              parameter Real k = 1;
+        Real pCO2;
+        Real BE;
+        parameter Real Hb=15;
+        parameter Real alb=4.4;
+        parameter Real a=20, b=40;
+        parameter Real k=1;
       equation
         BE = if time < a then time else a;
 
         pCO2 = if time > a then b + time - a else b;
 
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end Test_EP;
+
+      model P_BE
+
+        Real Clpw(
+          start=112,
+          min=10,
+          max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
+        //   Real Cle(
+        //     start=71,
+        //     min=1,
+        //     max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
+        Real Vew=vols.Vew "= 1.44400";
+        Real Vis=vols.Vis "=15.75516";
+
+        //   Real pHe=ery.pH;
+        Real pHp=pla.pH;
+
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla(Pi=1.15, alb_Gdl=alb);
+        FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
+        //   FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery(O2Sat=O2s);
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
+        // total mass of Cl mobile ion
+        input Real pCO2mmHg=20 + 60*time;
+        // output: osmolarity and Cl
+        parameter Real O2s=1;
+        input Real addCl=0;
+        input Real alb=4.4;
+
+        Real rClpwis=0.9504;
+        Real Clis=115.461419;
+
+        constant Real MNac=272.17930;
+        constant Real MKc=3178.3177;
+        constant Real MClc=88.33349;
+        // Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+        Real MCle=102.5695;
+        Real MCl_IP=sim.MCl - MClc - MCle + addCl;
+
+      equation
+
+        vols.Vew = 1.44400;
+        vols.Vis = 15.75516;
+        vols.Vc = 22.64963;
+
+        //   vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        //   ery.fH = vols.fH;
+        //   ery.few = vols.few;
+        //   ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
+        //   //LACpw/rCl;
+        //   ery.Vew0 = vols.Vew0;
+        //   ery.Vew = vols.Vew;
+
+        //   Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
+        //   ery.Osm = pla.Osm;
+
+        //  pla.Osm = 286
+
+        //   ery.charge = 0;
+        //   ery.pCO2mmHg = pCO2mmHg;
+
+        sim.Ve0 = vols.Ve0;
+        sim.Vp0 = vols.Vp0;
+        sim.Vis0 = vols.Vis0;
+        sim.Vc0 = vols.Vc0;
+        sim.MNa_IP = sim.MNa - MNac;
+        sim.MK_IP = sim.MK - MKc;
+
+        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
+        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
+        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
+        //pla.water_c[pla.cont.Cl] = 109.694599;
+
+        pla.charge = 0;
+        pla.Vp0ByVp = vols.Vp0ByVp;
+        pla.fpw = vols.fpw;
+        pla.pCO2mmHg = pCO2mmHg;
+
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end P_BE;
       annotation (Documentation(info="<html>
 <p>References:</p>
 <p><br>Raftos, J. E., Bulliman, B. T., &amp; Kuchel, P. W. (1990). Evaluation of an electrochemical model of erythrocyte pH buffering using 31P nuclear magnetic resonance data. The Journal of General Physiology, 95(6), 1183&ndash;1204.</p>
