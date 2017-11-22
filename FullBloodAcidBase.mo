@@ -4424,7 +4424,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
           //   parameter Real Zim ;//= -5.3 "Charge of ALL impermeable solutes";//test
           // Real Zim = -5.3 "Charge of ALL impermeable solutes";//test
-          parameter Real Zim=-0.6349 "Charge of ALL impermeable solutes";
+          parameter Real Zim=0 "Charge of ALL impermeable solutes";
 
           Real fi[cont]={0.93,0.93,1,1,0.93,0.93,1,1,-9999};
           // Alb has osmotic coefficient of 1???
@@ -4631,31 +4631,35 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         end Volumes;
 
         record StrongIonMasses
-
+          parameter Real addNa=0;
+          parameter Real addK=0;
+          parameter Real addCl=0;
+          parameter Real addNaCl=0;
           Real Ve0;
           Real Vp0;
           Real Vis0;
           Real Vc0;
           // any ion addition MUST be added here as well;
-          constant Real Napl0=140;
-          constant Real Nais0=141.5;
+          constant Real Napl0=139;
+          constant Real Nais0=140.5;
           constant Real Nac0=12;
-          Real MNa=Napl0*Vp0 + Nais0*Vis0 + Nac0*Vc0;
+          Real MNa=Napl0*Vp0 + Nais0*Vis0 + Nac0*Vc0 + addNa + addNaCl;
           Real MNac=Nac0*Vc0;
           Real MNa_IP;
 
           constant Real Kpl0=4.7;
           constant Real Kis0=4.75;
-          constant Real Kc0=139;
-          Real MK=Kpl0*Vp0 + Kis0*Vis0 + Kc0*Vc0;
+          constant Real Kc0=138;
+          Real MK=Kpl0*Vp0 + Kis0*Vis0 + Kc0*Vc0 + addK;
           Real MKc=Kc0*Vc0;
           Real MK_IP;
 
-          constant Real Cle0=53.5;
+          constant Real Cle0=55.6;
           constant Real Clpl0=104;
           constant Real Clis0=116.5;
           constant Real Clc0=4;
-          Real MCl=Cle0*Ve0 + Clpl0*Vp0 + Clis0*Vis0 + Clc0*Vc0;
+          Real MCl=Cle0*Ve0 + Clpl0*Vp0 + Clis0*Vis0 + Clc0*Vc0 + addCl +
+              addNaCl;
           Real MClc=Clc0*Vc0;
 
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
@@ -4766,7 +4770,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
               Diagram(coordinateSystem(preserveAspectRatio=false)));
         end E;
 
-        model P
+        model P "Pla charga must be 0 and correct osm"
           Real Clpw(
             start=112,
             min=10,
@@ -4775,11 +4779,16 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
           FullBloodAcidBase.Wolf.v351.Auxiliary.Plasma pla;
           FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
-          FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim;
+          FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim(
+            addNa=0.672,
+            addK=-4.62,
+            addCl=-0.66);
           // total mass of Cl mobile ion
           Real pCO2mmHg=45.1;
           // Real rClpw_is = pla.volume_c[pla.cont.Cl]/Clis;
           Real rClpwis=Clpw/Clis;
+
+          Real Osm=pla.Osm "= 286.03";
 
 
           constant Real Clis=116.513794;
@@ -4806,7 +4815,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
           pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
           Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-          pla.water_c[pla.cont.Cl] = 110.673357;
+          //pla.water_c[pla.cont.Cl] = 110.673357;
 
           // same osmolarities
           //  pla.Osm = EryOsm;
@@ -4815,7 +4824,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           pla.Vp0ByVp = vols.Vp0ByVp;
 
           // Donnan equilibrium
-          //  pla.pH = 7.410676;
+          pla.pH = 7.364;
           pla.fpw = vols.fpw;
           // pco2
           pla.pCO2mmHg = pCO2mmHg;
