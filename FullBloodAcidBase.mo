@@ -4598,7 +4598,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           parameter Real fH0=Ve0/(Ve0 + Vp0);
           parameter Real fHa0=fH0/Fcell;
           parameter Real Vis0=0.331*LBM - Vpw0;
-          parameter Real TBW=2.447 - 0.09156*age + 0.3362*weight + 0.1074*
+          parameter Real TBW=2.447 - 0.09516*age + 0.3362*weight + 0.1074*
               height "Woodrow 2003 for male, there also exists female variant";
           parameter Real Vc0=TBW - Vis0 - Vpw0 - Vew0;
 
@@ -4610,14 +4610,14 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           Real Vb=Vpl + Ve;
           Real fH=Ve/Vb;
 
-          parameter Real Vw0=Ve0 + Vp0 + Vis0 + Vc0;
+          parameter Real Vw0=Vew0 + Vpw0 + Vis0 + Vc0;
           parameter Real V=Vw0 + Vadd;
-          parameter Real Vadd=0;
+          parameter Real Vadd=-0.01128;
           // Volumes
           Real Vpl=Vpw + Vps;
           Real fpw=Vpw/Vpl;
           Real few=Vew/Ve;
-          Real Vpw=Vadd + Vpw0 + Vis0 + Vew0 + Vc0 - Vis - Vew - Vc " = 2.93";
+          Real Vpw=V - Vis - Vew - Vc " = 2.93";
           Real Vp0ByVp=Vp0/Vpl;
           Real Vew(start=Vew0,min=1e-3) "= 1.43";
           Real Vis(start=Vis0,min=1e-3) "= 15.59";
@@ -4726,6 +4726,9 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           parameter Real EryOsm=286.03625;
           Real Cle=ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
           Real Vew=vols.Vew "= 1.44400";
+          Real Osm=ery.Osm "286.03";
+          parameter Real Hb=13.20658;
+
         equation
           vols.Vew = 1.44026;
           vols.Vis = 15.603374;
@@ -4736,6 +4739,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           ery.fH = vols.fH;
           ery.few = vols.few;
           ery.Lactate = 1.083;
+          ery.HbGperLiterBlood = Hb*10;
+
           //LACpw/rCl;
           ery.Vew0 = vols.Vew0;
           ery.Vew = vols.Vew;
@@ -4747,6 +4752,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
           // ery.
           //   // same osmolarities
+          //
           //  ery.Osm = EryOsm;
           //  ery.charge = 0;
           //   ery.Cl = ery.Cl0;
