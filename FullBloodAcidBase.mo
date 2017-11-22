@@ -4396,8 +4396,9 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           //  Real Cl_mass0(unit="mol") = Cl0/wf0*water_volume0;
           //  Real Cl_mass(unit="mol") = Cl/wf0*water_volume;
           parameter Concentration Pi=1.2;
+          parameter Concentration alb=43 "g/dl pw";
           Concentration Alb=AlbPwGPerL/66.5 "mmol/Lpw";
-          Real AlbPwGPerL=43*Vp0ByVp "g/lpw";
+          Real AlbPwGPerL=alb*Vp0ByVp "g/lpw";
           // parameter Concentration im = 0; // original
           parameter Concentration im=11.87;
           // adjusted
@@ -4491,7 +4492,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           Real Vis;
           Real Vis0;
           parameter Real Alb(unit="g/l") = 43 "plasma alb conc g/l";
-          Concentration SO4pw "mmol/Pw";
+          Concentration SO4pw "mEq/Pw";
 
           Concentration albis=(Alb*0.33*Vis0)/(Vis - Vis0*0.25) "g/iw";
           Concentration albiw=albis/66.5
@@ -4499,15 +4500,14 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
           Real CaPPBound=(3.98)/(3.98 + Hh)*plasma_water_c[cont.Ca]
             "= 1.290 Meq/Lis";
-          Real CaPPBoundErr=0
-            "Error in VisSim diagram, should be CaPPBound instead";
+          Real CaPPBoundErr=0 "Should be CaPPBound, but it is not right now";
           Real ZCaBindPerAlb=CaPPBound/albiw;
           Real ZClBindPerAlb=6.46/(6.46 + Hh)*6 + 4 "Anstey";
 
           Real transf[cont]={rClpwis,rClpwis,0,0,0,(1/rClpwis)^(-ZPi),0,0,1/
               rClpwis} "Only Na, K, Pi and Lac";
 
-          Real SO4=(SO4pw*2)/(rClpwis^2) "concentration in one liter mEq/lw";
+          Real SO4=(SO4pw)/(rClpwis^2) "concentration in one liter mEq/lw";
           // Concentration water_c[cont]=transf .* plasma_water_c;
           Concentration water_c[cont]=transf .* plasma_water_c
             "Actual concentration recalculated from plasma";
@@ -4517,7 +4517,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           Real ZAlbBnd=-ZClBindPerAlb + ZCaBindPerAlb + ZCaBindPerAlb/2;
           Real ZAlb=ZFigge + ZAlbBnd;
 
-          parameter Real Zim=3.057 "Charge of ALL impermeable solutes";
+          parameter Real Zim=3.68 "Charge of ALL impermeable solutes";
+          Real ZimIsfw=Zim*Vis0/Vis;
 
           Real OsmStep1=sum(water_c[{cont.Na,cont.K}]) + Cl;
           Real CaMgIonOsm=(CaIon - CaPPBoundErr + MgIon - CaPPBoundErr/2)/2;
@@ -4527,8 +4528,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
           Real SID=sum(water_c[{cont.Na,cont.K}]) - Cl + CaIon - CaPPBoundErr
                + (MgIon - 0.5*CaPPBoundErr) - water_c[cont.Lac];
-          Real charge=Zim + SID + albiw*ZAlb + water_c[cont.Pi]*ZPi - HCO3 - 2*
-              CO3 - SO4;
+          Real charge=ZimIsfw + SID + albiw*ZAlb + water_c[cont.Pi]*ZPi - HCO3
+               - 2*CO3 - SO4;
           //*water_volume;
 
           Concentration HCO3=0.0326*pCO2mmHg*10^(pH - 6.103);
@@ -4837,34 +4838,36 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           FullBloodAcidBase.Wolf.v351.Auxiliary.Isf isf(permeableParticles=
                 10.62755);
           FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
-          Real rClpwis=Clpw/isf.Cl " = 0.9500";
-          parameter Real Hpw=4.128159e-8;
-          parameter Real Clpw=109.694599;
+          Real rClpwis=Clpw/isf.Cl " = 0.94987";
+          parameter Real Hpw=4.602e-8;
           parameter Real Alb=43;
-          constant Real EryOsm=284.084;
-          constant Real MCl_IP=2148.68379;
+          //constant Real EryOsm=284.084;
+          constant Real MCl_IP=2143.203;
 
           // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
-          Real Clis(start=115) " = 115.4614";
+          Real Clis(start=115) = 116.513794;
+          Real Clpw=isf.plasma_water_c[isf.cont.Cl];
           Real Vis=vols.Vis "= 15.75516";
-          Real oo=isf.Osm + isf.pd*2;
+          // Real oo=isf.Osm + isf.pd*2;
         equation
-          vols.Vew = 1.44400;
-          //  vols.Vis = 15.75516;
-          vols.Vc = 22.64963;
+          vols.Vew = 1.44026;
+          vols.Vis = 15.603374;
+          vols.Vc = 22.784381;
 
-          isf.plasma_water_c = {147.3244,4.9890,2.4977,0,0,1.2488,0,0,1.56017};
+
+          isf.plasma_water_c = {147.9191,5.000,2.5545,0.85133,110.673,1.277,0,0,
+            1.5962};
 
           isf.rClpwis = rClpwis;
 
-          isf.CaIon = 3.76940*rClpwis^2;
-          isf.MgIon = 1.05212*rClpwis^2;
+          isf.CaIon = 3.9236*rClpwis^2 "ionized in plasma water * rCl";
+          isf.MgIon = 1.11004*rClpwis^2 "ionized in plasma water * rCl";
           isf.Vis = vols.Vis;
           isf.Vis0 = vols.Vis0;
-          isf.SO4pw = 0.702420/2;
+          isf.SO4pw = 0.70235;
           // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
-          isf.pCO2mmHg = 40;
-          isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
+          isf.pCO2mmHg = 45.1;
+          isf.AlbPwGPerL = Alb;
           isf.Vb = vols.Vb;
           isf.Vb0 = vols.Vb0;
           isf.Cl = Clis;
@@ -4875,8 +4878,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           //  isf.pH = 7.40649;
 
           isf.H = Hpw*rClpwis;
-          isf.charge = 0;
-          isf.Osm + isf.OsmDiff = EryOsm;
+          // isf.charge = 0;
+          //isf.Osm + isf.OsmDiff = EryOsm;
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
               Diagram(coordinateSystem(preserveAspectRatio=false)));
         end I;
