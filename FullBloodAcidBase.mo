@@ -1290,6 +1290,18 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
 
         Real BE=-20 + time*40;
         parameter Real pCO2=40;
+        FullBloodAcidBase.FullBloodCombined.comparisson.Auxiliary.CombinedModelBase
+          combinedModelBase3(
+          Hb=15,
+          BE=BE,
+          pCO2=pCO2,
+          Pi=1.15,
+          alb=4.4,
+          redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
+
+          redeclare FullBloodAcidBase.FullBloodEmpirical.Kofr2009
+            fullErythrocyte)
+          annotation (Placement(transformation(extent={{-60,-60},{-40,-40}})));
       equation
 
         annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
@@ -3122,7 +3134,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           Real Cl_mass0(unit="mol") = Cl0/wf0*Vew0;
           //  Real Cl_mass = Cl/wf0*Vew;
 
-          parameter Concentration Hb=5.3 "concentration of Hb tetramer";
+          Concentration Hb
+            "concentration of Hb tetramer [mmol per blood liter]. Calculated through HbGperLiterBlood";
           Concentration DPG=4.3/few*wf0 "the 4.3 value goes directly in";
           Concentration ATP=1.8/few*wf0;
 
@@ -3136,7 +3149,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           Real Ve0ByVeFraction;
           Real fH;
           Real few;
-          Real HbGperLiterBlood=Hb*Ve0ByVeFraction*fH*64.5;
+          Real HbGperLiterBlood=Hb*Ve0ByVeFraction*fH*64.5
+            "Hemoglobin mass concentration g per liter blood. In further versions it is not multiplied by Ve0byVe";
           Concentration volume_c[cont]={Na,K,Cl,Hb,DPG,ATP,GSH,im,Pi}
             "concentration in one liter";
           Concentration water_c[cont]=volume_c ./ wf0 .* Vew0 ./ Vew
@@ -3763,7 +3777,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         constant Real MClc=88.33349;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
         Real MCl_IP=sim.MCl - MClc - MCle;
-
+        parameter Real Hb=13.2;
       equation
         //  vols.Vew = 1.44400;
         //  vols.Vis = 15.75516;
@@ -3776,6 +3790,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         //LACpw/rCl;
         ery.Vew0 = vols.Vew0;
         ery.Vew = vols.Vew;
+        ery.HbGperLiterBlood = Hb*10;
 
         Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
         ery.Osm = pla.Osm;
@@ -3846,6 +3861,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
         Real rClpwis=Clpw/Clis " = 0.9500";
         parameter Real Alb=43;
+        parameter Real Hb=13.2;
 
         // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
       equation
@@ -3865,6 +3881,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         ery.Osm = pla.Osm;
         ery.charge = 0;
         ery.pCO2mmHg = pCO2mmHg;
+        ery.HbGperLiterBlood = Hb*10;
 
         sim.Ve0 = vols.Ve0;
         sim.Vp0 = vols.Vp0;
@@ -3957,6 +3974,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
         Real rClpwis=Clpw/Clis " = 0.9500";
         parameter Real Alb=43;
+        parameter Real Hb=13.2;
 
         // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
       equation
@@ -3971,6 +3989,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         //LACpw/rCl;
         ery.Vew0 = vols.Vew0;
         ery.Vew = vols.Vew;
+        ery.HbGperLiterBlood = Hb*10;
 
         Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
         ery.Osm = pla.Osm;
@@ -4079,13 +4098,14 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         constant Real MClc=88.33349;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
         Real MCl_IP=sim.MCl - MClc - MCle + addCl;
-
+        parameter Real Hb=13.2;
       equation
         //vols.Vew = 1.44400;
         vols.Vis = 15.75516;
         vols.Vc = 22.64963;
 
         vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.HbGperLiterBlood = Hb*10;
         ery.fH = vols.fH;
         ery.few = vols.few;
         ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
@@ -4125,7 +4145,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         EP_BE eP_comparison(
           addCl=-BE*eP_comparison.vols.Vb,
           alb=alb,
-          pCO2mmHg=pCO2);
+          pCO2mmHg=pCO2,
+          Hb=Hb);
 
         P_BE P_comparison(
           addCl=-BE*P_comparison.vols.Vpw,
@@ -4264,7 +4285,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           //Real Cl_mass0(unit="mol") = Cl0/wf0*Vew0;
           //  Real Cl_mass = Cl/wf0*Vew;
 
-          Concentration Hb=5.3 "concentration of Hb tetramer";
+          Concentration Hb
+            "concentration of Hb tetramer [mmol per blood liter]. Calculated through HbGperLiterBlood";
           Concentration DPG=4.3 "the 4.3 value goes directly in";
           Concentration ATP=1.8;
 
@@ -4280,7 +4302,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           Real rVe "Ve0/Ve";
           Real fH;
           Real few;
-          Real HbGperLiterBlood=Hb*fH*64.5;
+          Real HbGperLiterBlood=Hb*fH*64.5
+            "Hemoglobin mass concentration g per liter blood. In further versions it is not multiplied by Ve0byVe";
           Concentration water_c[cont]={Na*rVew,K*rVew,Cl,Hb/few,DPG/rVe/few,ATP
               *rVe/few,GSH*rVe/few,im,Pi*rVe/few}
             "Actual concentration recalculated to water fraction (initially 0.73) per one liter of volume";
