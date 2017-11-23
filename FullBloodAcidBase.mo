@@ -1302,6 +1302,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           redeclare FullBloodAcidBase.FullBloodEmpirical.Kofr2009
             fullErythrocyte)
           annotation (Placement(transformation(extent={{-60,-60},{-40,-40}})));
+
       equation
 
         annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
@@ -4677,6 +4678,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           Real Vc;
           Real His;
           Real pCO2mmHg(unit="1");
+          Real Lacis;
 
           Real Clc(
             start=3.9,
@@ -4685,8 +4687,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
           Real rClisce(start=29.6) = Clis/Clc;
           Real Kc=Kis*rClisce;
-          Real Nac=Nais*rClisce*0.0029;
-
+          Real Nac=Nais*rClisce*0.00295;
+          Real Lacc=Lacis/rClisce;
           Concentration HCO3=0.029*pCO2mmHg*10^(pH - 6.103);
           Real pH(start=7.408) = -log10(H);
 
@@ -4695,22 +4697,19 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
             min=1e-9,
             max=1) = His*0.1*rClisce "Why His*0.1? Is it the water content?";
 
-          Real charge=-HCO3 + Kc - Clc + Nac + Zim*Im;
-          Real Zim=-1.1728*10^(pH - 5.5)/(1 + 10^(pH - 5.5));
-          Real Im=Vc0/Vc*123.045;
+          Real charge=-HCO3 + Kc - Clc + Nac - Lacc + Zim*Im;
+          Real Zim=-1.1672*10^(pH - 5.5)/(1 + 10^(pH - 5.5));
+          Real Im=Vc0/Vc*122.6343;
 
           Real OsmPart=HCO3 + Kc + Nac + Clc;
-          Real Osm=Im + permeableParticles + 0.93*OsmPart;
+          Real Osm=Im + permeableParticles + 0.93*OsmPart + Lacc;
 
           Real MNac=Nac*Vc;
           Real MClc=Clc*Vc;
           Real MKc=Kc*Vc;
 
-          parameter Concentration permeableParticles=5.313 + UreaError
+          parameter Concentration permeableParticles=10.64
             "glucose and urea concentration in PLasma water";
-          constant Real UreaError=0
-            "Concentration of Urea in plasma water. Should be 5.31, is zero";
-
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
               Diagram(coordinateSystem(preserveAspectRatio=false)));
         end Cell;
@@ -4892,22 +4891,24 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
             min=1,
             max=100) = c.Clc;
         equation
-          c.Kis = 4.73983;
+          c.Kis = 4.75091;
           //4.73106;
-          c.Nais = 139.9662;
+          c.Nais = 140.50451;
           //141.474;
-          c.Clis = 115.461419;
+          c.Clis = 116.51379;
           //116.7911;
-          c.Vc0 = 22.87176;
-          //  c.Vc = 22.64963;//22.897789;
-          c.His = 3.92197e-8;
+          c.Vc0 = 22.79616;
+          c.Vc = 22.7843;
+          //22.897789;
+          c.His = 4.37195e-8;
+          c.Lacis = 1.680;
           //3.91020e-8;
-          c.pCO2mmHg = 40;
+          c.pCO2mmHg = 45.1;
 
-          //  c.rClisce = 29.6055;
-          //  c.Clc = 3.961488;
-          c.charge = 0;
-          c.Osm = 282.20;
+          //c.rClisce = 29.6055;
+          c.Clc = 4.015042;
+          //c.charge = 0;
+          //c.Osm = 282.20;
 
           annotation (Icon(coordinateSystem(preserveAspectRatio=false)),
               Diagram(coordinateSystem(preserveAspectRatio=false)));
