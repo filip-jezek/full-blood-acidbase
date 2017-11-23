@@ -1008,7 +1008,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           //     Pi0=Pi) annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
 
         public
-          Wolf.v349.EP_BE eP_comparison(
+          Wolf.v349.EP eP_comparison(
             addBE=BE,
             alb=alb,
             pCO2mmHg=pCO2)
@@ -2750,85 +2750,105 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
       connect(ctO2content.pO2, inverseBlockConstraints.y1) annotation (Line(
             points={{38,76},{4,76},{4,62},{-1.4,62}}, color={0,0,127}));
       annotation (
-        Icon(coordinateSystem(preserveAspectRatio=false), graphics={Rectangle(
-                  extent={{-100,100},{100,-100}},
-                  lineColor={238,46,47},
-                  pattern=LinePattern.None,
-                  fillColor={255,255,170},
-                  fillPattern=FillPattern.Solid,
-                  lineThickness=0.5),Rectangle(
-                  extent={{0,100},{100,-100}},
-                  lineColor={28,108,200},
-                  fillColor={215,215,215},
-                  fillPattern=FillPattern.Solid),Text(
-                  extent={{0,70},{60,90}},
-                  lineColor={28,108,200},
-                  textString="Volume"),Text(
-                  extent={{0,30},{60,50}},
-                  lineColor={28,108,200},
-                  textString="T"),Text(
-                  extent={{0,-10},{60,10}},
-                  lineColor={28,108,200},
-                  textString="ctHb"),Text(
-                  extent={{0,-50},{60,-30}},
-                  lineColor={28,108,200},
-                  textString="Alb"),Text(
-                  extent={{0,-90},{60,-70}},
-                  lineColor={28,108,200},
-                  textString="Pi"),Polygon(
-                  points={{-34,40},{-54,-4},{-32,-22},{-12,-6},{-32,40},{-34,40}},
-                  lineColor={0,0,0},
-                  fillColor={238,46,47},
-                  fillPattern=FillPattern.Solid,
-                  smooth=Smooth.Bezier),Ellipse(
-                  extent={{-44,10},{-20,-14}},
-                  fillColor={255,255,170},
-                  fillPattern=FillPattern.Solid,
-                  pattern=LinePattern.None,
-                  lineColor={0,0,0}),Ellipse(
-                  extent={{-48,16},{-20,-12}},
-                  fillColor={238,46,47},
-                  fillPattern=FillPattern.Solid,
-                  pattern=LinePattern.None),Text(
-                  extent={{64,88},{96,70}},
-                  lineColor={28,108,200},
-                  fillColor={238,46,47},
-                  fillPattern=FillPattern.Solid,
-                  textString="=X0"),Text(
-                  extent={{64,50},{96,32}},
-                  lineColor={28,108,200},
-                  fillColor={238,46,47},
-                  fillPattern=FillPattern.Solid,
-                  textString="=X0"),Text(
-                  extent={{62,10},{94,-8}},
-                  lineColor={28,108,200},
-                  fillColor={238,46,47},
-                  fillPattern=FillPattern.Solid,
-                  textString="=X0"),Text(
-                  extent={{62,-30},{94,-48}},
-                  lineColor={28,108,200},
-                  fillColor={238,46,47},
-                  fillPattern=FillPattern.Solid,
-                  textString="=X0"),Text(
-                  extent={{62,-70},{94,-88}},
-                  lineColor={28,108,200},
-                  fillColor={238,46,47},
-                  fillPattern=FillPattern.Solid,
-                  textString="=X0"),Text(
-                  extent={{-100,-100},{0,-22}},
-                  lineColor={238,46,47},
-                  fillColor={238,46,47},
-                  fillPattern=FillPattern.Solid,
-                  textString="FULL
-BLOOD"),Text(     extent={{-78,60},{-50,80}},
-                  lineColor={102,44,145},
-                  textString="O2"),Text(
-                  extent={{-78,20},{-50,40}},
-                  lineColor={102,44,145},
-                  textString="CO2"),Text(
-                  extent={{-78,-20},{-50,0}},
-                  lineColor={102,44,145},
-                  textString="BE")}),
+        Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+            Rectangle(
+              extent={{-100,100},{100,-100}},
+              lineColor={238,46,47},
+              pattern=LinePattern.None,
+              fillColor={255,255,170},
+              fillPattern=FillPattern.Solid,
+              lineThickness=0.5),
+            Rectangle(
+              extent={{0,100},{100,-100}},
+              lineColor={28,108,200},
+              fillColor={215,215,215},
+              fillPattern=FillPattern.Solid),
+            Text(
+              extent={{0,70},{60,90}},
+              lineColor={28,108,200},
+              textString="Volume"),
+            Text(
+              extent={{0,30},{60,50}},
+              lineColor={28,108,200},
+              textString="T"),
+            Text(
+              extent={{0,-10},{60,10}},
+              lineColor={28,108,200},
+              textString="ctHb"),
+            Text(
+              extent={{0,-50},{60,-30}},
+              lineColor={28,108,200},
+              textString="Alb"),
+            Text(
+              extent={{0,-90},{60,-70}},
+              lineColor={28,108,200},
+              textString="Pi"),
+            Polygon(
+              points={{-34,40},{-54,-4},{-32,-22},{-12,-6},{-32,40},{-34,40}},
+              lineColor={0,0,0},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              smooth=Smooth.Bezier),
+            Ellipse(
+              extent={{-44,10},{-20,-14}},
+              fillColor={255,255,170},
+              fillPattern=FillPattern.Solid,
+              pattern=LinePattern.None,
+              lineColor={0,0,0}),
+            Ellipse(
+              extent={{-48,16},{-20,-12}},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              pattern=LinePattern.None),
+            Text(
+              extent={{64,88},{96,70}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{64,50},{96,32}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{62,10},{94,-8}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{62,-30},{94,-48}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{62,-70},{94,-88}},
+              lineColor={28,108,200},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="=X0"),
+            Text(
+              extent={{-100,-100},{0,-22}},
+              lineColor={238,46,47},
+              fillColor={238,46,47},
+              fillPattern=FillPattern.Solid,
+              textString="FULL
+BLOOD"),
+            Text(
+              extent={{-78,60},{-50,80}},
+              lineColor={102,44,145},
+              textString="O2"),
+            Text(
+              extent={{-78,20},{-50,40}},
+              lineColor={102,44,145},
+              textString="CO2"),
+            Text(
+              extent={{-78,-20},{-50,0}},
+              lineColor={102,44,145},
+              textString="BE")}),
         Diagram(coordinateSystem(preserveAspectRatio=false)),
         Documentation(info="<html>
 <p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Full-blood model subcomponent with interfaces for complex models. Supplement to the article.</span></p>
@@ -3760,41 +3780,43 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         Real pHe=ery.pH;
         Real pHp=pla.pH;
 
-        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla(Pi=1.15, alb_Gdl=alb);
         FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
-        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery;
+        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery(O2Sat=O2s);
         FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
         // total mass of Cl mobile ion
-        input Real pCO2mmHg=40;
+        input Real pCO2mmHg=20 + 60*time;
         // output: osmolarity and Cl
-        parameter Real Hct=0.44;
-        parameter Real O2s=0.75;
-
-        Real rClpwis=Clpw/Clis;
+        parameter Real O2s=1;
+        input Real addCl=0;
+        input Real alb=4.4;
+        Real rClpwis=0.9504;
+        //Clpw/Clis;
 
         constant Real Clis=115.461419;
         constant Real MNac=272.17930;
         constant Real MKc=3178.3177;
         constant Real MClc=88.33349;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
-        Real MCl_IP=sim.MCl - MClc - MCle;
+        Real MCl_IP=sim.MCl - MClc - MCle + addCl;
         parameter Real Hb=13.2;
       equation
-        //  vols.Vew = 1.44400;
-        //  vols.Vis = 15.75516;
+        //vols.Vew = 1.44400;
+        vols.Vis = 15.75516;
         vols.Vc = 22.64963;
 
         vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.HbGperLiterBlood = Hb*10;
         ery.fH = vols.fH;
         ery.few = vols.few;
         ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
         //LACpw/rCl;
         ery.Vew0 = vols.Vew0;
         ery.Vew = vols.Vew;
-        ery.HbGperLiterBlood = Hb*10;
 
         Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
         ery.Osm = pla.Osm;
+
         ery.charge = 0;
         ery.pCO2mmHg = pCO2mmHg;
 
@@ -3808,7 +3830,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
         pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
         Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-        pla.water_c[pla.cont.Cl] = 109.694599;
+        //pla.water_c[pla.cont.Cl] = 109.694599;
 
         pla.charge = 0;
         pla.Vp0ByVp = vols.Vp0ByVp;
@@ -4064,86 +4086,9 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
               coordinateSystem(preserveAspectRatio=false)));
       end EPIC;
 
-      model EP_BE
-
-        Real Clpw(
-          start=112,
-          min=10,
-          max=200) = pla.water_c[pla.cont.Cl] " = 109.694599";
-        Real Cle(
-          start=71,
-          min=1,
-          max=200) = ery.water_c[ery.cont.Cl] "= 71.031139 @v3.49";
-        Real Vew=vols.Vew "= 1.44400";
-        Real Vis=vols.Vis "=15.75516";
-
-        Real pHe=ery.pH;
-        Real pHp=pla.pH;
-
-        FullBloodAcidBase.Wolf.v349.Auxiliary.Plasma pla(Pi=1.15, alb_Gdl=alb);
-        FullBloodAcidBase.Wolf.v349.Auxiliary.StrongIonMasses sim;
-        FullBloodAcidBase.Wolf.v349.Auxiliary.Erythrocyte ery(O2Sat=O2s);
-        FullBloodAcidBase.Wolf.v349.Auxiliary.Volumes vols;
-        // total mass of Cl mobile ion
-        input Real pCO2mmHg=20 + 60*time;
-        // output: osmolarity and Cl
-        parameter Real O2s=1;
-        input Real addCl=0;
-        input Real alb=4.4;
-        Real rClpwis=0.9504;
-        //Clpw/Clis;
-
-        constant Real Clis=115.461419;
-        constant Real MNac=272.17930;
-        constant Real MKc=3178.3177;
-        constant Real MClc=88.33349;
-        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
-        Real MCl_IP=sim.MCl - MClc - MCle + addCl;
-        parameter Real Hb=13.2;
-      equation
-        //vols.Vew = 1.44400;
-        vols.Vis = 15.75516;
-        vols.Vc = 22.64963;
-
-        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
-        ery.HbGperLiterBlood = Hb*10;
-        ery.fH = vols.fH;
-        ery.few = vols.few;
-        ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
-        //LACpw/rCl;
-        ery.Vew0 = vols.Vew0;
-        ery.Vew = vols.Vew;
-
-        Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
-        ery.Osm = pla.Osm;
-
-        ery.charge = 0;
-        ery.pCO2mmHg = pCO2mmHg;
-
-        sim.Ve0 = vols.Ve0;
-        sim.Vp0 = vols.Vp0;
-        sim.Vis0 = vols.Vis0;
-        sim.Vc0 = vols.Vc0;
-        sim.MNa_IP = sim.MNa - MNac;
-        sim.MK_IP = sim.MK - MKc;
-
-        pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
-        pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
-        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-        //pla.water_c[pla.cont.Cl] = 109.694599;
-
-        pla.charge = 0;
-        pla.Vp0ByVp = vols.Vp0ByVp;
-        pla.fpw = vols.fpw;
-        pla.pCO2mmHg = pCO2mmHg;
-
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
-      end EP_BE;
-
       model Test_EP
 
-        EP_BE eP_comparison(
+        EP eP_comparison(
           addCl=-BE*eP_comparison.vols.Vb,
           alb=alb,
           pCO2mmHg=pCO2,
@@ -4265,6 +4210,9 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
     end v349;
 
     package v351
+      "Implementation of Wolf`s CIPE acid-base model into Modelica by Filip Jezek"
+      extends Modelica.Icons.ExamplesPackage;
+
       package Auxiliary
         record Erythrocyte
           import Modelica.SIunits.*;
@@ -4286,7 +4234,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           //Real Cl_mass0(unit="mol") = Cl0/wf0*Vew0;
           //  Real Cl_mass = Cl/wf0*Vew;
 
-          Concentration Hb
+          Concentration Hb(start=5.3)
             "concentration of Hb tetramer [mmol per blood liter]. Calculated through HbGperLiterBlood";
           Concentration DPG=4.3 "the 4.3 value goes directly in";
           Concentration ATP=1.8;
@@ -4397,9 +4345,9 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           //  Real Cl_mass0(unit="mol") = Cl0/wf0*water_volume0;
           //  Real Cl_mass(unit="mol") = Cl/wf0*water_volume;
           parameter Concentration Pi=1.2;
-          parameter Concentration alb=43 "g/dl pw";
+          parameter Concentration alb=4.3 "g/dl pw";
           Concentration Alb=AlbPwGPerL/66.5 "mmol/Lpw";
-          Real AlbPwGPerL=alb*Vp0ByVp "g/lpw";
+          Real AlbPwGPerL=alb*10*Vp0ByVp "g/lpw";
           // parameter Concentration im = 0; // original
           parameter Concentration im=11.87;
           // adjusted
@@ -4544,8 +4492,9 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
             max=1);
           Real Hh=H*1e8;
 
-          parameter Concentration permeableParticles=10.64
+          Concentration permeableParticles
             "glucose and urea concentration in PLasma water";
+          //=10.64
 
           // Transcapillary pressures
           // wattenpaugh J trauma Inuj 1998
@@ -4647,14 +4596,20 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           constant Real Nac0=12;
           Real MNa=Napl0*Vp0 + Nais0*Vis0 + Nac0*Vc0 + addNa + addNaCl;
           Real MNac=Nac0*Vc0;
-          Real MNa_IP;
+          Real MNa_IP(
+            start=2627,
+            min=0,
+            max=10000);
 
           constant Real Kpl0=4.7;
           constant Real Kis0=4.75;
           constant Real Kc0=138;
           Real MK=Kpl0*Vp0 + Kis0*Vis0 + Kc0*Vc0 + addK;
           Real MKc=Kc0*Vc0;
-          Real MK_IP;
+          Real MK_IP(
+            start=88.8,
+            min=0,
+            max=1000);
 
           constant Real Cle0=55.6;
           constant Real Clpl0=104;
@@ -4716,13 +4671,15 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
       end Auxiliary;
 
       package Tests
-        model E
-          FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery;
+        extends Modelica.Icons.ExamplesPackage;
+
+        model E "Test of Erythrocyte component"
+          extends Modelica.Icons.Example;
+          FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery(O2Sat=O2s);
           FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
           // total mass of Cl mobile ion
           Real pCO2mmHg=45.1;
           // output: osmolarity and Cl
-          parameter Real Hct=0.5;
           parameter Real O2s=0.70;
 
           parameter Real Hpw=4.602669e-8;
@@ -4771,6 +4728,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         end E;
 
         model P "Pla charga must be 0 and correct osm"
+          extends Modelica.Icons.Example;
           Real Clpw(
             start=112,
             min=10,
@@ -4796,8 +4754,6 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           constant Real MKc=3141.2286;
           constant Real MClc=91.4811;
           constant Real MCle=108.194619;
-
-          parameter Real EryOsm=284.084;
           Real MCl_IP=sim.MCl - MClc - MCle;
           //Real test = sim.MNa_IP /(vols.Vis * rClpw_is + vols.Vpw);
         equation
@@ -4833,9 +4789,9 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
               Diagram(coordinateSystem(preserveAspectRatio=false)));
         end P;
 
-        model I
-          FullBloodAcidBase.Wolf.v351.Auxiliary.Isf isf(permeableParticles=
-                10.62755);
+        model I "Test of Interstitial component"
+          extends Modelica.Icons.Example;
+          FullBloodAcidBase.Wolf.v351.Auxiliary.Isf isf;
           FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
           Real rClpwis=Clpw/isf.Cl " = 0.94987";
           parameter Real Hpw=4.602e-8;
@@ -4871,7 +4827,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
           isf.Vb0 = vols.Vb0;
           isf.Cl = Clis;
 
-          //  isf.permeableParticles = 10.62755 "5+5 / fpw";
+          isf.permeableParticles = 10/vols.fpw;
 
           //  isf.Cl = 115.4614;
           //  isf.pH = 7.40649;
@@ -4883,7 +4839,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
               Diagram(coordinateSystem(preserveAspectRatio=false)));
         end I;
 
-        model C
+        model C "Test of Cell component"
+          extends Modelica.Icons.Example;
           import Modelica.SIunits.*;
           FullBloodAcidBase.Wolf.v351.Auxiliary.Cell c;
           Real Clc(
@@ -4915,8 +4872,8 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         end C;
       end Tests;
 
-      model EP
-
+      model EP "Test of erythrocyte - plasma compartments"
+        extends Modelica.Icons.Example;
         Real Clpw(
           start=112,
           min=10,
@@ -4931,40 +4888,50 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         Real pHe=ery.pH;
         Real pHp=pla.pH;
 
-        FullBloodAcidBase.Wolf.v351.Auxiliary.Plasma pla;
-        FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim;
-        FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery;
+        FullBloodAcidBase.Wolf.v351.Auxiliary.Plasma pla(alb=alb);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim(
+          addNa=0.672,
+          addK=-4.62,
+          addCl=-0.66 + addCl);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery(O2Sat=O2s);
         FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
         // total mass of Cl mobile ion
         Real pCO2mmHg=45.1;
         // output: osmolarity and Cl
-        parameter Real Hct=0.50;
         parameter Real O2s=0.70;
+        parameter Real addCl=0;
+        parameter Real alb=4.3;
 
-        Real rClpwis=Clpw/Clis;
+        Real rClpwis=0.94987;
+        //Clpw/Clis;
 
         constant Real Clis=116.513794;
-        //115.461419;
         constant Real MNac=274.051633;
         constant Real MKc=3141.2286;
         constant Real MClc=91.4811;
-        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
         Real MCl_IP=sim.MCl - MClc - MCle;
 
+        Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
+
+
+        parameter Real Hb=13.20658;
       equation
         //  vols.Vew = 1.44400;
-        //  vols.Vis = 15.75516;
+        vols.Vis = 15.603374;
         vols.Vc = 22.784381;
 
-        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.rVew = vols.Vew0/vols.Vew;
+        ery.rVe = vols.Ve0/vols.Ve;
         ery.fH = vols.fH;
         ery.few = vols.few;
-        ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
+        ery.Lactate = 1.083;
+        ery.HbGperLiterBlood = Hb*10;
+
         //LACpw/rCl;
         ery.Vew0 = vols.Vew0;
         ery.Vew = vols.Vew;
-
         Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
+
         ery.Osm = pla.Osm;
         ery.charge = 0;
         ery.pCO2mmHg = pCO2mmHg;
@@ -4978,7 +4945,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
 
         pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
         pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
-        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
+        //Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
         pla.water_c[pla.cont.Cl] = 110.6733;
 
         pla.charge = 0;
@@ -4991,7 +4958,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
       end EP;
 
       model EPI
-
+        extends Modelica.Icons.Example;
         Real Clis(
           start=115,
           min=10,
@@ -5012,21 +4979,22 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         Real pHp=pla.pH;
         Real pHi=isf.pH;
 
-        FullBloodAcidBase.Wolf.v351.Auxiliary.Plasma pla;
-        FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim;
-        FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery;
-        FullBloodAcidBase.Wolf.v351.Auxiliary.Isf isf(permeableParticles=
-              10.62755);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.Plasma pla(alb=Alb);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim(
+          addNa=0.672,
+          addK=-4.62,
+          addCl=-0.66 + addCl);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery(O2Sat=O2s);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.Isf isf;
         FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
         // total mass of Cl mobile ion
-        Real pCO2mmHg=40;
+        Real pCO2mmHg=45.1;
         // output: osmolarity and Cl
-        parameter Real Hct=0.44;
-        parameter Real O2s=0.75;
+        parameter Real O2s=0.70;
 
-        constant Real MNac=272.17930;
-        constant Real MKc=3178.3177;
-        constant Real MClc=88.33349;
+        constant Real MNac=274.051633;
+        constant Real MKc=3141.2286;
+        constant Real MClc=91.4811;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
         Real MCl_IP=sim.MCl - MClc - MCle;
         Real rH=isf.H/pla.Hw;
@@ -5035,20 +5003,27 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         parameter Real Alb=43;
 
         // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
+        parameter Real Hb=13.20658;
+        parameter Real Urea=5;
+        parameter Real Glu=5;
+        Real permeableParticles=(Urea + Glu)/vols.fpw "10.62755";
       equation
         //  vols.Vew = 1.44400;
-        //  vols.Vis = 15.75516;
-        vols.Vc = 22.64963;
+        //vols.Vis = 15.603374;
+        vols.Vc = 22.784381;
 
-        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.rVew = vols.Vew0/vols.Vew;
+        ery.rVe = vols.Ve0/vols.Ve;
         ery.fH = vols.fH;
         ery.few = vols.few;
-        ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
+        ery.Lactate = 1.083;
+        ery.HbGperLiterBlood = Hb*10;
+
         //LACpw/rCl;
         ery.Vew0 = vols.Vew0;
         ery.Vew = vols.Vew;
-
         Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
+
         ery.Osm = pla.Osm;
         ery.charge = 0;
         ery.pCO2mmHg = pCO2mmHg;
@@ -5063,22 +5038,23 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
         pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
         Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-        //pla.water_c[pla.cont.Cl] = 109.694599;
+        //pla.water_c[pla.cont.Cl] = 110.6733;
 
         pla.charge = 0;
         pla.Vp0ByVp = vols.Vp0ByVp;
         pla.fpw = vols.fpw;
         pla.pCO2mmHg = pCO2mmHg;
 
-        isf.plasma_water_c = {147.3244,4.9890,2.4977,0,0,1.2488,0,0,1.56017};
+        isf.plasma_water_c = pla.water_c;
         isf.rClpwis = rClpwis;
-        isf.CaIon = 3.76940*rClpwis^2;
-        isf.MgIon = 1.05212*rClpwis^2;
+        isf.CaIon = pla.CaIon*rClpwis^2;
+        isf.MgIon = pla.MgIon*rClpwis^2;
         isf.Vis = vols.Vis;
         isf.Vis0 = vols.Vis0;
         isf.SO4pw = pla.SO4pw;
+        isf.permeableParticles = permeableParticles;
         // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
-        isf.pCO2mmHg = 40;
+        isf.pCO2mmHg = pCO2mmHg;
         isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
         isf.Vb = vols.Vb;
         isf.Vb0 = vols.Vb0;
@@ -5091,6 +5067,7 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
       end EPI;
 
       model EPIC
+        extends Modelica.Icons.Example;
         Real Clc(
           start=3.9,
           min=1,
@@ -5117,24 +5094,21 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         Real pHc=c.pH;
 
         FullBloodAcidBase.Wolf.v351.Auxiliary.Plasma pla;
-        FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim;
-        FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery;
-        FullBloodAcidBase.Wolf.v351.Auxiliary.Isf isf(permeableParticles=
-              10.62755);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.StrongIonMasses sim(
+          addNa=0.672,
+          addK=-4.62,
+          addCl=-0.66 + addCl);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery(O2Sat=O2s);
+        FullBloodAcidBase.Wolf.v351.Auxiliary.Isf isf;
         FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
         FullBloodAcidBase.Wolf.v351.Auxiliary.Cell c;
         // total mass of Cl mobile ion
-        Real pCO2mmHg=40;
+        Real pCO2mmHg=45.1;
         // output: osmolarity and Cl
         parameter Real Hct=0.44;
-        parameter Real O2s=0.75;
+        parameter Real O2s=0.70;
+        parameter Real addCl=0;
 
-        //   constant Real MNac=272.17930;
-        //   constant Real MKc=3178.3177;
-        //   constant Real MClc=88.33349;
-        //   Real MNac=272.17930;
-        //   Real MKc=3178.3177;
-        //   Real MClc=88.33349;
         Real MNac=c.Nac*vols.Vc;
         Real MKc=c.Kc*vols.Vc;
         Real MClc=c.Clc*vols.Vc;
@@ -5145,21 +5119,29 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         Real rClpwis=Clpw/Clis " = 0.9500";
         parameter Real Alb=43;
 
+        Real rClpwew=1/Cle*Clpw;
         // Real Clis( start = 115) = MCl_IP - vols.Vpw*Clpw/vols.Vis " = 115.4614";
+        parameter Real Hb=13.20658;
+        parameter Real Urea=5;
+        parameter Real Glu=5;
+        Real permeableParticles=(Urea + Glu)/vols.fpw "10.62755";
       equation
         //  vols.Vew = 1.44400;
-        //  vols.Vis = 15.75516;
-        //  vols.Vc = 22.64963;
+        //vols.Vis = 15.603374;
+        //vols.Vc = 22.784381;
 
-        vols.Ve0/vols.Ve = ery.Ve0ByVeFraction;
+        ery.rVew = vols.Vew0/vols.Vew;
+        ery.rVe = vols.Ve0/vols.Ve;
         ery.fH = vols.fH;
         ery.few = vols.few;
-        ery.Lactate = pla.water_c[pla.cont.Lac]*Cle/Clpw;
+        ery.Lactate = pla.Lac/rClpwew "1.083";
+        ery.HbGperLiterBlood = Hb*10;
+
         //LACpw/rCl;
         ery.Vew0 = vols.Vew0;
         ery.Vew = vols.Vew;
-
         Cle/Clpw = pla.Hw/ery.H "Clpla , Hpl at standard V3.49";
+
         ery.Osm = pla.Osm;
         ery.charge = 0;
         ery.pCO2mmHg = pCO2mmHg;
@@ -5174,22 +5156,23 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
         pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
         Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-        //pla.water_c[pla.cont.Cl] = 109.694599;
+        //pla.water_c[pla.cont.Cl] = 110.6733;
 
         pla.charge = 0;
         pla.Vp0ByVp = vols.Vp0ByVp;
         pla.fpw = vols.fpw;
         pla.pCO2mmHg = pCO2mmHg;
 
-        isf.plasma_water_c = {147.3244,4.9890,2.4977,0,0,1.2488,0,0,1.56017};
+        isf.plasma_water_c = pla.water_c;
         isf.rClpwis = rClpwis;
-        isf.CaIon = 3.76940*rClpwis^2;
-        isf.MgIon = 1.05212*rClpwis^2;
+        isf.CaIon = pla.CaIon*rClpwis^2;
+        isf.MgIon = pla.MgIon*rClpwis^2;
         isf.Vis = vols.Vis;
         isf.Vis0 = vols.Vis0;
         isf.SO4pw = pla.SO4pw;
+        isf.permeableParticles = permeableParticles;
         // The input here is in mmol/lpw to match plaswma variable, not in mEq/lpw as in the vissim model
-        isf.pCO2mmHg = 40;
+        isf.pCO2mmHg = pCO2mmHg;
         isf.AlbPwGPerL = Alb*vols.Vp0ByVp;
         isf.Vb = vols.Vb;
         isf.Vb0 = vols.Vb0;
@@ -5197,21 +5180,6 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         isf.H = pla.Hw*rClpwis;
         isf.charge = 0;
         isf.Osm + isf.OsmDiff = pla.Osm;
-
-        //    c.Kis = 4.73983;//4.73106;
-        //    c.Nais = 139.9662;//141.474;
-        //    c.Clis = 115.461419;//116.7911;
-        //   c.Vc0 = 22.87176;
-        //  c.Vc = 22.64963;//22.897789;
-        //   c.His = 3.92197e-8;//3.91020e-8;
-        //   c.pCO2mmHg = 40;
-
-        //   c.Vc = vols.Vc;
-        //  c.rClisce = 29.6055;
-        //  c.Clc = 3.961488;
-        //   c.charge = 0;
-        //   c.Osm = 282.20;
-        //
 
         c.Kis = isf.water_c[isf.cont.K];
         //4.73983;//4.73106;
@@ -5222,8 +5190,9 @@ BLOOD"),Text(     extent={{-78,60},{-50,80}},
         c.Vc0 = vols.Vc0;
         c.Vc = vols.Vc;
         c.His = isf.H;
+        c.Lacis = isf.water_c[isf.cont.Lac] "1.680";
         //3.92197e-8;//3.91020e-8;
-        c.pCO2mmHg = 40;
+        c.pCO2mmHg = pCO2mmHg;
 
         c.charge = 0;
         c.Osm = isf.Osm;
