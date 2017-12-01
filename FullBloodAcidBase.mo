@@ -1008,11 +1008,23 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           //     Pi0=Pi) annotation (Placement(transformation(extent={{-80,40},{-60,60}})));
 
         public
-          Wolf.v349.EP eP_comparison(
-            addBE=BE,
+          Wolf.v351.EP eP(
+            addCl=-BE*eP.vols.Vb,
             alb=alb,
-            pCO2mmHg=pCO2)
+            pCO2mmHg=pCO2, Hb = Hb, O2s = 1)
             annotation (Placement(transformation(extent={{-60,-20},{-40,0}})));
+
+          Wolf.v349.EP eP_349(
+            addCl=-BE*eP_349.vols.Vb,
+            alb=alb,
+            pCO2mmHg=pCO2,
+            Hb=Hb);
+
+          Wolf.v349.P_BE P_349(
+            addCl=-BE*P_349.vols.Vpw,
+            alb=alb,
+            pCO2mmHg=pCO2);
+
         end SetAtAlb;
 
         model CombinedModelBase
@@ -1298,7 +1310,6 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           Pi=1.15,
           alb=4.4,
           redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
-
           redeclare FullBloodAcidBase.FullBloodEmpirical.Kofr2009
             fullErythrocyte)
           annotation (Placement(transformation(extent={{-60,-60},{-40,-40}})));
@@ -1319,7 +1330,6 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           Pi=1.15,
           alb=4.4,
           redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
-
           redeclare FullBloodAcidBase.FullBloodEmpirical.Zander1995
             fullErythrocyte)
           annotation (Placement(transformation(extent={{-60,60},{-40,80}})));
@@ -1883,8 +1893,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Placement(transformation(extent={{80,0},{100,20}})),
           Documentation(info="<html>
 <p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Interface using the SI units, as the Combined model relies on units originally  used by the cited models.</span></p>
-</html>"),
-          Icon(coordinateSystem(preserveAspectRatio=false)),
+</html>"),Icon(coordinateSystem(preserveAspectRatio=false)),
           Diagram(coordinateSystem(preserveAspectRatio=false)));
       end CombinedModel;
 
@@ -2427,8 +2436,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Physiolibrary.Types.RealIO.pHInput pH annotation (Placement(
                 transformation(extent={{-120,70},{-80,110}}),
                 iconTransformation(extent={{-120,32},{-100,52}})));
-          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) annotation
-            (Placement(transformation(extent={{-120,20},{-80,60}}),
+          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) annotation (
+             Placement(transformation(extent={{-120,20},{-80,60}}),
                 iconTransformation(extent={{-120,-10},{-100,10}})));
           Physiolibrary.Types.RealIO.TemperatureInput T(start=310.15)
             annotation (Placement(transformation(extent={{-120,-20},{-80,20}}),
@@ -2836,8 +2845,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
               fillColor={238,46,47},
               fillPattern=FillPattern.Solid,
               textString="FULL
-BLOOD"),
-            Text(
+BLOOD"),    Text(
               extent={{-78,60},{-50,80}},
               lineColor={102,44,145},
               textString="O2"),
@@ -3799,7 +3807,7 @@ BLOOD"),
         constant Real MClc=88.33349;
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
         Real MCl_IP=sim.MCl - MClc - MCle + addCl;
-        parameter Real Hb=13.2;
+        input Real Hb=13.2;
       equation
         //vols.Vew = 1.44400;
         vols.Vis = 15.75516;
@@ -4345,7 +4353,7 @@ BLOOD"),
           //  Real Cl_mass0(unit="mol") = Cl0/wf0*water_volume0;
           //  Real Cl_mass(unit="mol") = Cl/wf0*water_volume;
           parameter Concentration Pi=1.2;
-          parameter Concentration alb=4.3 "g/dl pw";
+          input Concentration alb=4.3 "g/dl pw";
           Concentration Alb=AlbPwGPerL/66.5 "mmol/Lpw";
           Real AlbPwGPerL=alb*10*Vp0ByVp "g/lpw";
           // parameter Concentration im = 0; // original
@@ -4582,10 +4590,10 @@ BLOOD"),
         end Volumes;
 
         record StrongIonMasses
-          parameter Real addNa=0;
-          parameter Real addK=0;
-          parameter Real addCl=0;
-          parameter Real addNaCl=0;
+          input Real addNa=0;
+          input Real addK=0;
+          input Real addCl=0;
+          input Real addNaCl=0;
           Real Ve0;
           Real Vp0;
           Real Vis0;
@@ -4896,11 +4904,11 @@ BLOOD"),
         FullBloodAcidBase.Wolf.v351.Auxiliary.Erythrocyte ery(O2Sat=O2s);
         FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
         // total mass of Cl mobile ion
-        Real pCO2mmHg=45.1;
+        input Real pCO2mmHg=45.1;
         // output: osmolarity and Cl
         parameter Real O2s=0.70;
-        parameter Real addCl=0;
-        parameter Real alb=4.3;
+        input Real addCl=0;
+        input Real alb=4.3;
 
         Real rClpwis=0.94987;
         //Clpw/Clis;
@@ -4914,7 +4922,7 @@ BLOOD"),
         Real MCle=ery.water_c[ery.cont.Cl]*vols.Vew "= 102.5695";
 
 
-        parameter Real Hb=13.20658;
+        input Real Hb=13.20658;
       equation
         //  vols.Vew = 1.44400;
         vols.Vis = 15.603374;
@@ -4945,8 +4953,8 @@ BLOOD"),
 
         pla.water_c[pla.cont.Na] = sim.MNa_IP/(vols.Vis*rClpwis + vols.Vpw);
         pla.water_c[pla.cont.K] = sim.MK_IP/(vols.Vis*rClpwis + vols.Vpw);
-        //Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
-        pla.water_c[pla.cont.Cl] = 110.6733;
+        Clis = (MCl_IP - vols.Vpw*pla.water_c[pla.cont.Cl])/vols.Vis;
+        //pla.water_c[pla.cont.Cl] = 110.6733;
 
         pla.charge = 0;
         pla.Vp0ByVp = vols.Vp0ByVp;
@@ -5103,7 +5111,7 @@ BLOOD"),
         FullBloodAcidBase.Wolf.v351.Auxiliary.Volumes vols;
         FullBloodAcidBase.Wolf.v351.Auxiliary.Cell c;
         // total mass of Cl mobile ion
-        Real pCO2mmHg=45.1;
+        input Real pCO2mmHg=45.1;
         // output: osmolarity and Cl
         parameter Real Hct=0.44;
         parameter Real O2s=0.70;
