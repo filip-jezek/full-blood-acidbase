@@ -1862,6 +1862,38 @@ LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.
 createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.full_blood_combo.pH", "test_Combo_Wolf_15.wolf_full_blood.pHP", "test_Combo_Wolf0.full_blood_combo.pH", "test_Combo_Wolf0.wolf_full_blood.pHP", "test_Combo_Wolf15.wolf_full_blood.pHP", "test_Combo_Wolf15.full_blood_combo.pH"}, range={20.0, 80.0, 7.0, 7.8}, autoscale=false, grid=true, legend=false, filename="dsres.mat", logX=true, leftTitleType=2, leftTitle="pH", colors={{238,46,47}, {0,0,0}, {238,46,47}, {0,0,0}, {0,0,0}, {238,46,47}}, patterns={LinePattern.Solid, LinePattern.Dash, LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5});
 */
     end Test_Combo_Wolf_at_BE;
+
+    model testWolfPE
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+
+      parameter Integer N = 200;
+      Wolf.v351.EP eP[N]
+        annotation (Placement(transformation(extent={{-60,-20},{-40,0}})));
+
+
+
+    end testWolfPE;
+
+    model testCombined
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+
+      parameter Integer N = 200;
+
+        FullBloodAcidBase.FullBloodCombined.comparisson.Auxiliary.CombinedModelBase
+        full_blood_combo[N](
+        Hb=15,
+        BE=0,
+        pCO2=40,
+        Pi=1.1,
+        alb=4.3,
+        redeclare PlasmaElectrochemical.PlasmaFencl plasma,
+        redeclare FullBloodEmpirical.SAoriginal fullErythrocyte)
+        "Fencl Plasma, Poly ery"
+        annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+
+    end testCombined;
   end Tests;
 
   package FullBloodSubmodelComponent
