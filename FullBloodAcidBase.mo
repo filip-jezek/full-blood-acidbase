@@ -1863,6 +1863,16 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 */
     end Test_Combo_Wolf_at_BE;
 
+    model testWolfPEOriginal
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+
+      parameter Integer N = 200;
+
+        FullBloodAcidBase.Wolf.OriginalValues.PE
+        wolf[N];
+    end testWolfPEOriginal;
+
     model testWolfPE
       annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
             coordinateSystem(preserveAspectRatio=false)));
