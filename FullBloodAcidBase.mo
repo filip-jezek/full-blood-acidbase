@@ -1343,7 +1343,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
       end SimplestCombination;
     end comparisson;
 
-    model SimplestCombinedListing
+    model SimplestCombinedListing "Provides simplest combined model, listed as a lucid flat modelica implementation. The Zander's model is however not very precise for this usage."
       extends Modelica.Icons.Example;
 
       // INPUT PARAMETERS
@@ -1396,7 +1396,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
             coordinateSystem(preserveAspectRatio=false)));
     end SimplestCombinedListing;
 
-    model PolynomialCombinedListing
+    model PolynomialCombinedListing "Provides simple combined model with polynomial description of the behavioral HCT1 compartment. Provides good precision, yet good performance as well."
       extends Modelica.Icons.Example;
 
       // INPUT PARAMETERS
@@ -1477,7 +1477,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
   package Figures
     extends Modelica.Icons.ExamplesPackage;
 
-    model Figure1_BE_curve "BE curve for graphs with SA nomogram"
+    model Figure_BE_curve "BE curve for graphs with SA nomogram"
       extends Modelica.Icons.Example;
       Real BE=time*60 - 30;
       output Real pCO2BE(start=40) = pco2BECoef[1]*BE^6 + pco2BECoef[2]*BE^5 +
@@ -1498,9 +1498,9 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
   createPlot(id=2, position={219, 4, 483, 300}, x="pCO2BE", y={"pHBE"}, range={20.0, 60.00000000000001, 7.1000000000000005, 7.800000000000001}, autoscale=false, grid=true, legend=false, filename="Figure1_4_BE_curve.mat", logX=true, leftTitleType=0, bottomTitleType=0, colors={{28,108,200}}, rightTitleType=0);
   */
 
-    end Figure1_BE_curve;
+    end Figure_BE_curve;
 
-    model Figure_1
+    model Figure_2
       extends Modelica.Icons.Example;
       Real logpCO2=log10(pCO2);
       Real pCO2=time*60 + 20;
@@ -1568,9 +1568,9 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.25, 0.25, 0.5, 0.25, 0.25, 0
 0.25, 0.25, 0.5, 0.25}, rightTitleType=0);
 
 */
-    end Figure_1;
+    end Figure_2;
 
-    model Figure_2
+    model Figure_3
       extends Modelica.Icons.Example;
 
       parameter Real Pi=1.15;
@@ -1616,9 +1616,9 @@ LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
     */
       annotation (Placement(transformation(extent={{20,20},{40,40}})));
 
-    end Figure_2;
+    end Figure_3;
 
-    model Figure_3
+    model Figure_4
       "Dilution of FF and full blood models. The dilution of SA is made possible by incorporating the physicochemical model"
       extends Modelica.Icons.Example;
       parameter Real pCO2(displayUnit="mmHg") = 40;
@@ -1692,9 +1692,56 @@ createPlot(id=6, position={46, 289, 586, 421}, x="dilutionFactor", y={"compensat
 "dilluted.full_blood_combo.pH", "compensatedpCO2.full_blood_combo.pH"}, range={0.5, 1.25, 7.1000000000000005, 7.500000000000001}, grid=true, legend=false, filename="dsres.mat", bottomTitleType=2, bottomTitle="Dilution factor", colors={{0,0,0}, {0,0,0}, {238,46,47}, {238,46,47}}, patterns={LinePattern.Solid, LinePattern.Dash, LinePattern.Dash, LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.5});
 */
 
-    end Figure_3;
+    end Figure_4;
 
-    model Figure_5 "Effects of acute hypoalbuminemia"
+    package Figure_5
+      extends Modelica.Icons.ExamplesPackage;
+      model testWolfPEOriginal
+        "Performance test of the original implementation of the Wolf EP model version 1.0"
+        extends Modelica.Icons.Example;
+        parameter Integer N = 1000;
+
+          FullBloodAcidBase.Wolf.OriginalValues.PE
+          wolf[N];
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end testWolfPEOriginal;
+
+      model testWolfPE
+        "Performance test of the implementation of the Wolf V3.51 P-E model"
+        extends Modelica.Icons.Example;
+        parameter Integer N = 1000;
+        Wolf.v351.EP eP[N]
+          annotation (Placement(transformation(extent={{-60,-20},{-40,0}})));
+
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end testWolfPE;
+
+      model testCombined
+        "Performance test of the Combined model in default setting"
+        extends Modelica.Icons.Example;
+
+        parameter Integer N = 1000;
+
+          FullBloodAcidBase.FullBloodCombined.comparisson.Auxiliary.CombinedModelBase
+          full_blood_combo[N](
+          Hb=15,
+          BE=0,
+          pCO2=40,
+          Pi=1.1,
+          alb=4.3,
+          redeclare PlasmaElectrochemical.PlasmaFencl plasma,
+          redeclare FullBloodEmpirical.SAoriginal fullErythrocyte)
+          "Fencl Plasma, Poly ery"
+          annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
+
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end testCombined;
+    end Figure_5;
+
+    model Figure_7 "Effects of acute hypoalbuminemia"
       extends Modelica.Icons.Example;
 
       Real BEf=0 "BE for fixed BE during Alb change";
@@ -1750,7 +1797,7 @@ createPlot(id=8, position={-39, 211, 865, 629}, x="alb", y={"fixedSID.FF_plasma_
 {0,0,0}}, patterns={LinePattern.Solid, LinePattern.Solid, LinePattern.Solid, LinePattern.Dot, 
 LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thicknesses={0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 1.0}, range2={6.0, 7.6}, rightTitleType=2, rightTitle="pH", axes={1, 1, 1, 1, 1, 1, 2, 2});
 */
-    end Figure_5;
+    end Figure_7;
 
     model Supplement_Figure1 "Comparison of SA nomogram formalisations"
       extends Modelica.Icons.Example;
@@ -1771,7 +1818,7 @@ LinePattern.Dot, LinePattern.Dot, LinePattern.Dash, LinePattern.Dash}, thickness
         BEox=15,
         pCO2=pCO2,
         Hct=Hct) annotation (Placement(transformation(extent={{0,20},{20,40}})));
-      FullBloodAcidBase.Figures.Figure1_BE_curve BE_curve;
+      FullBloodAcidBase.Figures.Figure_BE_curve BE_curve;
 
       // Figure 1 Dymola Script
       /*
@@ -1789,7 +1836,7 @@ LinePattern.Solid}, thicknesses={0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.
   end Figures;
 
   package Tests
-    extends Modelica.Icons.ExamplesPackage;
+   // extends Modelica.Icons.ExamplesPackage;
 
     model testpCO2
       "Test combination of plasma and full hematocrit blood against original SA during varying pCO2"
@@ -1863,47 +1910,6 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
 */
     end Test_Combo_Wolf_at_BE;
 
-    model testWolfPEOriginal
-      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-            coordinateSystem(preserveAspectRatio=false)));
-
-      parameter Integer N = 200;
-
-        FullBloodAcidBase.Wolf.OriginalValues.PE
-        wolf[N];
-    end testWolfPEOriginal;
-
-    model testWolfPE
-      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-            coordinateSystem(preserveAspectRatio=false)));
-
-      parameter Integer N = 200;
-      Wolf.v351.EP eP[N]
-        annotation (Placement(transformation(extent={{-60,-20},{-40,0}})));
-
-
-
-    end testWolfPE;
-
-    model testCombined
-      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-            coordinateSystem(preserveAspectRatio=false)));
-
-      parameter Integer N = 200;
-
-        FullBloodAcidBase.FullBloodCombined.comparisson.Auxiliary.CombinedModelBase
-        full_blood_combo[N](
-        Hb=15,
-        BE=0,
-        pCO2=40,
-        Pi=1.1,
-        alb=4.3,
-        redeclare PlasmaElectrochemical.PlasmaFencl plasma,
-        redeclare FullBloodEmpirical.SAoriginal fullErythrocyte)
-        "Fencl Plasma, Poly ery"
-        annotation (Placement(transformation(extent={{-60,20},{-40,40}})));
-
-    end testCombined;
   end Tests;
 
   package FullBloodSubmodelComponent
