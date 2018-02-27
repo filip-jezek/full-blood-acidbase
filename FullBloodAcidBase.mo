@@ -18,6 +18,7 @@
         input Real alb(unit="g/dl") "Albumin concentration. Normal value 4.4";
         // Real Alb(unit="mmol/l") = alb*10/66500*1000;
         Real pH(start=10, unit="1");
+      //  Real HCO3;
         annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
               coordinateSystem(preserveAspectRatio=false)));
       end PlasmaElectrochemicalBase;
@@ -1312,7 +1313,6 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           Pi=1.15,
           alb=4.4,
           redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
-
           redeclare FullBloodAcidBase.FullBloodEmpirical.Kofr2009
             fullErythrocyte)
           annotation (Placement(transformation(extent={{-60,-60},{-40,-40}})));
@@ -1333,7 +1333,6 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
           Pi=1.15,
           alb=4.4,
           redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma,
-
           redeclare FullBloodAcidBase.FullBloodEmpirical.Zander1995
             fullErythrocyte)
           annotation (Placement(transformation(extent={{-60,60},{-40,80}})));
@@ -1946,8 +1945,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Placement(transformation(extent={{80,0},{100,20}})),
           Documentation(info="<html>
 <p><span style=\"font-family: Arial,sans-serif; color: #222222; background-color: #ffffff;\">Interface using the SI units, as the Combined model relies on units originally  used by the cited models.</span></p>
-</html>"),
-          Icon(coordinateSystem(preserveAspectRatio=false)),
+</html>"),Icon(coordinateSystem(preserveAspectRatio=false)),
           Diagram(coordinateSystem(preserveAspectRatio=false)));
       end CombinedModel;
 
@@ -2490,8 +2488,8 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Physiolibrary.Types.RealIO.pHInput pH annotation (Placement(
                 transformation(extent={{-120,70},{-80,110}}),
                 iconTransformation(extent={{-120,32},{-100,52}})));
-          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) annotation
-            (Placement(transformation(extent={{-120,20},{-80,60}}),
+          Physiolibrary.Types.RealIO.PressureInput pCO2(start=5330) annotation (
+             Placement(transformation(extent={{-120,20},{-80,60}}),
                 iconTransformation(extent={{-120,-10},{-100,10}})));
           Physiolibrary.Types.RealIO.TemperatureInput T(start=310.15)
             annotation (Placement(transformation(extent={{-120,-20},{-80,20}}),
@@ -2899,8 +2897,7 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
               fillColor={238,46,47},
               fillPattern=FillPattern.Solid,
               textString="FULL
-BLOOD"),
-            Text(
+BLOOD"),    Text(
               extent={{-78,60},{-50,80}},
               lineColor={102,44,145},
               textString="O2"),
@@ -5282,127 +5279,127 @@ BLOOD"),
         Charges={1,1,-1,-1,-1,-1},
         Permeabilities={0.016666666666667,0.016666666666667,0.016666666666667,
             8.3333333333333e-06,0.016666666666667,0})
-        annotation (Placement(transformation(extent={{-32,28},{4,70}})));
+        annotation (Placement(transformation(extent={{22,14},{58,56}})));
       Physiolibrary.Chemical.Components.Substance Na_p(useNormalizedVolume=
             false, solute_start=1.739738)
-        annotation (Placement(transformation(extent={{-88,72},{-68,92}})));
+        annotation (Placement(transformation(extent={{-4,64},{16,84}})));
       Physiolibrary.Chemical.Components.Substance K_p(useNormalizedVolume=false,
           solute_start=0.04973529)
-        annotation (Placement(transformation(extent={{-90,38},{-70,58}})));
+        annotation (Placement(transformation(extent={{-4,34},{16,54}})));
       Physiolibrary.Chemical.Components.Substance Cl_p(useNormalizedVolume=
             false, solute_start=1.224174)
-        annotation (Placement(transformation(extent={{-90,8},{-70,28}})));
+        annotation (Placement(transformation(extent={{-4,0},{16,20}})));
       Physiolibrary.Chemical.Components.Substance HCO3_p(useNormalizedVolume=
             false, solute_start=0.3267127)
-        annotation (Placement(transformation(extent={{-90,-20},{-70,0}})));
+        annotation (Placement(transformation(extent={{-4,-28},{16,-8}})));
       Physiolibrary.Chemical.Components.Substance UA_p(useNormalizedVolume=
             false, solute_start=0.190587)
-        annotation (Placement(transformation(extent={{-88,-52},{-68,-32}})));
+        annotation (Placement(transformation(extent={{-4,-60},{16,-40}})));
       Physiolibrary.Chemical.Components.Substance Alb_p(useNormalizedVolume=
             false, solute_start=0.048)
-        annotation (Placement(transformation(extent={{-88,-82},{-68,-62}})));
+        annotation (Placement(transformation(extent={{-4,-90},{16,-70}})));
       Physiolibrary.Chemical.Components.Substance Na_isf(useNormalizedVolume=
             false, solute_start=0.001)
-        annotation (Placement(transformation(extent={{30,64},{50,84}})));
+        annotation (Placement(transformation(extent={{62,64},{82,84}})));
       Physiolibrary.Chemical.Components.Substance K_isf(useNormalizedVolume=
             false, solute_start=0)
-        annotation (Placement(transformation(extent={{30,38},{50,58}})));
+        annotation (Placement(transformation(extent={{62,38},{82,58}})));
       Physiolibrary.Chemical.Components.Substance Cl_isf(useNormalizedVolume=
             false, solute_start=0.001)
-        annotation (Placement(transformation(extent={{32,-4},{52,16}})));
+        annotation (Placement(transformation(extent={{62,-4},{82,16}})));
       Physiolibrary.Chemical.Components.Substance HCO3_isf(useNormalizedVolume=
             false, solute_start=0)
-        annotation (Placement(transformation(extent={{36,-36},{56,-16}})));
+        annotation (Placement(transformation(extent={{62,-36},{82,-16}})));
       Physiolibrary.Chemical.Components.Substance UA_isf(useNormalizedVolume=
             false, solute_start=0)
-        annotation (Placement(transformation(extent={{38,-70},{58,-50}})));
+        annotation (Placement(transformation(extent={{62,-70},{82,-50}})));
       Physiolibrary.Chemical.Components.Substance Alb_isf(useNormalizedVolume=
             false, solute_start=0)
-        annotation (Placement(transformation(extent={{40,-98},{60,-78}})));
+        annotation (Placement(transformation(extent={{62,-100},{82,-80}})));
       Real totalCharge_p(displayUnit="mmol");
       Real totalCharge_isf(displayUnit="mmol");
 
       Physiolibrary.Types.Constants.VolumeConst VP(k(displayUnit="l") = 0.003)
-        annotation (Placement(transformation(extent={{-104,90},{-96,98}})));
+        annotation (Placement(transformation(extent={{-8,90},{0,98}})));
       Physiolibrary.Types.Constants.VolumeConst VISF(k(displayUnit="l") = 0.01)
-        annotation (Placement(transformation(extent={{82,82},{74,90}})));
+        annotation (Placement(transformation(extent={{78,90},{70,98}})));
     equation
       totalCharge_p = Na_p.solute + K_p.solute - Cl_p.solute - HCO3_p.solute -
         UA_p.solute - Alb_p.solute;
       totalCharge_isf = Na_isf.solute + K_isf.solute - Cl_isf.solute - HCO3_isf.solute
          - UA_isf.solute - Alb_isf.solute;
       connect(Na_p.q_out, membrane.particlesInside[1]) annotation (Line(
-          points={{-78,82},{-78,82},{-32,82},{-32,47.25}},
+          points={{6,74},{22,74},{22,33.25}},
           color={107,45,134},
           thickness=1));
       connect(K_p.q_out, membrane.particlesInside[2]) annotation (Line(
-          points={{-80,48},{-62,48},{-44,48},{-44,47.95},{-32,47.95}},
+          points={{6,44},{22,44},{22,33.95}},
           color={107,45,134},
           thickness=1));
       connect(Cl_p.q_out, membrane.particlesInside[3]) annotation (Line(
-          points={{-80,18},{-56,18},{-32,18},{-32,48.65}},
+          points={{6,10},{22,10},{22,34.65}},
           color={107,45,134},
           thickness=1));
       connect(HCO3_p.q_out, membrane.particlesInside[4]) annotation (Line(
-          points={{-80,-10},{-32,-10},{-32,49.35}},
+          points={{6,-18},{22,-18},{22,35.35}},
           color={107,45,134},
           thickness=1));
       connect(membrane.particlesOutside[1], Na_isf.q_out) annotation (Line(
-          points={{4,47.25},{4,47.25},{4,74},{40,74}},
+          points={{58,33.25},{58,74},{72,74}},
           color={107,45,134},
           thickness=1));
       connect(K_isf.q_out, membrane.particlesOutside[2]) annotation (Line(
-          points={{40,48},{4,48},{4,47.95}},
+          points={{72,48},{58,48},{58,33.95}},
           color={107,45,134},
           thickness=1));
       connect(Cl_isf.q_out, membrane.particlesOutside[3]) annotation (Line(
-          points={{42,6},{4,6},{4,48.65}},
+          points={{72,6},{58,6},{58,34.65}},
           color={107,45,134},
           thickness=1));
       connect(HCO3_isf.q_out, membrane.particlesOutside[4]) annotation (Line(
-          points={{46,-26},{28,-26},{4,-26},{4,49.35}},
+          points={{72,-26},{58,-26},{58,35.35}},
           color={107,45,134},
           thickness=1));
       connect(UA_isf.q_out, membrane.particlesOutside[5]) annotation (Line(
-          points={{48,-60},{28,-60},{4,-60},{4,50.05}},
+          points={{72,-60},{58,-60},{58,36.05}},
           color={107,45,134},
           thickness=1));
       connect(Alb_p.q_out, membrane.particlesInside[6]) annotation (Line(
-          points={{-78,-72},{-52,-72},{-32,-72},{-32,50.75}},
+          points={{6,-80},{22,-80},{22,36.75}},
           color={107,45,134},
           thickness=1));
       connect(Alb_isf.q_out, membrane.particlesOutside[6]) annotation (Line(
-          points={{50,-88},{50,-88},{4,-88},{4,50.75}},
+          points={{72,-90},{58,-90},{58,36.75}},
           color={107,45,134},
           thickness=1));
       connect(UA_p.q_out, membrane.particlesInside[5]) annotation (Line(
-          points={{-78,-42},{-56,-42},{-32,-42},{-32,50.05}},
+          points={{6,-50},{22,-50},{22,36.05}},
           color={107,45,134},
           thickness=1));
-      connect(VP.y, Na_p.solutionVolume) annotation (Line(points={{-95,94},{-82,
-              94},{-82,86}}, color={0,0,127}));
-      connect(VP.y, K_p.solutionVolume) annotation (Line(points={{-95,94},{-92,
-              94},{-92,58},{-84,58},{-84,52}}, color={0,0,127}));
-      connect(VP.y, Cl_p.solutionVolume) annotation (Line(points={{-95,94},{-92,
-              94},{-92,30},{-84,30},{-84,22}}, color={0,0,127}));
-      connect(VP.y, HCO3_p.solutionVolume) annotation (Line(points={{-95,94},{-92,
-              94},{-92,2},{-84,2},{-84,-6}}, color={0,0,127}));
-      connect(VP.y, UA_p.solutionVolume) annotation (Line(points={{-95,94},{-92,
-              94},{-92,-28},{-82,-28},{-82,-38}}, color={0,0,127}));
-      connect(VP.y, Alb_p.solutionVolume) annotation (Line(points={{-95,94},{-92,
-              94},{-92,-60},{-82,-60},{-82,-68}}, color={0,0,127}));
-      connect(VISF.y, Na_isf.solutionVolume) annotation (Line(points={{73,86},{
-              73,86},{36,86},{36,78}}, color={0,0,127}));
-      connect(VISF.y, K_isf.solutionVolume) annotation (Line(points={{73,86},{
-              64,86},{64,60},{36,60},{36,52}}, color={0,0,127}));
-      connect(VISF.y, Cl_isf.solutionVolume) annotation (Line(points={{73,86},{
-              73,86},{64,86},{64,24},{38,24},{38,10}}, color={0,0,127}));
-      connect(VISF.y, HCO3_isf.solutionVolume) annotation (Line(points={{73,86},
-              {73,86},{64,86},{64,-12},{42,-12},{42,-22}}, color={0,0,127}));
-      connect(VISF.y, UA_isf.solutionVolume) annotation (Line(points={{73,86},{
-              64,86},{64,-44},{44,-44},{44,-56}}, color={0,0,127}));
-      connect(VISF.y, Alb_isf.solutionVolume) annotation (Line(points={{73,86},
-              {68,86},{64,86},{64,-74},{46,-74},{46,-84}}, color={0,0,127}));
+      connect(VP.y, Na_p.solutionVolume) annotation (Line(points={{1,94},{2,94},
+              {2,78}},       color={0,0,127}));
+      connect(VP.y, K_p.solutionVolume) annotation (Line(points={{1,94},{2,94},
+              {2,48}},                         color={0,0,127}));
+      connect(VP.y, Cl_p.solutionVolume) annotation (Line(points={{1,94},{2,94},
+              {2,14}},                         color={0,0,127}));
+      connect(VP.y, HCO3_p.solutionVolume) annotation (Line(points={{1,94},{2,
+              94},{2,-14}},                  color={0,0,127}));
+      connect(VP.y, UA_p.solutionVolume) annotation (Line(points={{1,94},{2,94},
+              {2,-46}},                           color={0,0,127}));
+      connect(VP.y, Alb_p.solutionVolume) annotation (Line(points={{1,94},{2,94},
+              {2,-76}},                           color={0,0,127}));
+      connect(VISF.y, Na_isf.solutionVolume) annotation (Line(points={{69,94},{
+              68,94},{68,78}},         color={0,0,127}));
+      connect(VISF.y, K_isf.solutionVolume) annotation (Line(points={{69,94},{
+              68,94},{68,52}},                 color={0,0,127}));
+      connect(VISF.y, Cl_isf.solutionVolume) annotation (Line(points={{69,94},{
+              68,94},{68,10}},                         color={0,0,127}));
+      connect(VISF.y, HCO3_isf.solutionVolume) annotation (Line(points={{69,94},
+              {68,94},{68,-22}},                           color={0,0,127}));
+      connect(VISF.y, UA_isf.solutionVolume) annotation (Line(points={{69,94},{
+              68,94},{68,-56}},                   color={0,0,127}));
+      connect(VISF.y, Alb_isf.solutionVolume) annotation (Line(points={{69,94},
+              {68,94},{68,-86}},                           color={0,0,127}));
       annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{
                 -100,-100},{100,100}})));
     end Simple1DonnanWithPhysiolibrary;
@@ -5440,6 +5437,35 @@ BLOOD"),
         Physiolibrary.Hydraulic.Interfaces.HydraulicPort_a pq annotation (
             Placement(transformation(extent={{0,-280},{20,-260}}),
               iconTransformation(extent={{0,-280},{20,-260}})));
+
+      equation
+        fbc.pressure = pq.pressure;
+        fbc.q + pq.q = 0;
+
+
+        tCO2.q = fbc.q*inStream(fbc.solutes[BC.tCO2]) "flow TO FBC";
+        fbc.solutes[BC.tCO2] = tCO2.conc;
+
+        tO2.q = fbc.q*inStream(fbc.solutes[BC.tO2]) "flow TO FBC";
+        fbc.solutes[BC.tO2] = tO2.conc "flow FROM FBC";
+
+        BE.q = fbc.q*inStream(fbc.solutes[BC.BE]) "flow TO FBC";
+        fbc.solutes[BC.BE] = BE.conc "flow FROM FBC";
+
+        Na.q = fbc.q*inStream(fbc.solutes[BC.Na]) "flow TO FBC";
+        fbc.solutes[BC.Na] = Na.conc "flow FROM FBC";
+
+        K.q = fbc.q*inStream(fbc.solutes[BC.K]) "flow TO FBC";
+        fbc.solutes[BC.K] = K.conc "flow FROM FBC";
+
+        Cl.q = fbc.q*inStream(fbc.solutes[BC.Cl]) "flow TO FBC";
+        fbc.solutes[BC.Cl] = Cl.conc "flow FROM FBC";
+
+        Alb.q = fbc.q*inStream(fbc.solutes[BC.Alb]) "flow TO FBC";
+        fbc.solutes[BC.Alb] = Alb.conc "flow FROM FBC";
+
+        UA.q = fbc.q*inStream(fbc.solutes[BC.UA]) "flow TO FBC";
+        fbc.solutes[BC.UA] = UA.conc "flow FROM FBC";
 
         annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{0,
                   -280},{20,100}}), graphics={
@@ -5516,35 +5542,6 @@ BLOOD"),
                 horizontalAlignment=TextAlignment.Left,
                 textString="Hydraulic")}), Diagram(coordinateSystem(
                 preserveAspectRatio=false, extent={{0,-280},{20,100}})));
-      equation
-        fbc.pressure = pq.pressure;
-        fbc.q + pq.q = 0;
-
-
-        tCO2.q = fbc.q*inStream(fbc.solutes[BC.tCO2]) "flow TO FBC";
-        fbc.solutes[BC.tCO2] = tCO2.conc;
-
-        tO2.q = fbc.q*inStream(fbc.solutes[BC.tO2]) "flow TO FBC";
-        fbc.solutes[BC.tO2] = tO2.conc "flow FROM FBC";
-
-        BE.q = fbc.q*inStream(fbc.solutes[BC.BE]) "flow TO FBC";
-        fbc.solutes[BC.BE] = BE.conc "flow FROM FBC";
-
-        Na.q = fbc.q*inStream(fbc.solutes[BC.Na]) "flow TO FBC";
-        fbc.solutes[BC.Na] = Na.conc "flow FROM FBC";
-
-        K.q = fbc.q*inStream(fbc.solutes[BC.K]) "flow TO FBC";
-        fbc.solutes[BC.K] = K.conc "flow FROM FBC";
-
-        Cl.q = fbc.q*inStream(fbc.solutes[BC.Cl]) "flow TO FBC";
-        fbc.solutes[BC.Cl] = Cl.conc "flow FROM FBC";
-
-        Alb.q = fbc.q*inStream(fbc.solutes[BC.Alb]) "flow TO FBC";
-        fbc.solutes[BC.Alb] = Alb.conc "flow FROM FBC";
-
-        UA.q = fbc.q*inStream(fbc.solutes[BC.UA]) "flow TO FBC";
-        fbc.solutes[BC.UA] = UA.conc "flow FROM FBC";
-
       end BloodContent;
 
       type BC = enumeration(
@@ -5559,7 +5556,8 @@ BLOOD"),
       connector FullBloodConnector
         extends Physiolibrary.Hydraulic.Interfaces.HydraulicPort;
 
-        stream Physiolibrary.Types.Concentration[BC] solutes;
+        stream Physiolibrary.Types.Concentration[Interfaces.BC]
+                                                     solutes;
         annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{-40,
                   -40},{40,40}}), graphics={Polygon(
                 points={{0,40},{-40,0},{0,-42},{40,0},{0,40}},
@@ -5614,10 +5612,6 @@ BLOOD"),
             points={{86,-73.6842},{1,-73.6842},{1,-73.6842},{-86,-73.6842}},
             color={215,215,215},
             thickness=1));
-        connect(bloodContent2.pq, bloodContent1.pq) annotation (Line(
-            points={{86,-94.7368},{2,-94.7368},{2,-94.7368},{-86,-94.7368}},
-            color={0,0,0},
-            thickness=1));
         connect(bloodContent1.fbc, fullBloodConnector) annotation (Line(
             points={{-86,94.7368},{-86,93.3684},{-100,93.3684},{-100,0}},
             color={0,0,0},
@@ -5641,15 +5635,14 @@ BLOOD"),
         Physiolibrary.Chemical.Components.Substance Cl_p(useNormalizedVolume=
               false, solute_start=1.224174)
           annotation (Placement(transformation(extent={{-30,-38},{-10,-18}})));
-        Physiolibrary.Chemical.Components.Substance HCO3_p(useNormalizedVolume=
-              false, solute_start=0.3267127) annotation (Placement(
-              transformation(extent={{-32,-138},{-12,-118}})));
         Physiolibrary.Chemical.Components.Substance UA_p(useNormalizedVolume=
               false, solute_start=0.190587)
           annotation (Placement(transformation(extent={{24,-76},{44,-56}})));
         Physiolibrary.Chemical.Components.Substance Alb_p(useNormalizedVolume=
               false, solute_start=0.048)
           annotation (Placement(transformation(extent={{-2,-58},{18,-38}})));
+        Physiolibrary.Hydraulic.Components.Resistor resistor
+          annotation (Placement(transformation(extent={{-12,-104},{8,-84}})));
       equation
         connect(bloodContent1.Na, Na_p.q_out) annotation (Line(
             points={{-86,10.5263},{-66,10.5263},{-66,16}},
@@ -5671,10 +5664,666 @@ BLOOD"),
             points={{-86,-73.6842},{-26,-73.6842},{-26,-66},{34,-66}},
             color={107,45,134},
             thickness=1));
+        connect(bloodContent1.pq, resistor.q_in) annotation (Line(
+            points={{-86,-94.7368},{-50,-94.7368},{-50,-94},{-12,-94}},
+            color={0,0,0},
+            thickness=1));
+        connect(bloodContent2.pq, resistor.q_out) annotation (Line(
+            points={{86,-94.7368},{48,-94.7368},{48,-94},{8,-94}},
+            color={0,0,0},
+            thickness=1));
         annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
               coordinateSystem(preserveAspectRatio=false)));
       end OnePortAccumulation;
     end Interfaces;
+
+    package Sources
+      model SourceBase
+        Interfaces.BloodContent bloodContent
+          annotation (Placement(transformation(extent={{-80,-62},{-72,68}})));
+        Interfaces.FullBloodConnector fullBloodConnector
+          annotation (Placement(transformation(extent={{-104,-4},{-96,4}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage UA
+          annotation (Placement(transformation(extent={{120,-54},{100,-34}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage Alb
+          annotation (Placement(transformation(extent={{98,-40},{78,-20}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage Cl
+          annotation (Placement(transformation(extent={{74,-26},{54,-6}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage K
+          annotation (Placement(transformation(extent={{50,-12},{30,8}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage Na
+          annotation (Placement(transformation(extent={{26,0},{6,20}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage BE
+          annotation (Placement(transformation(extent={{4,14},{-16,34}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage tO2
+          annotation (Placement(transformation(extent={{-18,30},{-38,50}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage tCO2
+          annotation (Placement(transformation(extent={{-42,42},{-62,62}})));
+      equation
+        connect(UA.q_out, bloodContent.UA) annotation (Line(
+            points={{100,-44},{28,-44},{28,-44.8947},{-76,-44.8947}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent.Alb, Alb.q_out) annotation (Line(
+            points={{-76,-31.2105},{16,-31.2105},{16,-30},{78,-30}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent.Cl, Cl.q_out) annotation (Line(
+            points={{-76,-17.5263},{4,-17.5263},{4,-16},{54,-16}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent.K, K.q_out) annotation (Line(
+            points={{-76,-3.84211},{-8,-3.84211},{-8,-2},{30,-2}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent.Na, Na.q_out) annotation (Line(
+            points={{-76,9.84211},{-20,9.84211},{-20,10},{6,10}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent.BE, BE.q_out) annotation (Line(
+            points={{-76,23.5263},{-30,23.5263},{-30,24},{-16,24}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent.tO2, tO2.q_out) annotation (Line(
+            points={{-76,37.2105},{-42,37.2105},{-42,40},{-38,40}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent.tCO2, tCO2.q_out) annotation (Line(
+            points={{-76,50.8947},{-62,50.8947},{-62,52}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent.fbc, fullBloodConnector) annotation (Line(
+            points={{-76,64.5789},{-100,64.5789},{-100,0}},
+            color={0,0,0},
+            thickness=0.5));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end SourceBase;
+
+      model FlowSource
+        extends SourceBase;
+        Physiolibrary.Hydraulic.Sources.UnlimitedPump unlimitedPump
+          annotation (Placement(transformation(extent={{10,-70},{-10,-50}})));
+      equation
+        connect(bloodContent.pq, unlimitedPump.q_out) annotation (Line(
+            points={{-76,-58.5789},{-44,-58.5789},{-44,-60},{-10,-60}},
+            color={0,0,0},
+            thickness=1));
+      end FlowSource;
+
+      model PressureSource
+        extends SourceBase;
+        Physiolibrary.Hydraulic.Sources.UnlimitedPump unlimitedPump
+          annotation (Placement(transformation(extent={{10,-70},{-10,-50}})));
+      equation
+        connect(bloodContent.pq, unlimitedPump.q_out) annotation (Line(
+            points={{-76,-58.5789},{-44,-58.5789},{-44,-60},{-10,-60}},
+            color={0,0,0},
+            thickness=1));
+      end PressureSource;
+    end Sources;
+
+    model test
+      Interfaces.OnePortAccumulation onePortAccumulation(
+        Na_p(useNormalizedVolume=true, solute_start=1),
+        K_p(useNormalizedVolume=true),
+        Cl_p(useNormalizedVolume=true),
+        Alb_p(useNormalizedVolume=true),
+        UA_p(useNormalizedVolume=true),
+        resistor(Resistance=1))
+        annotation (Placement(transformation(extent={{-12,-12},{8,10}})));
+      Sources.FlowSource flowSource(
+        UA(Conc=1),
+        Cl(Conc=2),
+        BE(Conc=10),
+        unlimitedPump(SolutionFlow=1.6666666666667e-8))
+        annotation (Placement(transformation(extent={{30,-12},{50,10}})));
+      Sources.PressureSource pressureSource
+        annotation (Placement(transformation(extent={{-40,-10},{-60,10}})));
+    equation
+      connect(onePortAccumulation.fullBloodConnector1, flowSource.fullBloodConnector)
+        annotation (Line(
+          points={{8,-1},{30,-1}},
+          color={0,0,0},
+          thickness=0.5));
+      connect(onePortAccumulation.fullBloodConnector, pressureSource.fullBloodConnector)
+        annotation (Line(
+          points={{-12,-1},{-26,-1},{-26,0},{-40,0}},
+          color={0,0,0},
+          thickness=0.5));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+    end test;
+
+    package simpletest
+      connector sbc
+        extends Physiolibrary.Hydraulic.Interfaces.HydraulicPort;
+
+        stream Physiolibrary.Types.Concentration solute;
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{-40,
+                  -40},{40,40}}), graphics={Polygon(
+                points={{0,40},{-40,0},{0,-42},{40,0},{0,40}},
+                lineColor={0,0,0},
+                lineThickness=0.5,
+                fillColor={255,0,0},
+                fillPattern=FillPattern.Solid)}), Diagram(coordinateSystem(
+                preserveAspectRatio=false, extent={{-40,-40},{40,40}})));
+      end sbc;
+
+      model BloodContent
+        sbc                           fbc annotation (Placement(transformation(extent=
+                 {{-94,86},{-86,94}}), iconTransformation(extent={{-80,-102},{0,-22}})));
+        Physiolibrary.Chemical.Interfaces.ChemicalPort_a tCO2 annotation (
+            Placement(transformation(extent={{0,40},{20,60}}),
+              iconTransformation(extent={{-40,0},{40,80}})));
+
+        Physiolibrary.Hydraulic.Interfaces.HydraulicPort_a pq annotation (
+            Placement(transformation(extent={{-40,-280},{-20,-260}}),
+              iconTransformation(extent={{-40,-280},{40,-200}})));
+
+      equation
+        fbc.pressure = pq.pressure;
+        fbc.q + pq.q = 0;
+
+
+      if fbc.q > 0 then
+        0 = tCO2.q + fbc.q*actualStream(fbc.solute) "flow TO FBC";
+
+      else
+        fbc.solute = tCO2.conc;
+      end if;
+
+        inStream(fbc.solute) = tCO2.conc;
+
+        // b.c = inStream(a.c);
+        //
+        //
+        // a.c = inStream(b.c);
+
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{-80,-280},
+                  {40,100}}),       graphics={
+              Text(
+                extent={{-44,80},{56,100}},
+                lineColor={0,0,0},
+                lineThickness=0.5,
+                fillColor={255,0,0},
+                fillPattern=FillPattern.None,
+                textString="tCO2",
+                horizontalAlignment=TextAlignment.Left)}),
+                                           Diagram(coordinateSystem(
+                preserveAspectRatio=false, extent={{-80,-280},{40,100}})));
+      end BloodContent;
+
+      model test0
+        Physiolibrary.Hydraulic.Sources.UnlimitedPump unlimitedPump(
+            SolutionFlow=1.6666666666667e-8)
+          annotation (Placement(transformation(extent={{152,-8},{132,12}})));
+        Physiolibrary.Hydraulic.Sources.UnlimitedVolume unlimitedVolume(P=1)
+          annotation (Placement(transformation(extent={{-164,-8},{-144,12}})));
+        BloodContent bloodContent
+          annotation (Placement(transformation(extent={{96,-2},{108,36}})));
+        BloodContent bloodContent1
+          annotation (Placement(transformation(extent={{0,-2},{-12,36}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage
+          unlimitedSolutionStorage(Conc=1)
+          annotation (Placement(transformation(extent={{152,20},{132,40}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage
+          unlimitedSolutionStorage1(Conc=2)
+          annotation (Placement(transformation(extent={{-134,20},{-114,40}})));
+      equation
+        connect(unlimitedPump.q_out, bloodContent.pq) annotation (Line(
+            points={{132,2},{104,2}},
+            color={0,0,0},
+            thickness=1));
+        connect(unlimitedVolume.y, bloodContent1.pq) annotation (Line(
+            points={{-144,2},{-8,2}},
+            color={0,0,0},
+            thickness=1));
+        connect(bloodContent.tCO2, unlimitedSolutionStorage.q_out) annotation (
+            Line(
+            points={{104,30},{132,30}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent1.tCO2, unlimitedSolutionStorage1.q_out)
+          annotation (Line(
+            points={{-8,30},{-114,30}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent1.fbc, bloodContent.fbc) annotation (Line(
+            points={{-4,19.8},{47,19.8},{47,19.8},{100,19.8}},
+            color={0,0,0},
+            thickness=0.5));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end test0;
+
+      model test
+        Physiolibrary.Hydraulic.Sources.UnlimitedPump unlimitedPump(
+            SolutionFlow=1.6666666666667e-8)
+          annotation (Placement(transformation(extent={{152,-8},{132,12}})));
+        Physiolibrary.Hydraulic.Sources.UnlimitedVolume unlimitedVolume(P=1)
+          annotation (Placement(transformation(extent={{-164,-8},{-144,12}})));
+        BloodContent bloodContent
+          annotation (Placement(transformation(extent={{96,-2},{108,36}})));
+        BloodContent bloodContent1
+          annotation (Placement(transformation(extent={{-90,-2},{-102,36}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage
+          unlimitedSolutionStorage(Conc=1)
+          annotation (Placement(transformation(extent={{152,20},{132,40}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage
+          unlimitedSolutionStorage1(Conc=2)
+          annotation (Placement(transformation(extent={{-134,20},{-114,40}})));
+        BloodContent bloodContent2
+          annotation (Placement(transformation(extent={{-70,-2},{-58,36}})));
+        BloodContent bloodContent3
+          annotation (Placement(transformation(extent={{62,-2},{50,36}})));
+        Physiolibrary.Chemical.Components.Substance substance(solute_start=0)
+          annotation (Placement(transformation(extent={{-40,20},{-20,40}})));
+        Physiolibrary.Chemical.Components.Substance substance1(solute_start=0)
+          annotation (Placement(transformation(extent={{0,20},{20,40}})));
+      equation
+        connect(unlimitedPump.q_out, bloodContent.pq) annotation (Line(
+            points={{132,2},{104,2}},
+            color={0,0,0},
+            thickness=1));
+        connect(unlimitedVolume.y, bloodContent1.pq) annotation (Line(
+            points={{-144,2},{-98,2}},
+            color={0,0,0},
+            thickness=1));
+        connect(bloodContent.tCO2, unlimitedSolutionStorage.q_out) annotation (
+            Line(
+            points={{104,30},{132,30}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent1.tCO2, unlimitedSolutionStorage1.q_out)
+          annotation (Line(
+            points={{-98,30},{-114,30}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent3.fbc, bloodContent.fbc) annotation (Line(
+            points={{58,19.8},{79,19.8},{79,19.8},{100,19.8}},
+            color={0,0,0},
+            thickness=0.5));
+        connect(bloodContent2.fbc, bloodContent1.fbc) annotation (Line(
+            points={{-66,19.8},{-79,19.8},{-79,19.8},{-94,19.8}},
+            color={0,0,0},
+            thickness=0.5));
+        connect(bloodContent2.pq, bloodContent3.pq) annotation (Line(
+            points={{-62,2},{54,2}},
+            color={0,0,0},
+            thickness=1));
+        connect(bloodContent2.tCO2, substance.q_out) annotation (Line(
+            points={{-62,30},{-30,30}},
+            color={107,45,134},
+            thickness=1));
+        connect(substance1.q_out, bloodContent3.tCO2) annotation (Line(
+            points={{10,30},{54,30}},
+            color={107,45,134},
+            thickness=1));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end test;
+
+      model SourceQ
+        sbc sbc1 annotation (Placement(transformation(extent={{-4,-6},{4,4}})));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+              parameter Real k = 1;
+              parameter Real c = 1;
+              Real measuredC = inStream(sbc1.solute);
+      equation
+        sbc1.q = k;
+        sbc1.solute = c;
+      end SourceQ;
+
+      model SourceP
+        sbc sbc1 annotation (Placement(transformation(extent={{-4,-6},{4,4}})));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+              parameter Real k = 1;
+              parameter Real c = 1;
+      equation
+        sbc1.pressure = k;
+        sbc1.c = c;
+      end SourceP;
+
+      model testStreams
+        SourceQ sourceQ
+          annotation (Placement(transformation(extent={{40,0},{60,20}})));
+        BloodContent bloodContent
+          annotation (Placement(transformation(extent={{-24,-8},{-36,30}})));
+        Physiolibrary.Hydraulic.Sources.UnlimitedVolume unlimitedVolume
+          annotation (Placement(transformation(extent={{-84,-14},{-64,6}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage
+          unlimitedSolutionStorage
+          annotation (Placement(transformation(extent={{-84,18},{-64,38}})));
+      equation
+        connect(bloodContent.fbc, sourceQ.sbc1) annotation (Line(
+            points={{-28,13.8},{11,13.8},{11,9.9},{50,9.9}},
+            color={0,0,0},
+            thickness=0.5));
+        connect(bloodContent.pq, unlimitedVolume.y) annotation (Line(
+            points={{-32,-4},{-64,-4}},
+            color={0,0,0},
+            thickness=1));
+        connect(bloodContent.tCO2, unlimitedSolutionStorage.q_out) annotation (
+            Line(
+            points={{-32,24},{-48,24},{-48,28},{-64,28}},
+            color={107,45,134},
+            thickness=1));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end testStreams;
+
+      model testCore
+        Physiolibrary.Hydraulic.Sources.UnlimitedPump unlimitedPump(
+            SolutionFlow=1.6666666666667e-8)
+          annotation (Placement(transformation(extent={{86,-8},{66,12}})));
+        Physiolibrary.Hydraulic.Sources.UnlimitedVolume unlimitedVolume(P=1)
+          annotation (Placement(transformation(extent={{-64,-8},{-44,12}})));
+        BloodContent bloodContent
+          annotation (Placement(transformation(extent={{30,-2},{42,36}})));
+        Physiolibrary.Chemical.Sources.UnlimitedSolutionStorage
+          unlimitedSolutionStorage(Conc=1)
+          annotation (Placement(transformation(extent={{86,20},{66,40}})));
+        BloodContent bloodContent3
+          annotation (Placement(transformation(extent={{-4,-2},{-16,36}})));
+        Physiolibrary.Chemical.Components.Substance substance1(solute_start=0)
+          annotation (Placement(transformation(extent={{-66,20},{-46,40}})));
+        Physiolibrary.Chemical.Components.Substance substance2(solute_start=0)
+          annotation (Placement(transformation(extent={{-66,58},{-46,78}})));
+        Physiolibrary.Chemical.Components.Stream Stream(SolutionFlow=
+              1.6666666666667e-8)
+          annotation (Placement(transformation(extent={{22,58},{2,78}})));
+        SourceQ sourceQ(k=0)
+          annotation (Placement(transformation(extent={{6,-30},{26,-10}})));
+      equation
+        connect(unlimitedPump.q_out, bloodContent.pq) annotation (Line(
+            points={{66,2},{38,2}},
+            color={0,0,0},
+            thickness=1));
+        connect(bloodContent.tCO2, unlimitedSolutionStorage.q_out) annotation (
+            Line(
+            points={{38,30},{66,30}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent3.fbc, bloodContent.fbc) annotation (Line(
+            points={{-8,19.8},{34,19.8}},
+            color={0,0,0},
+            thickness=0.5));
+        connect(substance1.q_out, bloodContent3.tCO2) annotation (Line(
+            points={{-56,30},{-12,30}},
+            color={107,45,134},
+            thickness=1));
+        connect(bloodContent3.pq, unlimitedVolume.y) annotation (Line(
+            points={{-12,2},{-44,2}},
+            color={0,0,0},
+            thickness=1));
+        connect(Stream.q_out, substance2.q_out) annotation (Line(
+            points={{2,68},{-56,68}},
+            color={107,45,134},
+            thickness=1));
+        connect(Stream.q_in, unlimitedSolutionStorage.q_out) annotation (Line(
+            points={{22,68},{56,68},{56,30},{66,30}},
+            color={107,45,134},
+            thickness=1));
+        connect(sourceQ.sbc1, bloodContent.fbc) annotation (Line(
+            points={{16,-20.1},{24,-20.1},{24,19.8},{34,19.8}},
+            color={0,0,0},
+            thickness=0.5));
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
+      end testCore;
+    end simpletest;
+
+    model FullBloodWithISF
+    //  Real totalCharge_p(displayUnit="mmol");
+      Real totalCharge_isf(displayUnit="mmol");
+      constant Integer charges[:] = {1,1,-1,-1,-1,1};
+
+      Physiolibrary.Chemical.Components.Membrane membrane(
+        NumberOfParticles=6,
+        Charges=charges,
+        Permeabilities={0.016666666666667,0.016666666666667,0.016666666666667,8.3333333333333e-6,
+            0.016666666666667,0})
+        annotation (Placement(transformation(extent={{22,14},{58,56}})));
+      Physiolibrary.Chemical.Components.Substance Na_p(useNormalizedVolume=
+            false, solute_start=1.739738)
+        annotation (Placement(transformation(extent={{-4,64},{16,84}})));
+      Physiolibrary.Chemical.Components.Substance K_p(useNormalizedVolume=false,
+          solute_start=0.04973529)
+        annotation (Placement(transformation(extent={{-4,34},{16,54}})));
+      Physiolibrary.Chemical.Components.Substance Cl_p(useNormalizedVolume=
+            false, solute_start=1.224174)
+        annotation (Placement(transformation(extent={{-4,0},{16,20}})));
+      Physiolibrary.Chemical.Components.Substance UA_p(useNormalizedVolume=
+            false, solute_start=0.190587)
+        annotation (Placement(transformation(extent={{-4,-60},{16,-40}})));
+      Physiolibrary.Chemical.Components.Substance Alb_p(useNormalizedVolume=
+            false, solute_start(displayUnit="mol") = 6.7*0.003)
+        annotation (Placement(transformation(extent={{-52,-88},{-32,-68}})));
+      Physiolibrary.Chemical.Components.Substance Na_isf(useNormalizedVolume=
+            false, solute_start=0.001)
+        annotation (Placement(transformation(extent={{62,64},{82,84}})));
+      Physiolibrary.Chemical.Components.Substance K_isf(useNormalizedVolume=
+            false, solute_start=0)
+        annotation (Placement(transformation(extent={{62,38},{82,58}})));
+      Physiolibrary.Chemical.Components.Substance Cl_isf(useNormalizedVolume=
+            false, solute_start=0.001)
+        annotation (Placement(transformation(extent={{62,-4},{82,16}})));
+      Physiolibrary.Chemical.Components.Substance HCO3_isf(useNormalizedVolume=
+            false, solute_start=0)
+        annotation (Placement(transformation(extent={{62,-36},{82,-16}})));
+      Physiolibrary.Chemical.Components.Substance UA_isf(useNormalizedVolume=
+            false, solute_start=0)
+        annotation (Placement(transformation(extent={{62,-70},{82,-50}})));
+      Physiolibrary.Chemical.Components.Substance Alb_isf(useNormalizedVolume=
+            false, solute_start=0)
+        annotation (Placement(transformation(extent={{62,-100},{82,-80}})));
+      Physiolibrary.Types.Constants.VolumeConst VP(k(displayUnit="l") = 0.003)
+        annotation (Placement(transformation(extent={{-8,90},{0,98}})));
+      Physiolibrary.Types.Constants.VolumeConst VISF(k(displayUnit="l") = 0.01)
+        annotation (Placement(transformation(extent={{78,90},{70,98}})));
+      Modelica.Blocks.Math.MultiSum multiSum(nu=6, k=charges)
+        annotation (Placement(transformation(extent={{18,88},{30,100}})));
+      Modelica.Blocks.Math.Product  product
+        annotation (Placement(transformation(extent={{36,86},{46,96}})));
+      AlbChrg albChrg
+        annotation (Placement(transformation(extent={{-6,-68},{14,-88}})));
+      Physiolibrary.Chemical.Components.Substance Alb_p1(useNormalizedVolume=true,
+          solute_start=0.048)
+        annotation (Placement(transformation(extent={{26,-146},{46,-126}})));
+      Physiolibrary.Chemical.Sensors.ConcentrationMeasure concentrationMeasure
+        annotation (Placement(transformation(extent={{2,-66},{22,-86}})));
+      FullBlood fullBlood
+        annotation (Placement(transformation(extent={{-26,-30},{-6,-10}})));
+      Physiolibrary.Types.Constants.PressureConst
+                                       pressure(k=40*133)
+        annotation (Placement(transformation(extent={{-96,-20},{-76,0}})));
+      Physiolibrary.Chemical.Components.Substance BE(
+          solute_start=0, useNormalizedVolume=false)
+        annotation (Placement(transformation(extent={{-60,64},{-40,84}})));
+      Physiolibrary.Chemical.Sensors.ConcentrationMeasure concentrationMeasure1
+        annotation (Placement(transformation(extent={{2,-10},{22,-30}})));
+    equation
+    //   totalCharge_p = sum({Na_p.solute, K_p.solute, Cl_p.solute, HCO3_p.solute,
+    //     UA_p.solute,Alb_p.solute}.*charges);
+      totalCharge_isf = Na_isf.solute + K_isf.solute - Cl_isf.solute - HCO3_isf.solute
+         - UA_isf.solute - Alb_isf.solute;
+      connect(Na_p.q_out, membrane.particlesInside[1]) annotation (Line(
+          points={{6,74},{22,74},{22,33.25}},
+          color={107,45,134},
+          thickness=1));
+      connect(K_p.q_out, membrane.particlesInside[2]) annotation (Line(
+          points={{6,44},{22,44},{22,33.95}},
+          color={107,45,134},
+          thickness=1));
+      connect(Cl_p.q_out, membrane.particlesInside[3]) annotation (Line(
+          points={{6,10},{22,10},{22,34.65}},
+          color={107,45,134},
+          thickness=1));
+      connect(membrane.particlesOutside[1], Na_isf.q_out) annotation (Line(
+          points={{58,33.25},{58,74},{72,74}},
+          color={107,45,134},
+          thickness=1));
+      connect(K_isf.q_out, membrane.particlesOutside[2]) annotation (Line(
+          points={{72,48},{58,48},{58,33.95}},
+          color={107,45,134},
+          thickness=1));
+      connect(Cl_isf.q_out, membrane.particlesOutside[3]) annotation (Line(
+          points={{72,6},{58,6},{58,34.65}},
+          color={107,45,134},
+          thickness=1));
+      connect(HCO3_isf.q_out, membrane.particlesOutside[4]) annotation (Line(
+          points={{72,-26},{58,-26},{58,35.35}},
+          color={107,45,134},
+          thickness=1));
+      connect(UA_isf.q_out, membrane.particlesOutside[5]) annotation (Line(
+          points={{72,-60},{58,-60},{58,36.05}},
+          color={107,45,134},
+          thickness=1));
+      connect(Alb_isf.q_out, membrane.particlesOutside[6]) annotation (Line(
+          points={{72,-90},{58,-90},{58,36.75}},
+          color={107,45,134},
+          thickness=1));
+      connect(UA_p.q_out, membrane.particlesInside[5]) annotation (Line(
+          points={{6,-50},{22,-50},{22,36.05}},
+          color={107,45,134},
+          thickness=1));
+      connect(VP.y, Na_p.solutionVolume) annotation (Line(points={{1,94},{2,94},{2,78}},
+                             color={0,0,127}));
+      connect(VP.y, K_p.solutionVolume) annotation (Line(points={{1,94},{2,94},{2,48}},
+                                               color={0,0,127}));
+      connect(VP.y, Cl_p.solutionVolume) annotation (Line(points={{1,94},{2,94},{2,14}},
+                                               color={0,0,127}));
+      connect(VP.y, UA_p.solutionVolume) annotation (Line(points={{1,94},{2,94},{2,-46}},
+                                                  color={0,0,127}));
+      connect(VP.y, Alb_p.solutionVolume) annotation (Line(points={{1,94},{2,94},
+              {2,-74},{-46,-74}},                 color={0,0,127}));
+      connect(VISF.y, Na_isf.solutionVolume) annotation (Line(points={{69,94},{68,94},
+              {68,78}},                color={0,0,127}));
+      connect(VISF.y, K_isf.solutionVolume) annotation (Line(points={{69,94},{68,94},
+              {68,52}},                        color={0,0,127}));
+      connect(VISF.y, Cl_isf.solutionVolume) annotation (Line(points={{69,94},{68,94},
+              {68,10}},                                color={0,0,127}));
+      connect(VISF.y, HCO3_isf.solutionVolume) annotation (Line(points={{69,94},{68,
+              94},{68,-22}},                               color={0,0,127}));
+      connect(VISF.y, UA_isf.solutionVolume) annotation (Line(points={{69,94},{68,94},
+              {68,-56}},                          color={0,0,127}));
+      connect(VISF.y, Alb_isf.solutionVolume) annotation (Line(points={{69,94},{68,94},
+              {68,-86}},                                   color={0,0,127}));
+      connect(Na_p.solute, multiSum.u[1])
+        annotation (Line(points={{12,64},{12,97.5},{18,97.5}}, color={0,0,127}));
+      connect(K_p.solute, multiSum.u[2])
+        annotation (Line(points={{12,34},{12,96.1},{18,96.1}}, color={0,0,127}));
+      connect(Cl_p.solute, multiSum.u[3])
+        annotation (Line(points={{12,0},{12,94.7},{18,94.7}}, color={0,0,127}));
+      connect(UA_p.solute, multiSum.u[4])
+        annotation (Line(points={{12,-60},{12,93.3},{18,93.3}}, color={0,0,127}));
+      connect(multiSum.y, product.u1)
+        annotation (Line(points={{31.02,94},{35,94}}, color={0,0,127}));
+      connect(product.u2, VP.y) annotation (Line(points={{35,88},{18,88},{18,94},{1,
+              94}}, color={0,0,127}));
+      connect(Alb_p.q_out, albChrg.port_a) annotation (Line(
+          points={{-42,-78},{-10,-78},{-10,-77.8},{-5,-77.8}},
+          color={107,45,134},
+          thickness=1));
+      connect(membrane.particlesInside[6], albChrg.chemicalPort) annotation (Line(
+          points={{22,36.75},{22,-78},{13,-78}},
+          color={107,45,134},
+          thickness=1));
+      connect(albChrg.chemicalPort, concentrationMeasure.q_in)
+        annotation (Line(points={{13,-78},{12,-78},{12,-76}}));
+      connect(concentrationMeasure.concentration, multiSum.u[5])
+        annotation (Line(points={{12,-68},{12,91.9},{18,91.9}}, color={0,0,127}));
+      connect(pressure.y, fullBlood.pCO2) annotation (Line(points={{-73.5,-10},
+              {-66,-10},{-66,-11},{-26,-11}}, color={0,0,127}));
+      connect(BE.q_out, fullBlood.BE) annotation (Line(
+          points={{-50,74},{-50,40},{-16,40},{-16,-11}},
+          color={107,45,134},
+          thickness=1));
+      connect(BE.solutionVolume, VP.y)
+        annotation (Line(points={{-54,78},{1,78},{1,94}}, color={0,0,127}));
+      connect(fullBlood.HCO3, membrane.particlesInside[4]) annotation (Line(
+          points={{-7,-20},{22,-20},{22,35.35}},
+          color={107,45,134},
+          thickness=1));
+      connect(fullBlood.HCO3, concentrationMeasure1.q_in) annotation (Line(
+          points={{-7,-20},{12,-20}},
+          color={107,45,134},
+          thickness=1));
+      connect(concentrationMeasure1.concentration, multiSum.u[6]) annotation (
+          Line(points={{12,-12},{12,90.5},{18,90.5}}, color={0,0,127}));
+      connect(fullBlood.pH, albChrg.pH) annotation (Line(points={{-7,-29},{-7,
+              -59.5},{-6,-59.5},{-6,-87}}, color={0,0,127}));
+      annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{
+                -100,-100},{100,100}})));
+    end FullBloodWithISF;
+
+    model AlbChrg
+      Physiolibrary.Chemical.Interfaces.ChemicalPort chemicalPort
+        annotation (Placement(transformation(extent={{80,-10},{100,10}})));
+      Physiolibrary.Chemical.Interfaces.ChemicalPort_a port_a
+        annotation (Placement(transformation(extent={{-100,-12},{-80,8}})));
+      Modelica.Blocks.Interfaces.RealInput pH
+        annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+            Real toMeqConversion = -1/1000*6500*(0.123*pH - 0.631);
+            Real atch=-(alb*10)*(0.123*pH - 0.631) "albumin total charge";
+            Real atch2 =  port_a.conc*toMeqConversion;
+          Real alb(unit="g/dl") = port_a.conc/10/1000*6500 "Albumin concentration. Normal value 4.4";
+    equation
+      chemicalPort.conc = atch;
+      port_a.q*toMeqConversion + chemicalPort.q = 0;
+    end AlbChrg;
+
+    model FullBlood
+      extends Physiolibrary.Icons.RedCells;
+      FullBloodCombined.CombinedModel fb(redeclare FullBloodAcidBase.PlasmaElectrochemical.PlasmaFencl plasma, pCO2 = pCO2/133, BE = BE.conc)
+        annotation (Placement(transformation(extent={{-20,0},{0,20}})));
+      Physiolibrary.Types.RealIO.pHOutput pH = fb.pH
+        annotation (Placement(transformation(extent={{80,-100},{100,-80}})));
+
+      Physiolibrary.Chemical.Interfaces.ChemicalPort_a HCO3
+      annotation (Placement(transformation(extent={{80,-10},{100,10}})));
+
+      Physiolibrary.Chemical.Interfaces.ChemicalPort_a BE
+        annotation (Placement(transformation(extent={{-10,80},{10,100}})));
+        /*
+  Physiolibrary.Chemical.Interfaces.ChemicalPort_a Cl
+  annotation (Placement(transformation(extent={{80,80},{100,100}})));
+  */
+      Physiolibrary.Types.RealIO.PressureInput
+                                           pCO2
+        annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+            Text(
+              extent={{-40,100},{40,140}},
+              lineColor={28,108,200},
+              textString="BE"),
+            Text(
+              extent={{42,96},{122,136}},
+              lineColor={28,108,200},
+              textString="Cl"),
+            Text(
+              extent={{0,-20},{80,20}},
+              lineColor={28,108,200},
+              textString="HCO3"),
+            Text(
+              extent={{0,-100},{80,-60}},
+              lineColor={28,108,200},
+              textString="pH")}),                                    Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+    //         parameter Real Pi = 1.15;
+    //         parameter Real alb = 4.4;
+    // Real BE = 1;
+    Real dHCO3 = der(fb.mHCO3);
+    equation
+    //   BE.q + HCO3.q + der(fb.mHCO3) + Cl.q = 0;
+    BE.q + HCO3.q = 0;
+    HCO3.conc = fb.plasma.HCO3;
+    end FullBlood;
   end Circulation;
   annotation (uses(Modelica(version="3.2.2"), Physiolibrary(version=
             "2.3.2-beta")), Documentation(info="<html>
