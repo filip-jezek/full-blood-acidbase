@@ -876,6 +876,7 @@ Implemented in Modelica by Filip Jezek, FEE CTU in Prague, 2016
     equation
       plasma.pH = fullErythrocyte.pH;
       BEp = SID - plasma.NSID;
+
       annotation (experiment(
           StopTime=1,
           __Dymola_NumberOfIntervals=500,
@@ -1931,14 +1932,20 @@ createPlot(id=1, position={15, 10, 584, 420}, x="pCO2", y={"test_Combo_Wolf_15.f
           Hb=ctHb*HbConversion,
           Pi=Pi) annotation (Placement(transformation(extent={{-20,0},{0,20}})));
         Physiolibrary.Types.RealIO.PressureInput pCO2
-          annotation (Placement(transformation(extent={{-120,30},{-80,70}})));
+          annotation (Placement(transformation(extent={{-120,80},{-80,120}}),
+              iconTransformation(extent={{-120,80},{-80,120}})));
         Physiolibrary.Types.RealIO.ConcentrationInput BEox
-          annotation (Placement(transformation(extent={{-120,-10},{-80,30}})));
+          annotation (Placement(transformation(extent={{-120,20},{-80,60}}),
+              iconTransformation(extent={{-120,20},{-80,60}})));
         Physiolibrary.Types.RealIO.ConcentrationInput Alb
-          annotation (Placement(transformation(extent={{-120,-50},{-80,-10}})));
+          annotation (Placement(transformation(extent={{-120,-60},{-80,-20}}),
+              iconTransformation(extent={{-120,-60},{-80,-20}})));
         Physiolibrary.Types.RealIO.ConcentrationInput Pi
-          annotation (Placement(transformation(extent={{-120,-90},{-80,-50}})));
-        Physiolibrary.Types.RealIO.pHOutput pH=combinedModel.pH;
+          annotation (Placement(transformation(extent={{-120,-120},{-80,-80}}),
+              iconTransformation(extent={{-120,-120},{-80,-80}})));
+        Physiolibrary.Types.RealIO.pHOutput pH=combinedModel.pH
+          annotation (Placement(transformation(extent={{60,-20},{100,20}}),
+              iconTransformation(extent={{60,-20},{100,20}})));
         Physiolibrary.Types.RealIO.ConcentrationInput ctHb
           annotation (Placement(transformation(extent={{-40,70},{0,110}})));
         annotation (
@@ -2933,7 +2940,7 @@ BLOOD"),    Text(
           useSoluteFlowInput=false)
         annotation (Placement(transformation(extent={{-60,2},{-40,22}})));
       Physiolibrary.Chemical.Sources.UnlimitedSolutePump unlimitedSolutePump2(
-          useSoluteFlowInput=false, SoluteFlow(displayUnit="mol/s") = 0)
+          useSoluteFlowInput=false, SoluteFlow(displayUnit="mmol/min") = -1.6666666666667e-5)
         annotation (Placement(transformation(extent={{-60,-14},{-40,6}})));
     equation
       connect(unlimitedSolutePump.q_out, fullBlood.port_O2) annotation (Line(
@@ -5966,25 +5973,25 @@ BLOOD"),    Text(
 
       model SourceQ
         sbc sbc1 annotation (Placement(transformation(extent={{-4,-6},{4,4}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
               parameter Real k = 1;
               parameter Real c = 1;
               Real measuredC = inStream(sbc1.solute);
       equation
         sbc1.q = k;
         sbc1.solute = c;
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end SourceQ;
 
       model SourceP
         sbc sbc1 annotation (Placement(transformation(extent={{-4,-6},{4,4}})));
-        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-              coordinateSystem(preserveAspectRatio=false)));
               parameter Real k = 1;
               parameter Real c = 1;
       equation
         sbc1.pressure = k;
         sbc1.c = c;
+        annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              coordinateSystem(preserveAspectRatio=false)));
       end SourceP;
 
       model testStreams
@@ -6267,8 +6274,6 @@ BLOOD"),    Text(
         annotation (Placement(transformation(extent={{-100,-12},{-80,8}})));
       Modelica.Blocks.Interfaces.RealInput pH
         annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
-      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-            coordinateSystem(preserveAspectRatio=false)));
             Real toMeqConversion = -1/1000*6500*(0.123*pH - 0.631);
             Real atch=-(alb*10)*(0.123*pH - 0.631) "albumin total charge";
             Real atch2 =  port_a.conc*toMeqConversion;
@@ -6276,6 +6281,8 @@ BLOOD"),    Text(
     equation
       chemicalPort.conc = atch;
       port_a.q*toMeqConversion + chemicalPort.q = 0;
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
     end AlbChrg;
 
     model FullBlood
@@ -6297,6 +6304,14 @@ BLOOD"),    Text(
       Physiolibrary.Types.RealIO.PressureInput
                                            pCO2
         annotation (Placement(transformation(extent={{-120,70},{-80,110}})));
+    //         parameter Real Pi = 1.15;
+    //         parameter Real alb = 4.4;
+    // Real BE = 1;
+    Real dHCO3 = der(fb.mHCO3);
+    equation
+    //   BE.q + HCO3.q + der(fb.mHCO3) + Cl.q = 0;
+    BE.q + HCO3.q = 0;
+    HCO3.conc = fb.plasma.HCO3;
       annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
             Text(
               extent={{-40,100},{40,140}},
@@ -6315,14 +6330,6 @@ BLOOD"),    Text(
               lineColor={28,108,200},
               textString="pH")}),                                    Diagram(
             coordinateSystem(preserveAspectRatio=false)));
-    //         parameter Real Pi = 1.15;
-    //         parameter Real alb = 4.4;
-    // Real BE = 1;
-    Real dHCO3 = der(fb.mHCO3);
-    equation
-    //   BE.q + HCO3.q + der(fb.mHCO3) + Cl.q = 0;
-    BE.q + HCO3.q = 0;
-    HCO3.conc = fb.plasma.HCO3;
     end FullBlood;
   end Circulation;
   annotation (uses(Modelica(version="3.2.2"), Physiolibrary(version=
